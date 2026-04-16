@@ -11,8 +11,11 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 add_library(orchidc
-    compile.c
-    compile.h
+    compiler.c
+    compiler.h
+    lexer.c
+    lexer.h
+    token.h
 )
 
 add_executable(orchid main.c)
