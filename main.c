@@ -5,6 +5,6 @@
 int main(int argc, char const *argv[])
 {
     printf("Hello, World!\n");
-    orchid_compile("  package orchid. std");
+    orchid_compile("  abc >= 150 package");
     return 0;
 }

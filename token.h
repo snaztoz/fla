@@ -14,6 +14,7 @@ struct Token {
 #define TOKEN_UNKNOWN     0
 #define TOKEN_EOF         1
 #define TOKEN_NAME        2
+#define TOKEN_NUMBER      3
 
 #define TOKEN_KW_CLASS    11
 #define TOKEN_KW_ELSE     12
