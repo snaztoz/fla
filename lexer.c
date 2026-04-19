@@ -5,6 +5,24 @@
 #include "lexer.h" // next_token, struct LexerState
 #include "token.h" // TOKEN_*, struct Token
 
+char current(struct LexerState *ls)
+{
+    return ls->src[ls->cursor];
+}
+
+#define SKIP_WHITESPACES(ls)                                    \
+    while (ls->cursor < strlen(ls->src)                         \
+            && isspace(current(ls)))                            \
+    {                                                           \
+        if (current(ls) == '\n')                                \
+        {                                                       \
+            ls->curr_line += 1;                                 \
+            ls->curr_column = 0;                                \
+        }                                                       \
+        ls->curr_column += 1;                                   \
+        ls->cursor += 1;                                        \
+    }
+
 #define TRY_MATCH_STATIC(ls, text, type_if_matches)             \
     if (strncmp(ls->src + ls->cursor, text, strlen(text)) == 0) \
     {                                                           \
@@ -20,11 +38,6 @@
         return t;                                               \
     }
 
-char current(struct LexerState *ls)
-{
-    return ls->src[ls->cursor];
-}
-
 int is_current_valid_name_start(struct LexerState *ls)
 {
     return isalpha(current(ls)) || current(ls) == '_';
@@ -35,74 +48,65 @@ int is_current_valid_name_tail(struct LexerState *ls)
     return isalnum(current(ls)) || current(ls) == '_';
 }
 
-#define TRY_MATCH_NAME(ls)                     \
-    if (is_current_valid_name_start(ls))       \
-    {                                          \
-        size_t pos = ls->cursor;               \
-        ls->cursor += 1;                       \
-        int len = 1;                           \
-        while (is_current_valid_name_tail(ls)) \
-        {                                      \
-            len += 1;                          \
-            ls->cursor += 1;                   \
-        }                                      \
-        struct Token t = {                     \
-            .type = TOKEN_NAME,                \
-            .pos = pos,                        \
-            .len = len,                        \
-            .line = ls->curr_line,             \
-            .column = ls->curr_column,         \
-        };                                     \
-        ls->curr_column += len;                \
-        return t;                              \
+#define TRY_MATCH_NAME(ls)                                      \
+    if (is_current_valid_name_start(ls))                        \
+    {                                                           \
+        size_t pos = ls->cursor;                                \
+        ls->cursor += 1;                                        \
+        int len = 1;                                            \
+        while (is_current_valid_name_tail(ls))                  \
+        {                                                       \
+            len += 1;                                           \
+            ls->cursor += 1;                                    \
+        }                                                       \
+        struct Token t = {                                      \
+            .type = TOKEN_NAME,                                 \
+            .pos = pos,                                         \
+            .len = len,                                         \
+            .line = ls->curr_line,                              \
+            .column = ls->curr_column,                          \
+        };                                                      \
+        ls->curr_column += len;                                 \
+        return t;                                               \
     }
 
-#define TRY_MATCH_NUMBER(ls)           \
-    if (isdigit(current(ls)))          \
-    {                                  \
-        size_t pos = ls->cursor;       \
-        ls->cursor += 1;               \
-        int len = 1;                   \
-        while (isdigit(current(ls)))   \
-        {                              \
-            len += 1;                  \
-            ls->cursor += 1;           \
-        }                              \
-        struct Token t = {             \
-            .type = TOKEN_NUMBER,      \
-            .pos = pos,                \
-            .len = len,                \
-            .line = ls->curr_line,     \
-            .column = ls->curr_column, \
-        };                             \
-        ls->curr_column += len;        \
-        return t;                      \
+#define TRY_MATCH_NUMBER(ls)                                    \
+    if (isdigit(current(ls)))                                   \
+    {                                                           \
+        size_t pos = ls->cursor;                                \
+        ls->cursor += 1;                                        \
+        int len = 1;                                            \
+        while (isdigit(current(ls)))                            \
+        {                                                       \
+            len += 1;                                           \
+            ls->cursor += 1;                                    \
+        }                                                       \
+        struct Token t = {                                      \
+            .type = TOKEN_NUMBER,                               \
+            .pos = pos,                                         \
+            .len = len,                                         \
+            .line = ls->curr_line,                              \
+            .column = ls->curr_column,                          \
+        };                                                      \
+        ls->curr_column += len;                                 \
+        return t;                                               \
     }
 
-#define TRY_MATCH_EOF(ls)              \
-    if (ls->cursor >= strlen(ls->src)) \
-    {                                  \
-        return (struct Token) {        \
-            .type = TOKEN_EOF,         \
-            .pos = ls->cursor,         \
-            .len = 0,                  \
-            .line = ls->curr_line,     \
-            .column = ls->curr_column, \
-        };                             \
+#define TRY_MATCH_EOF(ls)                                       \
+    if (ls->cursor >= strlen(ls->src))                          \
+    {                                                           \
+        return (struct Token) {                                 \
+            .type = TOKEN_EOF,                                  \
+            .pos = ls->cursor,                                  \
+            .len = 0,                                           \
+            .line = ls->curr_line,                              \
+            .column = ls->curr_column,                          \
+        };                                                      \
     }
 
 struct Token next_token(struct LexerState *ls)
 {
-    while (ls->cursor < strlen(ls->src) && isspace(ls->src[ls->cursor]))
-    {
-        if (ls->src[ls->cursor] == '\n')
-        {
-            ls->curr_line += 1;
-            ls->curr_column = 0; // reset
-        }
-        ls->curr_column += 1;
-        ls->cursor += 1;
-    }
+    SKIP_WHITESPACES(ls);
 
     TRY_MATCH_STATIC(ls, "class", TOKEN_KW_CLASS);
     TRY_MATCH_STATIC(ls, "else", TOKEN_KW_ELSE);
