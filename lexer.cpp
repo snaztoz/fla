@@ -191,11 +191,11 @@ namespace orchid::compiler
 
   bool Lexer::is_current_valid_name_start()
   {
-    return isalpha(current()) || current() == '_';
+    return std::isalpha(current()) || current() == '_';
   }
 
   bool Lexer::is_current_valid_name_tail()
   {
-    return isalnum(current()) || current() == '_';
+    return std::isalnum(current()) || current() == '_';
   }
 }; // namespace orchid::compiler
