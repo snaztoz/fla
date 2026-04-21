@@ -3,6 +3,7 @@
 
 #include <string_view>
 
+#include "ast.hpp"
 #include "lexer.hpp"
 
 namespace orchid::compiler
@@ -11,7 +12,7 @@ namespace orchid::compiler
     {
     public:
         Parser(std::string_view src);
-        void parse();
+        Ast parse();
 
     private:
         Lexer lexer;

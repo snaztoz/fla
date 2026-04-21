@@ -8,7 +8,8 @@ namespace orchid::compiler
     {
     }
 
-    void Parser::parse()
+    Ast Parser::parse()
     {
+        return {};
     }
 } // namespace orchid::compiler
