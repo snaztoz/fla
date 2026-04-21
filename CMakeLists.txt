@@ -15,6 +15,8 @@ add_library(orchidc
     compiler.hpp
     lexer.cpp
     lexer.hpp
+    parser.cpp
+    parser.hpp
     token.hpp
 )
 
