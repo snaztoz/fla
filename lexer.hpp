@@ -13,11 +13,11 @@ namespace orchid::compiler
 {
     class Lexer
     {
-      public:
+    public:
         Lexer(std::string_view src);
         Token next_token();
 
-      private:
+    private:
         std::string_view src;
         std::size_t cursor;
         std::size_t curr_line;

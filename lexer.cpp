@@ -13,44 +13,44 @@ namespace orchid::compiler
         : src(s), cursor(0), curr_line(1), curr_column(1)
     {
         rules = {
-            [this]() { return try_match("class", TokenType::KwClass); },
-            [this]() { return try_match("else", TokenType::KwElse); },
-            [this]() { return try_match("fun", TokenType::KwFun); },
-            [this]() { return try_match("if", TokenType::KwIf); },
-            [this]() { return try_match("import", TokenType::KwImport); },
-            [this]() { return try_match("package", TokenType::KwPackage); },
-            [this]() { return try_match("var", TokenType::KwVar); },
-            [this]() { return try_match("while", TokenType::KwWhile); },
+            [this] { return try_match("class", TokenType::KwClass); },
+            [this] { return try_match("else", TokenType::KwElse); },
+            [this] { return try_match("fun", TokenType::KwFun); },
+            [this] { return try_match("if", TokenType::KwIf); },
+            [this] { return try_match("import", TokenType::KwImport); },
+            [this] { return try_match("package", TokenType::KwPackage); },
+            [this] { return try_match("var", TokenType::KwVar); },
+            [this] { return try_match("while", TokenType::KwWhile); },
 
             // Operators with more characters should have higher priority
-            [this]() { return try_match("&&", TokenType::OpAnd); },
-            [this]() { return try_match("==", TokenType::OpEq); },
-            [this]() { return try_match(">=", TokenType::OpGte); },
-            [this]() { return try_match("<=", TokenType::OpLte); },
-            [this]() { return try_match("!=", TokenType::OpNeq); },
-            [this]() { return try_match("||", TokenType::OpOr); },
-            [this]() { return try_match("+", TokenType::OpAdd); },
-            [this]() { return try_match("=", TokenType::OpAssign); },
-            [this]() { return try_match(":", TokenType::OpColon); },
-            [this]() { return try_match(",", TokenType::OpComma); },
-            [this]() { return try_match("/", TokenType::OpDiv); },
-            [this]() { return try_match(".", TokenType::OpDot); },
-            [this]() { return try_match(">", TokenType::OpGt); },
-            [this]() { return try_match("{", TokenType::OpLBrace); },
-            [this]() { return try_match("[", TokenType::OpLBrack); },
-            [this]() { return try_match("(", TokenType::OpLParen); },
-            [this]() { return try_match("<", TokenType::OpLt); },
-            [this]() { return try_match("%", TokenType::OpMod); },
-            [this]() { return try_match("*", TokenType::OpMul); },
-            [this]() { return try_match("!", TokenType::OpNot); },
-            [this]() { return try_match("}", TokenType::OpRBrace); },
-            [this]() { return try_match("]", TokenType::OpRBrack); },
-            [this]() { return try_match(")", TokenType::OpRParen); },
-            [this]() { return try_match("-", TokenType::OpSub); },
+            [this] { return try_match("&&", TokenType::OpAnd); },
+            [this] { return try_match("==", TokenType::OpEq); },
+            [this] { return try_match(">=", TokenType::OpGte); },
+            [this] { return try_match("<=", TokenType::OpLte); },
+            [this] { return try_match("!=", TokenType::OpNeq); },
+            [this] { return try_match("||", TokenType::OpOr); },
+            [this] { return try_match("+", TokenType::OpAdd); },
+            [this] { return try_match("=", TokenType::OpAssign); },
+            [this] { return try_match(":", TokenType::OpColon); },
+            [this] { return try_match(",", TokenType::OpComma); },
+            [this] { return try_match("/", TokenType::OpDiv); },
+            [this] { return try_match(".", TokenType::OpDot); },
+            [this] { return try_match(">", TokenType::OpGt); },
+            [this] { return try_match("{", TokenType::OpLBrace); },
+            [this] { return try_match("[", TokenType::OpLBrack); },
+            [this] { return try_match("(", TokenType::OpLParen); },
+            [this] { return try_match("<", TokenType::OpLt); },
+            [this] { return try_match("%", TokenType::OpMod); },
+            [this] { return try_match("*", TokenType::OpMul); },
+            [this] { return try_match("!", TokenType::OpNot); },
+            [this] { return try_match("}", TokenType::OpRBrace); },
+            [this] { return try_match("]", TokenType::OpRBrack); },
+            [this] { return try_match(")", TokenType::OpRParen); },
+            [this] { return try_match("-", TokenType::OpSub); },
 
-            [this]() { return try_match_name(); },
-            [this]() { return try_match_number(); },
-            [this]() { return try_match_eof(); },
+            [this] { return try_match_name(); },
+            [this] { return try_match_number(); },
+            [this] { return try_match_eof(); },
         };
     }
 
@@ -75,7 +75,10 @@ namespace orchid::compiler
         };
     }
 
-    char Lexer::current() { return src[cursor]; }
+    char Lexer::current()
+    {
+        return src[cursor];
+    }
 
     void Lexer::skip_whitespaces()
     {
