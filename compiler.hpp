@@ -5,7 +5,7 @@
 
 namespace orchid::compiler
 {
-  int compile(std::string_view src);
+    int compile(std::string_view src);
 }
 
 #endif
