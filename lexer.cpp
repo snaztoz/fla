@@ -17,8 +17,8 @@ namespace orchid::compiler
             [this] { return try_match("else", TokenType::KwElse); },
             [this] { return try_match("fun", TokenType::KwFun); },
             [this] { return try_match("if", TokenType::KwIf); },
-            [this] { return try_match("import", TokenType::KwImport); },
-            [this] { return try_match("package", TokenType::KwPackage); },
+            [this] { return try_match("namespace", TokenType::KwNamespace); },
+            [this] { return try_match("use", TokenType::KwUse); },
             [this] { return try_match("var", TokenType::KwVar); },
             [this] { return try_match("while", TokenType::KwWhile); },
 

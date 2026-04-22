@@ -2,7 +2,7 @@
 
 int main(int argc, char const *argv[])
 {
-    orchid::compiler::compile("  abc >= 150 package");
+    orchid::compiler::compile("  abc >= 150 use");
 
     return 0;
 }
