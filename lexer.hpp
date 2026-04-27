@@ -16,6 +16,7 @@ namespace orchid::compiler
     public:
         Lexer(std::string_view src);
         Token next_token();
+        Token peek_token();
 
     private:
         std::string_view src;

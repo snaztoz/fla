@@ -2,7 +2,7 @@
 
 int main(int argc, char const *argv[])
 {
-    orchid::compiler::compile("  abc >= 150 use");
+    orchid::compiler::compile("namespace foo.bar");
 
     return 0;
 }

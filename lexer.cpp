@@ -75,6 +75,36 @@ namespace orchid::compiler
         };
     }
 
+    Token Lexer::peek_token()
+    {
+        skip_whitespaces();
+
+        auto cursor = this->cursor;
+        auto curr_line = this->curr_line;
+        auto curr_column = this->curr_column;
+
+        for (const auto &rule : rules)
+        {
+            if (auto match = rule(); match)
+            {
+                // Restore states
+                this->cursor = cursor;
+                this->curr_line = curr_line;
+                this->curr_column = curr_column;
+
+                return match.value();
+            }
+        }
+
+        return Token{
+            .type = TokenType::Unknown,
+            .pos = cursor,
+            .len = 0,
+            .line = curr_line,
+            .column = curr_column,
+        };
+    }
+
     char Lexer::current()
     {
         return src[cursor];
