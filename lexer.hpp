@@ -32,8 +32,8 @@ namespace orchid::compiler
         std::optional<Token> try_match_eof();
         void skip_whitespaces();
         constexpr char current();
-        constexpr bool is_current_valid_name_start();
-        constexpr bool is_current_valid_name_tail();
+        bool is_current_valid_name_start();
+        bool is_current_valid_name_tail();
     };
 } // namespace orchid::compiler
 

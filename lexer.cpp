@@ -222,12 +222,12 @@ namespace orchid::compiler
         return src[cursor];
     }
 
-    constexpr bool Lexer::is_current_valid_name_start()
+    bool Lexer::is_current_valid_name_start()
     {
         return std::isalpha(current()) || current() == '_';
     }
 
-    constexpr bool Lexer::is_current_valid_name_tail()
+    bool Lexer::is_current_valid_name_tail()
     {
         return std::isalnum(current()) || current() == '_';
     }
