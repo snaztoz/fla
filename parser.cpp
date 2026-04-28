@@ -35,6 +35,14 @@ namespace orchid::compiler
             {
                 parse_namespace_statement();
             }
+            else if (t.type == TokenType::KwUse)
+            {
+                parse_use_statement();
+            }
+            else
+            {
+                return std::unexpected("unexpected token");
+            }
 
             t = lexer.peek();
         }
@@ -53,6 +61,20 @@ namespace orchid::compiler
         }
 
         return push_node(Node { NodeType::NamespaceDeclaration, nullptr,
+                                std::move(children.value()) });
+    }
+
+    std::expected<std::size_t, std::string> Parser::parse_use_statement()
+    {
+        auto kw { lexer.next() };
+
+        auto children { parse_nested_names(kw.column) };
+        if (!children)
+        {
+            return std::unexpected(children.error());
+        }
+
+        return push_node(Node { NodeType::UseDeclaration, nullptr,
                                 std::move(children.value()) });
     }
 

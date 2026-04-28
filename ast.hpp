@@ -15,6 +15,7 @@ namespace orchid::compiler
     {
         Root,
         NamespaceDeclaration,
+        UseDeclaration,
         Name,
     };
 
@@ -26,6 +27,8 @@ namespace orchid::compiler
             return "root";
         case NodeType::NamespaceDeclaration:
             return "namespace declaration";
+        case NodeType::UseDeclaration:
+            return "use declaration";
         case NodeType::Name:
             return "name";
         default:

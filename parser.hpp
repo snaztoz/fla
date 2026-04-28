@@ -27,6 +27,7 @@ namespace orchid::compiler
 
         std::expected<std::size_t, std::string> parse_root();
         std::expected<std::size_t, std::string> parse_namespace_statement();
+        std::expected<std::size_t, std::string> parse_use_statement();
 
         std::expected<std::vector<std::size_t>, std::string>
         parse_nested_names(const std::size_t min_column);
