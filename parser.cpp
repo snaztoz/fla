@@ -16,7 +16,7 @@ namespace orchid::compiler
 
     void Parser::parse()
     {
-        auto root = parse_root();
+        auto root { parse_root() };
         if (!root)
         {
             // todo
@@ -27,17 +27,17 @@ namespace orchid::compiler
 
     std::expected<std::size_t, std::string> Parser::parse_root()
     {
-        auto idx = push_node(Node{NodeType::Root, nullptr});
+        auto idx { push_node(Node { NodeType::Root, nullptr }) };
 
-        auto token = lexer.peek_token();
-        while (token.type != TokenType::Eof)
+        auto t { lexer.peek() };
+        while (t.type != TokenType::Eof)
         {
-            if (token.type == TokenType::KwNamespace)
+            if (t.type == TokenType::KwNamespace)
             {
                 parse_namespace_statement();
             }
 
-            token = lexer.peek_token();
+            t = lexer.peek();
         }
 
         return idx;
@@ -45,60 +45,59 @@ namespace orchid::compiler
 
     std::expected<std::size_t, std::string> Parser::parse_namespace_statement()
     {
-        auto kw = lexer.next_token();
-        auto column = kw.column;
+        auto kw { lexer.next() };
 
-        auto children_idx = parse_nested_names(column);
-        if (!children_idx)
+        auto children { parse_nested_names(kw.column) };
+        if (!children)
         {
-            return std::unexpected(children_idx.error());
+            return std::unexpected(children.error());
         }
 
-        return push_node(Node{NodeType::NamespaceDeclaration, nullptr,
-                              std::move(children_idx.value())});
+        return push_node(Node { NodeType::NamespaceDeclaration, nullptr,
+                                std::move(children.value()) });
     }
 
     std::expected<std::vector<std::size_t>, std::string>
     Parser::parse_nested_names(const std::size_t min_column)
     {
-        std::vector<std::size_t> children_idx;
+        std::vector<std::size_t> children;
 
-        auto t{lexer.next_token()};
+        auto t { lexer.next() };
         if (t.type != TokenType::Name || t.column <= min_column)
         {
             return std::unexpected("unexpected token");
         }
 
-        children_idx.push_back(push_node(Node{
+        children.push_back(push_node(Node {
             NodeType::Name,
             src.substr(t.pos, t.len),
         }));
 
-        t = lexer.peek_token();
+        t = lexer.peek();
         while (t.type == TokenType::OpDot && t.column > min_column)
         {
-            lexer.next_token();
+            lexer.next();
 
-            t = lexer.next_token();
+            t = lexer.next();
             if (t.type != TokenType::Name || t.column <= min_column)
             {
                 return std::unexpected("unexpected token");
             }
 
-            children_idx.push_back(push_node(Node{
+            children.push_back(push_node(Node {
                 NodeType::Name,
                 src.substr(t.pos, t.len),
             }));
 
-            t = lexer.peek_token();
+            t = lexer.peek();
         }
 
-        return children_idx;
+        return children;
     }
 
     std::size_t Parser::push_node(Node node)
     {
-        auto idx = ast.arena.size();
+        auto idx { ast.arena.size() };
         ast.arena.push_back(node);
         return idx;
     }

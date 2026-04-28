@@ -54,7 +54,7 @@ namespace orchid::compiler
         };
     }
 
-    Token Lexer::next_token()
+    Token Lexer::next()
     {
         skip_whitespaces();
 
@@ -66,7 +66,7 @@ namespace orchid::compiler
             }
         }
 
-        return Token{
+        return Token {
             .type = TokenType::Unknown,
             .pos = cursor,
             .len = 0,
@@ -75,7 +75,7 @@ namespace orchid::compiler
         };
     }
 
-    Token Lexer::peek_token()
+    Token Lexer::peek()
     {
         skip_whitespaces();
 
@@ -96,7 +96,7 @@ namespace orchid::compiler
             }
         }
 
-        return Token{
+        return Token {
             .type = TokenType::Unknown,
             .pos = cursor,
             .len = 0,
@@ -153,17 +153,17 @@ namespace orchid::compiler
             return std::nullopt;
         }
 
-        std::size_t pos{cursor};
+        std::size_t pos { cursor };
         cursor += 1;
 
-        std::size_t len{1};
+        std::size_t len { 1 };
         while (is_current_valid_name_tail())
         {
             len += 1;
             cursor += 1;
         }
 
-        Token t{
+        Token t {
             .type = TokenType::Name,
             .pos = pos,
             .len = len,
@@ -183,17 +183,17 @@ namespace orchid::compiler
             return std::nullopt;
         }
 
-        std::size_t pos{cursor};
+        std::size_t pos { cursor };
         cursor += 1;
 
-        std::size_t len{1};
+        std::size_t len { 1 };
         while (std::isdigit(current()))
         {
             len += 1;
             cursor += 1;
         }
 
-        Token t{
+        Token t {
             .type = TokenType::Number,
             .pos = pos,
             .len = len,
@@ -213,7 +213,7 @@ namespace orchid::compiler
             return std::nullopt;
         }
 
-        return Token{
+        return Token {
             .type = TokenType::Eof,
             .pos = cursor,
             .len = 0,

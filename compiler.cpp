@@ -9,7 +9,7 @@ namespace orchid::compiler
 {
     int compile(std::string_view src)
     {
-        Parser parser{src};
+        Parser parser { src };
         parser.parse();
 
         for (auto n : parser.ast.arena)
