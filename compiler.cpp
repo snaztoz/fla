@@ -14,7 +14,7 @@ namespace orchid::compiler
 
         for (auto n : parser.ast.arena)
         {
-            std::cout << node_type_sv(n.type) << "\n";
+            std::cout << node_type_string(n.type) << "\n";
         }
 
         return 0;

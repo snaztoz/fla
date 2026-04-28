@@ -105,11 +105,6 @@ namespace orchid::compiler
         };
     }
 
-    char Lexer::current()
-    {
-        return src[cursor];
-    }
-
     void Lexer::skip_whitespaces()
     {
         while (cursor < src.length() && std::isspace(current()))
@@ -222,12 +217,17 @@ namespace orchid::compiler
         };
     }
 
-    bool Lexer::is_current_valid_name_start()
+    constexpr char Lexer::current()
+    {
+        return src[cursor];
+    }
+
+    constexpr bool Lexer::is_current_valid_name_start()
     {
         return std::isalpha(current()) || current() == '_';
     }
 
-    bool Lexer::is_current_valid_name_tail()
+    constexpr bool Lexer::is_current_valid_name_tail()
     {
         return std::isalnum(current()) || current() == '_';
     }

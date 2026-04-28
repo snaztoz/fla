@@ -18,7 +18,20 @@ namespace orchid::compiler
         Name,
     };
 
-    std::string_view node_type_sv(NodeType &nt);
+    constexpr std::string_view node_type_string(NodeType &nt) noexcept
+    {
+        switch (nt)
+        {
+        case NodeType::Root:
+            return "root";
+        case NodeType::NamespaceDeclaration:
+            return "namespace declaration";
+        case NodeType::Name:
+            return "name";
+        default:
+            std::unreachable();
+        }
+    }
 
     struct Node
     {
