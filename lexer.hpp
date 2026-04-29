@@ -15,7 +15,8 @@ namespace orchid::compiler
     {
     public:
         Lexer(std::string_view src);
-        Token next_token();
+        Token next();
+        Token peek();
 
     private:
         std::string_view src;
@@ -30,7 +31,7 @@ namespace orchid::compiler
         std::optional<Token> try_match_number();
         std::optional<Token> try_match_eof();
         void skip_whitespaces();
-        char current();
+        constexpr char current();
         bool is_current_valid_name_start();
         bool is_current_valid_name_tail();
     };

@@ -15,8 +15,8 @@ namespace orchid::compiler
         KwElse,
         KwFun,
         KwIf,
-        KwImport,
-        KwPackage,
+        KwNamespace,
+        KwUse,
         KwVar,
         KwWhile,
         OpAdd,
@@ -47,11 +47,11 @@ namespace orchid::compiler
 
     struct Token
     {
-        const TokenType type;
-        const std::size_t pos;
-        const std::size_t len;
-        const std::size_t line;
-        const std::size_t column;
+        TokenType type;
+        std::size_t pos;
+        std::size_t len;
+        std::size_t line;
+        std::size_t column;
     };
 } // namespace orchid::compiler
 

@@ -2,27 +2,19 @@
 
 #include "compiler.hpp"
 #include "lexer.hpp"
+#include "parser.hpp"
 #include "token.hpp"
 
 namespace orchid::compiler
 {
     int compile(std::string_view src)
     {
-        Lexer lexer{src};
+        Parser parser { src };
+        parser.parse();
 
-        while (true)
+        for (auto n : parser.ast.arena)
         {
-            auto t = lexer.next_token();
-
-            if (t.type == TokenType::Eof || t.type == TokenType::Unknown)
-            {
-                std::cout << std::endl;
-                break;
-            }
-
-            auto s = src.substr(t.pos, t.len);
-            std::cout << "(" << s << ", " << t.line << ", " << t.column
-                      << ")\n";
+            std::cout << node_type_string(n.type) << "\n";
         }
 
         return 0;

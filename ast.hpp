@@ -2,7 +2,10 @@
 #define ORCHID_AST_H
 
 #include <cstddef>
+#include <memory>
+#include <optional>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -11,19 +14,39 @@ namespace orchid::compiler
     enum class NodeType
     {
         Root,
+        NamespaceDeclaration,
+        UseDeclaration,
+        Name,
     };
+
+    constexpr std::string_view node_type_string(NodeType &nt) noexcept
+    {
+        switch (nt)
+        {
+        case NodeType::Root:
+            return "root";
+        case NodeType::NamespaceDeclaration:
+            return "namespace declaration";
+        case NodeType::UseDeclaration:
+            return "use declaration";
+        case NodeType::Name:
+            return "name";
+        default:
+            std::unreachable();
+        }
+    }
 
     struct Node
     {
-        const NodeType type;
-        const std::variant<std::nullptr_t, std::string_view, int> value;
-        const std::vector<std::size_t> children_idx;
+        NodeType type;
+        std::variant<std::nullptr_t, std::string_view, int> value;
+        std::optional<std::vector<std::size_t>> children_idx;
     };
 
     struct Ast
     {
-        const std::vector<Node> arena;
-        const std::size_t root_idx;
+        std::vector<Node> arena;
+        std::size_t root_idx;
     };
 } // namespace orchid::compiler
 

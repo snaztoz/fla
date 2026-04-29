@@ -17,8 +17,8 @@ namespace orchid::compiler
             [this] { return try_match("else", TokenType::KwElse); },
             [this] { return try_match("fun", TokenType::KwFun); },
             [this] { return try_match("if", TokenType::KwIf); },
-            [this] { return try_match("import", TokenType::KwImport); },
-            [this] { return try_match("package", TokenType::KwPackage); },
+            [this] { return try_match("namespace", TokenType::KwNamespace); },
+            [this] { return try_match("use", TokenType::KwUse); },
             [this] { return try_match("var", TokenType::KwVar); },
             [this] { return try_match("while", TokenType::KwWhile); },
 
@@ -54,7 +54,7 @@ namespace orchid::compiler
         };
     }
 
-    Token Lexer::next_token()
+    Token Lexer::next()
     {
         skip_whitespaces();
 
@@ -66,7 +66,7 @@ namespace orchid::compiler
             }
         }
 
-        return Token{
+        return Token {
             .type = TokenType::Unknown,
             .pos = cursor,
             .len = 0,
@@ -75,9 +75,34 @@ namespace orchid::compiler
         };
     }
 
-    char Lexer::current()
+    Token Lexer::peek()
     {
-        return src[cursor];
+        skip_whitespaces();
+
+        auto cursor = this->cursor;
+        auto curr_line = this->curr_line;
+        auto curr_column = this->curr_column;
+
+        for (const auto &rule : rules)
+        {
+            if (auto match = rule(); match)
+            {
+                // Restore states
+                this->cursor = cursor;
+                this->curr_line = curr_line;
+                this->curr_column = curr_column;
+
+                return match.value();
+            }
+        }
+
+        return Token {
+            .type = TokenType::Unknown,
+            .pos = cursor,
+            .len = 0,
+            .line = curr_line,
+            .column = curr_column,
+        };
     }
 
     void Lexer::skip_whitespaces()
@@ -123,17 +148,17 @@ namespace orchid::compiler
             return std::nullopt;
         }
 
-        std::size_t pos{cursor};
+        std::size_t pos { cursor };
         cursor += 1;
 
-        std::size_t len{1};
+        std::size_t len { 1 };
         while (is_current_valid_name_tail())
         {
             len += 1;
             cursor += 1;
         }
 
-        Token t{
+        Token t {
             .type = TokenType::Name,
             .pos = pos,
             .len = len,
@@ -153,17 +178,17 @@ namespace orchid::compiler
             return std::nullopt;
         }
 
-        std::size_t pos{cursor};
+        std::size_t pos { cursor };
         cursor += 1;
 
-        std::size_t len{1};
+        std::size_t len { 1 };
         while (std::isdigit(current()))
         {
             len += 1;
             cursor += 1;
         }
 
-        Token t{
+        Token t {
             .type = TokenType::Number,
             .pos = pos,
             .len = len,
@@ -183,13 +208,18 @@ namespace orchid::compiler
             return std::nullopt;
         }
 
-        return Token{
+        return Token {
             .type = TokenType::Eof,
             .pos = cursor,
             .len = 0,
             .line = curr_line,
             .column = curr_column,
         };
+    }
+
+    constexpr char Lexer::current()
+    {
+        return src[cursor];
     }
 
     bool Lexer::is_current_valid_name_start()
