@@ -13,7 +13,8 @@
 namespace orchid::compiler
 {
     using ParseResult = std::expected<std::size_t, std::string>;
-    using ParseChildrenResult = std::expected<std::vector<std::size_t>, std::string>;
+    using ParseChildrenResult =
+        std::expected<std::vector<std::size_t>, std::string>;
 
     class Parser
     {

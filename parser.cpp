@@ -74,11 +74,8 @@ namespace orchid::compiler
             return std::unexpected(children.error());
         }
 
-        return push_node(Node {
-            NodeType::UseDeclaration,
-            nullptr,
-            std::move(children.value())
-        });
+        return push_node(Node { NodeType::UseDeclaration, nullptr,
+                                std::move(children.value()) });
     }
 
     ParseChildrenResult Parser::parse_nested_names(const std::size_t min_column)

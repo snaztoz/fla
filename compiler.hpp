@@ -1,5 +1,5 @@
-#ifndef ORCHID_COMPILE_H
-#define ORCHID_COMPILE_H
+#ifndef ORCHID_COMPILER_H
+#define ORCHID_COMPILER_H
 
 #include <string_view>
 
