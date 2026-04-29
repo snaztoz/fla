@@ -11,6 +11,8 @@
 
 namespace orchid::compiler
 {
+    using LexerRules = std::vector<std::function<std::optional<Token>(void)>>;
+
     class Lexer
     {
     public:
@@ -23,7 +25,7 @@ namespace orchid::compiler
         std::size_t cursor;
         std::size_t curr_line;
         std::size_t curr_column;
-        std::vector<std::function<std::optional<Token>(void)>> rules;
+        LexerRules rules;
 
         std::optional<Token> try_match(std::string_view text,
                                        TokenType type_if_matches);

@@ -19,7 +19,7 @@ namespace orchid::compiler
         Name,
     };
 
-    constexpr std::string_view node_type_string(NodeType &nt) noexcept
+    constexpr std::string_view node_type_string(const NodeType &nt) noexcept
     {
         switch (nt)
         {
@@ -36,17 +36,20 @@ namespace orchid::compiler
         }
     }
 
+    using NodeVariant = std::variant<std::nullptr_t, std::string_view, int>;
+    using NodeChildren = std::optional<std::vector<std::size_t>>;
+
     struct Node
     {
         NodeType type;
-        std::variant<std::nullptr_t, std::string_view, int> value;
-        std::optional<std::vector<std::size_t>> children_idx;
+        NodeVariant value;
+        NodeChildren children;
     };
 
     struct Ast
     {
         std::vector<Node> arena;
-        std::size_t root_idx;
+        std::size_t root;
     };
 } // namespace orchid::compiler
 

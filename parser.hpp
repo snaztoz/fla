@@ -12,6 +12,10 @@
 
 namespace orchid::compiler
 {
+    using ParseResult = std::expected<std::size_t, std::string>;
+    using ParseChildrenResult =
+        std::expected<std::vector<std::size_t>, std::string>;
+
     class Parser
     {
     public:
@@ -25,12 +29,11 @@ namespace orchid::compiler
         Lexer lexer;
         std::string_view src;
 
-        std::expected<std::size_t, std::string> parse_root();
-        std::expected<std::size_t, std::string> parse_namespace_statement();
-        std::expected<std::size_t, std::string> parse_use_statement();
+        ParseResult parse_root();
+        ParseResult parse_namespace_statement();
+        ParseResult parse_use_statement();
 
-        std::expected<std::vector<std::size_t>, std::string>
-        parse_nested_names(const std::size_t min_column);
+        ParseChildrenResult parse_nested_names(const std::size_t min_column);
 
         std::size_t push_node(Node node);
     };

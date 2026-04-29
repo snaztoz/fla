@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18...3.24)
+cmake_minimum_required(VERSION 3.28)
 
 project(Orchid
     VERSION 1.0
@@ -9,6 +9,7 @@ project(Orchid
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 add_library(orchidc
     ast.hpp
@@ -22,4 +23,13 @@ add_library(orchidc
 )
 
 add_executable(orchid main.cpp)
+
+if(MSVC)
+    target_compile_options(orchidc PRIVATE /W4)
+    target_compile_options(orchid PRIVATE /W4)
+else()
+    target_compile_options(orchidc PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(orchid PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 target_link_libraries(orchid PRIVATE orchidc)

@@ -79,18 +79,18 @@ namespace orchid::compiler
     {
         skip_whitespaces();
 
-        auto cursor = this->cursor;
-        auto curr_line = this->curr_line;
-        auto curr_column = this->curr_column;
+        auto real_cursor = cursor;
+        auto real_curr_line = curr_line;
+        auto real_curr_column = curr_column;
 
         for (const auto &rule : rules)
         {
             if (auto match = rule(); match)
             {
                 // Restore states
-                this->cursor = cursor;
-                this->curr_line = curr_line;
-                this->curr_column = curr_column;
+                cursor = real_cursor;
+                curr_line = real_curr_line;
+                curr_column = real_curr_column;
 
                 return match.value();
             }
