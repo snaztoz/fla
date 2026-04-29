@@ -24,7 +24,7 @@ namespace orchid::compiler
         ast.root_idx = root.value();
     }
 
-    std::expected<std::size_t, std::string> Parser::parse_root()
+    ParseResult Parser::parse_root()
     {
         auto idx { push_node(Node { NodeType::Root, nullptr }) };
 
@@ -50,7 +50,7 @@ namespace orchid::compiler
         return idx;
     }
 
-    std::expected<std::size_t, std::string> Parser::parse_namespace_statement()
+    ParseResult Parser::parse_namespace_statement()
     {
         auto kw { lexer.next() };
 
@@ -64,7 +64,7 @@ namespace orchid::compiler
                                 std::move(children.value()) });
     }
 
-    std::expected<std::size_t, std::string> Parser::parse_use_statement()
+    ParseResult Parser::parse_use_statement()
     {
         auto kw { lexer.next() };
 
@@ -74,12 +74,14 @@ namespace orchid::compiler
             return std::unexpected(children.error());
         }
 
-        return push_node(Node { NodeType::UseDeclaration, nullptr,
-                                std::move(children.value()) });
+        return push_node(Node {
+            NodeType::UseDeclaration,
+            nullptr,
+            std::move(children.value())
+        });
     }
 
-    std::expected<std::vector<std::size_t>, std::string>
-    Parser::parse_nested_names(const std::size_t min_column)
+    ParseChildrenResult Parser::parse_nested_names(const std::size_t min_column)
     {
         std::vector<std::size_t> children;
 

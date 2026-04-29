@@ -36,11 +36,14 @@ namespace orchid::compiler
         }
     }
 
+    using NodeVariant = std::variant<std::nullptr_t, std::string_view, int>;
+    using NodeChildrenIndexes = std::optional<std::vector<std::size_t>>;
+
     struct Node
     {
         NodeType type;
-        std::variant<std::nullptr_t, std::string_view, int> value;
-        std::optional<std::vector<std::size_t>> children_idx;
+        NodeVariant value;
+        NodeChildrenIndexes children_idx;
     };
 
     struct Ast
