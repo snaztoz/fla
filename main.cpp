@@ -8,7 +8,7 @@ namespace foo.bar
 use std.math
 )";
 
-int main(int argc, char const *argv[])
+int main()
 {
     orchid::compiler::compile(src);
 

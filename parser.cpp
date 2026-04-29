@@ -9,7 +9,7 @@
 
 namespace orchid::compiler
 {
-    Parser::Parser(std::string_view src) : lexer(src), ast({}), src(src)
+    Parser::Parser(std::string_view src) : ast({}), lexer(src), src(src)
     {
     }
 
@@ -26,7 +26,7 @@ namespace orchid::compiler
 
     ParseResult Parser::parse_root()
     {
-        auto idx { push_node(Node { NodeType::Root, nullptr }) };
+        auto idx { push_node(Node { NodeType::Root, nullptr, {} }) };
 
         auto t { lexer.peek() };
         while (t.type != TokenType::Eof)
@@ -91,6 +91,7 @@ namespace orchid::compiler
         children.push_back(push_node(Node {
             NodeType::Name,
             src.substr(t.pos, t.len),
+            {},
         }));
 
         t = lexer.peek();
@@ -107,6 +108,7 @@ namespace orchid::compiler
             children.push_back(push_node(Node {
                 NodeType::Name,
                 src.substr(t.pos, t.len),
+                {},
             }));
 
             t = lexer.peek();

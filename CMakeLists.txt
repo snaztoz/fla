@@ -22,4 +22,13 @@ add_library(orchidc
 )
 
 add_executable(orchid main.cpp)
+
+if(MSVC)
+    target_compile_options(orchidc PRIVATE /W4)
+    target_compile_options(orchid PRIVATE /W4)
+else()
+    target_compile_options(orchidc PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(orchid PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 target_link_libraries(orchid PRIVATE orchidc)
