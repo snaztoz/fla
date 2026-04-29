@@ -37,19 +37,19 @@ namespace orchid::compiler
     }
 
     using NodeVariant = std::variant<std::nullptr_t, std::string_view, int>;
-    using NodeChildrenIndexes = std::optional<std::vector<std::size_t>>;
+    using NodeChildren = std::optional<std::vector<std::size_t>>;
 
     struct Node
     {
         NodeType type;
         NodeVariant value;
-        NodeChildrenIndexes children_idx;
+        NodeChildren children;
     };
 
     struct Ast
     {
         std::vector<Node> arena;
-        std::size_t root_idx;
+        std::size_t root;
     };
 } // namespace orchid::compiler
 

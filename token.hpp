@@ -52,6 +52,11 @@ namespace orchid::compiler
         std::size_t len;
         std::size_t line;
         std::size_t column;
+
+        constexpr bool is_eof() noexcept
+        {
+            return type == TokenType::Eof;
+        }
     };
 } // namespace orchid::compiler
 

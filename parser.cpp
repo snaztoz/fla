@@ -21,33 +21,38 @@ namespace orchid::compiler
             // todo
         }
 
-        ast.root_idx = root.value();
+        ast.root = root.value();
     }
 
     ParseResult Parser::parse_root()
     {
-        auto idx { push_node(Node { NodeType::Root, nullptr, {} }) };
+        std::vector<std::size_t> children;
 
-        auto t { lexer.peek() };
-        while (t.type != TokenType::Eof)
+        for (auto t { lexer.peek() }; !t.is_eof(); t = lexer.peek())
         {
-            if (t.type == TokenType::KwNamespace)
+            ParseResult res;
+
+            switch (t.type)
             {
-                parse_namespace_statement();
-            }
-            else if (t.type == TokenType::KwUse)
-            {
-                parse_use_statement();
-            }
-            else
-            {
+            case TokenType::KwNamespace:
+                res = parse_namespace_statement();
+                break;
+            case TokenType::KwUse:
+                res = parse_use_statement();
+                break;
+            default:
                 return std::unexpected("unexpected token");
             }
 
-            t = lexer.peek();
+            if (!res)
+            {
+                return res;
+            }
+
+            children.push_back(res.value());
         }
 
-        return idx;
+        return push_node(Node { NodeType::Root, nullptr, std::move(children) });
     }
 
     ParseResult Parser::parse_namespace_statement()
@@ -91,7 +96,7 @@ namespace orchid::compiler
         children.push_back(push_node(Node {
             NodeType::Name,
             src.substr(t.pos, t.len),
-            {},
+            std::nullopt,
         }));
 
         t = lexer.peek();
@@ -108,7 +113,7 @@ namespace orchid::compiler
             children.push_back(push_node(Node {
                 NodeType::Name,
                 src.substr(t.pos, t.len),
-                {},
+                std::nullopt,
             }));
 
             t = lexer.peek();
