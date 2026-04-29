@@ -12,7 +12,7 @@ namespace orchid::compiler
         Parser parser { src };
         parser.parse();
 
-        for (auto n : parser.ast.arena)
+        for (const auto& n : parser.ast.arena)
         {
             std::cout << node_type_string(n.type) << "\n";
         }

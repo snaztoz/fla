@@ -19,7 +19,7 @@ namespace orchid::compiler
         Name,
     };
 
-    constexpr std::string_view node_type_string(NodeType &nt) noexcept
+    constexpr std::string_view node_type_string(const NodeType &nt) noexcept
     {
         switch (nt)
         {
