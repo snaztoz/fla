@@ -7,6 +7,12 @@
 #include "ast.hpp"
 #include "parser.hpp"
 
+#define EXPECT_TOKEN(t, expected_type)                                         \
+    if (t.type != expected_type)                                               \
+    {                                                                          \
+        return std::unexpected("unexpected token");                            \
+    }
+
 namespace orchid::compiler
 {
     Parser::Parser(std::string_view src) : ast({}), lexer(src), src(src)
@@ -40,6 +46,9 @@ namespace orchid::compiler
             case TokenType::KwUse:
                 res = parse_use_statement();
                 break;
+            case TokenType::KwFun:
+                res = parse_function_definition();
+                break;
             default:
                 return std::unexpected("unexpected token");
             }
@@ -57,9 +66,9 @@ namespace orchid::compiler
 
     ParseResult Parser::parse_namespace_statement()
     {
-        auto kw { lexer.next() };
+        lexer.next();
 
-        auto children { parse_nested_names(kw.column) };
+        auto children { parse_nested_names() };
         if (!children)
         {
             return std::unexpected(children.error());
@@ -71,9 +80,9 @@ namespace orchid::compiler
 
     ParseResult Parser::parse_use_statement()
     {
-        auto kw { lexer.next() };
+        lexer.next();
 
-        auto children { parse_nested_names(kw.column) };
+        auto children { parse_nested_names() };
         if (!children)
         {
             return std::unexpected(children.error());
@@ -83,15 +92,28 @@ namespace orchid::compiler
                                 std::move(children.value()) });
     }
 
-    ParseChildrenResult Parser::parse_nested_names(const std::size_t min_column)
+    ParseResult Parser::parse_function_definition()
+    {
+        lexer.next();
+
+        auto t { lexer.next() };
+        EXPECT_TOKEN(t, TokenType::Name);
+
+        t = lexer.next();
+        EXPECT_TOKEN(t, TokenType::OpLParen);
+
+        t = lexer.next();
+        EXPECT_TOKEN(t, TokenType::OpRParen);
+
+        return std::unexpected("TODO");
+    }
+
+    ParseChildrenResult Parser::parse_nested_names()
     {
         std::vector<std::size_t> children;
 
         auto t { lexer.next() };
-        if (t.type != TokenType::Name || t.column <= min_column)
-        {
-            return std::unexpected("unexpected token");
-        }
+        EXPECT_TOKEN(t, TokenType::Name);
 
         children.push_back(push_node(Node {
             NodeType::Name,
@@ -99,24 +121,18 @@ namespace orchid::compiler
             std::nullopt,
         }));
 
-        t = lexer.peek();
-        while (t.type == TokenType::OpDot && t.column > min_column)
+        for (t = lexer.peek(); t.type == TokenType::OpDot; t = lexer.peek())
         {
             lexer.next();
 
             t = lexer.next();
-            if (t.type != TokenType::Name || t.column <= min_column)
-            {
-                return std::unexpected("unexpected token");
-            }
+            EXPECT_TOKEN(t, TokenType::Name);
 
             children.push_back(push_node(Node {
                 NodeType::Name,
                 src.substr(t.pos, t.len),
                 std::nullopt,
             }));
-
-            t = lexer.peek();
         }
 
         return children;
@@ -129,3 +145,5 @@ namespace orchid::compiler
         return idx;
     }
 } // namespace orchid::compiler
+
+#undef EXPECT_TOKEN
