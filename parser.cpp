@@ -7,6 +7,12 @@
 #include "ast.hpp"
 #include "parser.hpp"
 
+#define EXPECT_TOKEN(t, expected_type)                                         \
+    if (t.type != expected_type)                                               \
+    {                                                                          \
+        return std::unexpected("unexpected token");                            \
+    }
+
 namespace orchid::compiler
 {
     Parser::Parser(std::string_view src) : ast({}), lexer(src), src(src)
@@ -39,6 +45,9 @@ namespace orchid::compiler
                 break;
             case TokenType::KwUse:
                 res = parse_use_statement();
+                break;
+            case TokenType::KwFun:
+                res = parse_function_definition();
                 break;
             default:
                 return std::unexpected("unexpected token");
@@ -83,15 +92,28 @@ namespace orchid::compiler
                                 std::move(children.value()) });
     }
 
+    ParseResult Parser::parse_function_definition()
+    {
+        lexer.next();
+
+        auto t { lexer.next() };
+        EXPECT_TOKEN(t, TokenType::Name);
+
+        t = lexer.next();
+        EXPECT_TOKEN(t, TokenType::OpLParen);
+
+        t = lexer.next();
+        EXPECT_TOKEN(t, TokenType::OpRParen);
+
+        return std::unexpected("TODO");
+    }
+
     ParseChildrenResult Parser::parse_nested_names()
     {
         std::vector<std::size_t> children;
 
         auto t { lexer.next() };
-        if (t.type != TokenType::Name)
-        {
-            return std::unexpected("unexpected token");
-        }
+        EXPECT_TOKEN(t, TokenType::Name);
 
         children.push_back(push_node(Node {
             NodeType::Name,
@@ -104,10 +126,7 @@ namespace orchid::compiler
             lexer.next();
 
             t = lexer.next();
-            if (t.type != TokenType::Name)
-            {
-                return std::unexpected("unexpected token");
-            }
+            EXPECT_TOKEN(t, TokenType::Name);
 
             children.push_back(push_node(Node {
                 NodeType::Name,
@@ -126,3 +145,5 @@ namespace orchid::compiler
         return idx;
     }
 } // namespace orchid::compiler
+
+#undef EXPECT_TOKEN

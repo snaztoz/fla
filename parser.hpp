@@ -32,6 +32,7 @@ namespace orchid::compiler
         ParseResult parse_root();
         ParseResult parse_namespace_statement();
         ParseResult parse_use_statement();
+        ParseResult parse_function_definition();
 
         ParseChildrenResult parse_nested_names();
 
