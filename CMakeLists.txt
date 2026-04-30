@@ -11,24 +11,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
-add_library(orchidc
-    ast.hpp
-    compiler.cpp
-    compiler.hpp
-    lexer.cpp
-    lexer.hpp
-    parser.cpp
-    parser.hpp
-    token.hpp
-)
+add_subdirectory(compiler)
 
 add_executable(orchid main.cpp)
 
 if(MSVC)
-    target_compile_options(orchidc PRIVATE /W4)
     target_compile_options(orchid PRIVATE /W4)
 else()
-    target_compile_options(orchidc PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(orchid PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
