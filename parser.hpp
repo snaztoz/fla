@@ -33,7 +33,7 @@ namespace orchid::compiler
         ParseResult parse_namespace_statement();
         ParseResult parse_use_statement();
 
-        ParseChildrenResult parse_nested_names(const std::size_t min_column);
+        ParseChildrenResult parse_nested_names();
 
         std::size_t push_node(Node node);
     };
