@@ -36,14 +36,24 @@ namespace orchid::compiler
         }
     }
 
-    using NodeVariant = std::variant<std::nullptr_t, std::string_view, int>;
+    using NodeValue = std::variant<std::nullptr_t, std::string_view, int>;
     using NodeChildren = std::optional<std::vector<std::size_t>>;
 
     struct Node
     {
         NodeType type;
-        NodeVariant value;
+        NodeValue value;
         NodeChildren children;
+
+        Node(NodeType t, NodeValue v)
+            : type(t), value(v), children(std::nullopt)
+        {
+        }
+
+        Node(NodeType t, NodeValue v, NodeChildren c)
+            : type(t), value(v), children(c)
+        {
+        }
     };
 
     struct Ast

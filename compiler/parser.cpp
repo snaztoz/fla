@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -7,11 +8,25 @@
 #include "ast.hpp"
 #include "parser.hpp"
 
-#define EXPECT_TOKEN(t, expected_type)                                         \
-    if (t.type != expected_type)                                               \
+#define EXPECT_NEXT(lexer, expected_type)                                      \
+    do                                                                         \
     {                                                                          \
-        return std::unexpected("unexpected token");                            \
-    }
+        auto t { lexer.next() };                                               \
+        if (t.type != expected_type)                                           \
+        {                                                                      \
+            return std::unexpected("unexpected token");                        \
+        }                                                                      \
+    } while (0)
+
+#define EXPECT_NEXT_AND_TAKE(lexer, expected_type, t)                          \
+    do                                                                         \
+    {                                                                          \
+        t = lexer.next();                                                      \
+        if (t.type != expected_type)                                           \
+        {                                                                      \
+            return std::unexpected("unexpected token");                        \
+        }                                                                      \
+    } while (0)
 
 namespace orchid::compiler
 {
@@ -97,14 +112,9 @@ namespace orchid::compiler
     {
         lexer.next();
 
-        auto t { lexer.next() };
-        EXPECT_TOKEN(t, TokenType::Name);
-
-        t = lexer.next();
-        EXPECT_TOKEN(t, TokenType::OpLParen);
-
-        t = lexer.next();
-        EXPECT_TOKEN(t, TokenType::OpRParen);
+        EXPECT_NEXT(lexer, TokenType::Name);
+        EXPECT_NEXT(lexer, TokenType::OpLParen);
+        EXPECT_NEXT(lexer, TokenType::OpRParen);
 
         return std::unexpected("TODO");
     }
@@ -113,26 +123,23 @@ namespace orchid::compiler
     {
         std::vector<std::size_t> children;
 
-        auto t { lexer.next() };
-        EXPECT_TOKEN(t, TokenType::Name);
+        Token t;
+        EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, t);
 
         children.push_back(push_node(Node {
             NodeType::Name,
             src.substr(t.pos, t.len),
-            std::nullopt,
         }));
 
         for (t = lexer.peek(); t.type == TokenType::OpDot; t = lexer.peek())
         {
             lexer.next();
 
-            t = lexer.next();
-            EXPECT_TOKEN(t, TokenType::Name);
+            EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, t);
 
             children.push_back(push_node(Node {
                 NodeType::Name,
                 src.substr(t.pos, t.len),
-                std::nullopt,
             }));
         }
 
@@ -147,4 +154,5 @@ namespace orchid::compiler
     }
 } // namespace orchid::compiler
 
-#undef EXPECT_TOKEN
+#undef EXPECT_NEXT
+#undef EXPECT_NEXT_AND_TAKE
