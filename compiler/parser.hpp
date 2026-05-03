@@ -23,7 +23,7 @@ namespace orchid::compiler
 
         Parser(std::string_view src);
 
-        void parse();
+        ParseResult parse();
 
     private:
         Lexer lexer;

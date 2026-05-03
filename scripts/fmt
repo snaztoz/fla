@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+clang-format -style=file -i ./compiler/*.{cpp,hpp}
+clang-format -style=file -i *.cpp

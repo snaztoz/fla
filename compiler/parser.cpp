@@ -19,15 +19,16 @@ namespace orchid::compiler
     {
     }
 
-    void Parser::parse()
+    ParseResult Parser::parse()
     {
         auto root { parse_root() };
         if (!root)
         {
-            // todo
+            return root;
         }
 
         ast.root = root.value();
+        return root;
     }
 
     ParseResult Parser::parse_root()
