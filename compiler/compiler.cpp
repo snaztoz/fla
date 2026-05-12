@@ -6,7 +6,7 @@
 #include "parser.hpp"
 #include "token.hpp"
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     int compile(std::string_view src)
     {
@@ -25,4 +25,4 @@ namespace orchid::compiler
 
         return 0;
     }
-} // namespace orchid::compiler
+} // namespace fla::compiler

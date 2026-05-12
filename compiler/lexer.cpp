@@ -7,7 +7,7 @@
 #include "lexer.hpp"
 #include "token.hpp"
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     Lexer::Lexer(std::string_view s)
         : src(s), cursor(0), curr_line(1), curr_column(1)
@@ -231,4 +231,4 @@ namespace orchid::compiler
     {
         return std::isalnum(current()) || current() == '_';
     }
-}; // namespace orchid::compiler
+}; // namespace fla::compiler

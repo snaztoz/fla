@@ -1,9 +1,9 @@
-#ifndef ORCHID_TOKEN_H
-#define ORCHID_TOKEN_H
+#ifndef FLA_TOKEN_H
+#define FLA_TOKEN_H
 
 #include <cstddef>
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     enum class TokenType
     {
@@ -58,6 +58,6 @@ namespace orchid::compiler
             return type == TokenType::Eof;
         }
     };
-} // namespace orchid::compiler
+} // namespace fla::compiler
 
 #endif

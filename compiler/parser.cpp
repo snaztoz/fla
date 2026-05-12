@@ -28,7 +28,7 @@
         }                                                                      \
     } while (0)
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     Parser::Parser(std::string_view src) : ast({}), lexer(src), src(src)
     {
@@ -152,7 +152,7 @@ namespace orchid::compiler
         ast.arena.push_back(node);
         return idx;
     }
-} // namespace orchid::compiler
+} // namespace fla::compiler
 
 #undef EXPECT_NEXT
 #undef EXPECT_NEXT_AND_TAKE

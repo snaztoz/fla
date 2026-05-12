@@ -10,7 +10,7 @@ use std.math
 
 int main()
 {
-    orchid::compiler::compile(src);
+    fla::compiler::compile(src);
 
     return 0;
 }

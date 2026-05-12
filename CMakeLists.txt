@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(Orchid
+project(Fla
     VERSION 1.0
     DESCRIPTION "A (yet another) programming language"
     LANGUAGES CXX
@@ -15,12 +15,12 @@ enable_testing()
 
 add_subdirectory(compiler)
 
-add_executable(orchid main.cpp)
+add_executable(fla main.cpp)
 
 if(MSVC)
-    target_compile_options(orchid PRIVATE /W4)
+    target_compile_options(fla PRIVATE /W4)
 else()
-    target_compile_options(orchid PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(fla PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-target_link_libraries(orchid PRIVATE orchidc)
+target_link_libraries(fla PRIVATE flac)

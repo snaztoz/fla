@@ -37,7 +37,7 @@ std::string read_fixture(std::filesystem::path path)
     {                                                                          \
         std::print(stderr, "test {} parsing...", name);                        \
         auto fixture { read_fixture(fixture_path) };                           \
-        orchid::compiler::Parser parser { fixture };                           \
+        fla::compiler::Parser parser { fixture };                              \
         if (auto res = parser.parse(); !res)                                   \
         {                                                                      \
             std::println(stderr, "failed ({})", res.error());                  \
@@ -54,8 +54,8 @@ int main()
     std::filesystem::path path { "tests/parser" };
 #endif
 
-    TEST_PARSE("namespace", path / "namespace.orchid");
-    TEST_PARSE("use", path / "use.orchid");
+    TEST_PARSE("namespace", path / "namespace.fla");
+    TEST_PARSE("use", path / "use.fla");
 
     std::println(stderr, "all tests passed!");
 

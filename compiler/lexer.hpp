@@ -1,5 +1,5 @@
-#ifndef ORCHID_LEXER_H
-#define ORCHID_LEXER_H
+#ifndef FLA_LEXER_H
+#define FLA_LEXER_H
 
 #include <cstddef>
 #include <functional>
@@ -9,7 +9,7 @@
 
 #include "token.hpp"
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     using LexerRules = std::vector<std::function<std::optional<Token>(void)>>;
 
@@ -37,6 +37,6 @@ namespace orchid::compiler
         bool is_current_valid_name_start();
         bool is_current_valid_name_tail();
     };
-} // namespace orchid::compiler
+} // namespace fla::compiler
 
 #endif

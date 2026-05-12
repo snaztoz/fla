@@ -1,5 +1,5 @@
-#ifndef ORCHID_AST_H
-#define ORCHID_AST_H
+#ifndef FLA_AST_H
+#define FLA_AST_H
 
 #include <cstddef>
 #include <memory>
@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     enum class NodeType
     {
@@ -61,6 +61,6 @@ namespace orchid::compiler
         std::vector<Node> arena;
         std::size_t root;
     };
-} // namespace orchid::compiler
+} // namespace fla::compiler
 
 #endif

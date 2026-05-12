@@ -1,5 +1,5 @@
-#ifndef ORCHID_PARSER_H
-#define ORCHID_PARSER_H
+#ifndef FLA_PARSER_H
+#define FLA_PARSER_H
 
 #include <cstddef>
 #include <expected>
@@ -10,7 +10,7 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 
-namespace orchid::compiler
+namespace fla::compiler
 {
     using ParseResult = std::expected<std::size_t, std::string>;
     using ParseChildrenResult =
@@ -38,6 +38,6 @@ namespace orchid::compiler
 
         std::size_t push_node(Node node);
     };
-} // namespace orchid::compiler
+} // namespace fla::compiler
 
 #endif
