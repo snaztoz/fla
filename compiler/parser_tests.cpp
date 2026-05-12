@@ -17,8 +17,7 @@ std::string read_fixture(std::filesystem::path path)
 {
     std::ifstream file(path.make_preferred());
 
-    if (!file.is_open())
-    {
+    if (!file.is_open()) {
         std::println(stderr, "failed (could not open {})",
                      path.generic_string());
         std::exit(1);
@@ -33,13 +32,11 @@ std::string read_fixture(std::filesystem::path path)
 }
 
 #define TEST_PARSE(name, fixture_path)                                         \
-    do                                                                         \
-    {                                                                          \
+    do {                                                                       \
         std::print(stderr, "test {} parsing...", name);                        \
         auto fixture { read_fixture(fixture_path) };                           \
         fla::compiler::Parser parser { fixture };                              \
-        if (auto res = parser.parse(); !res)                                   \
-        {                                                                      \
+        if (auto res = parser.parse(); !res) {                                 \
             std::println(stderr, "failed ({})", res.error());                  \
             std::exit(1);                                                      \
         }                                                                      \

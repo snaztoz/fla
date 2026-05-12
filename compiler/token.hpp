@@ -5,8 +5,7 @@
 
 namespace fla::compiler
 {
-    enum class TokenType
-    {
+    enum class TokenType {
         Unknown,
         Eof,
         Name,
@@ -45,8 +44,7 @@ namespace fla::compiler
         OpSub,
     };
 
-    struct Token
-    {
+    struct Token {
         TokenType type;
         std::size_t pos;
         std::size_t len;

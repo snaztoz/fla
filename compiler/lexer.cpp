@@ -58,10 +58,8 @@ namespace fla::compiler
     {
         skip_whitespaces();
 
-        for (const auto &rule : rules)
-        {
-            if (auto match = rule(); match)
-            {
+        for (const auto &rule : rules) {
+            if (auto match = rule(); match) {
                 return match.value();
             }
         }
@@ -83,10 +81,8 @@ namespace fla::compiler
         auto real_curr_line = curr_line;
         auto real_curr_column = curr_column;
 
-        for (const auto &rule : rules)
-        {
-            if (auto match = rule(); match)
-            {
+        for (const auto &rule : rules) {
+            if (auto match = rule(); match) {
                 // Restore states
                 cursor = real_cursor;
                 curr_line = real_curr_line;
@@ -107,10 +103,8 @@ namespace fla::compiler
 
     void Lexer::skip_whitespaces()
     {
-        while (cursor < src.length() && std::isspace(current()))
-        {
-            if (current() == '\n')
-            {
+        while (cursor < src.length() && std::isspace(current())) {
+            if (current() == '\n') {
                 curr_line += 1;
                 curr_column = 0;
             }
@@ -122,8 +116,7 @@ namespace fla::compiler
     std::optional<Token> Lexer::try_match(std::string_view text,
                                           TokenType type_if_matches)
     {
-        if (src.substr(cursor, text.length()) != text)
-        {
+        if (src.substr(cursor, text.length()) != text) {
             return std::nullopt;
         }
 
@@ -143,8 +136,7 @@ namespace fla::compiler
 
     std::optional<Token> Lexer::try_match_name()
     {
-        if (!is_current_valid_name_start())
-        {
+        if (!is_current_valid_name_start()) {
             return std::nullopt;
         }
 
@@ -152,8 +144,7 @@ namespace fla::compiler
         cursor += 1;
 
         std::size_t len { 1 };
-        while (is_current_valid_name_tail())
-        {
+        while (is_current_valid_name_tail()) {
             len += 1;
             cursor += 1;
         }
@@ -173,8 +164,7 @@ namespace fla::compiler
 
     std::optional<Token> Lexer::try_match_number()
     {
-        if (!std::isdigit(current()))
-        {
+        if (!std::isdigit(current())) {
             return std::nullopt;
         }
 
@@ -182,8 +172,7 @@ namespace fla::compiler
         cursor += 1;
 
         std::size_t len { 1 };
-        while (std::isdigit(current()))
-        {
+        while (std::isdigit(current())) {
             len += 1;
             cursor += 1;
         }
@@ -203,8 +192,7 @@ namespace fla::compiler
 
     std::optional<Token> Lexer::try_match_eof()
     {
-        if (cursor < src.length())
-        {
+        if (cursor < src.length()) {
             return std::nullopt;
         }
 

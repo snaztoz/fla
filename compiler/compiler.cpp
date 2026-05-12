@@ -12,14 +12,12 @@ namespace fla::compiler
     {
         Parser parser { src };
 
-        if (auto res = parser.parse(); !res)
-        {
+        if (auto res = parser.parse(); !res) {
             std::println(stderr, "error: failed to parse ({})", res.error());
             return 1;
         }
 
-        for (const auto &n : parser.ast.arena)
-        {
+        for (const auto &n : parser.ast.arena) {
             std::println("{}", node_type_string(n.type));
         }
 

@@ -11,8 +11,7 @@
 
 namespace fla::compiler
 {
-    enum class NodeType
-    {
+    enum class NodeType {
         Root,
         NamespaceDeclaration,
         UseDeclaration,
@@ -21,8 +20,7 @@ namespace fla::compiler
 
     constexpr std::string_view node_type_string(const NodeType &nt) noexcept
     {
-        switch (nt)
-        {
+        switch (nt) {
         case NodeType::Root:
             return "root";
         case NodeType::NamespaceDeclaration:
@@ -39,8 +37,7 @@ namespace fla::compiler
     using NodeValue = std::variant<std::nullptr_t, std::string_view, int>;
     using NodeChildren = std::optional<std::vector<std::size_t>>;
 
-    struct Node
-    {
+    struct Node {
         NodeType type;
         NodeValue value;
         NodeChildren children;
@@ -56,8 +53,7 @@ namespace fla::compiler
         }
     };
 
-    struct Ast
-    {
+    struct Ast {
         std::vector<Node> arena;
         std::size_t root;
     };
