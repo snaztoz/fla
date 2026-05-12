@@ -64,7 +64,7 @@ namespace fla::compiler
             }
         }
 
-        return Token {
+        return {
             .type = TokenType::Unknown,
             .pos = cursor,
             .len = 0,
@@ -92,7 +92,7 @@ namespace fla::compiler
             }
         }
 
-        return Token {
+        return {
             .type = TokenType::Unknown,
             .pos = cursor,
             .len = 0,
