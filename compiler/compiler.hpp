@@ -5,7 +5,7 @@
 
 namespace fla::compiler
 {
-    int compile(std::string_view src);
+    int compile(const std::string_view src);
 }
 
 #endif

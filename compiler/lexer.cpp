@@ -10,48 +10,50 @@
 namespace fla::compiler
 {
     Lexer::Lexer(std::string_view s)
-        : src(s), cursor(0), curr_line(1), curr_column(1)
+        : src(s), cursor(0), curr_line(1), curr_column(1),
+          rules({
+              // EOF checking should be the first to avoid out of range access
+              [this] { return try_match_eof(); },
+
+              [this] { return try_match("class", TokenType::KwClass); },
+              [this] { return try_match("else", TokenType::KwElse); },
+              [this] { return try_match("fun", TokenType::KwFun); },
+              [this] { return try_match("if", TokenType::KwIf); },
+              [this] { return try_match("namespace", TokenType::KwNamespace); },
+              [this] { return try_match("use", TokenType::KwUse); },
+              [this] { return try_match("var", TokenType::KwVar); },
+              [this] { return try_match("while", TokenType::KwWhile); },
+
+              // Operators with more characters should have higher priority
+              [this] { return try_match("&&", TokenType::OpAnd); },
+              [this] { return try_match("==", TokenType::OpEq); },
+              [this] { return try_match(">=", TokenType::OpGte); },
+              [this] { return try_match("<=", TokenType::OpLte); },
+              [this] { return try_match("!=", TokenType::OpNeq); },
+              [this] { return try_match("||", TokenType::OpOr); },
+              [this] { return try_match("+", TokenType::OpAdd); },
+              [this] { return try_match("=", TokenType::OpAssign); },
+              [this] { return try_match(":", TokenType::OpColon); },
+              [this] { return try_match(",", TokenType::OpComma); },
+              [this] { return try_match("/", TokenType::OpDiv); },
+              [this] { return try_match(".", TokenType::OpDot); },
+              [this] { return try_match(">", TokenType::OpGt); },
+              [this] { return try_match("{", TokenType::OpLBrace); },
+              [this] { return try_match("[", TokenType::OpLBrack); },
+              [this] { return try_match("(", TokenType::OpLParen); },
+              [this] { return try_match("<", TokenType::OpLt); },
+              [this] { return try_match("%", TokenType::OpMod); },
+              [this] { return try_match("*", TokenType::OpMul); },
+              [this] { return try_match("!", TokenType::OpNot); },
+              [this] { return try_match("}", TokenType::OpRBrace); },
+              [this] { return try_match("]", TokenType::OpRBrack); },
+              [this] { return try_match(")", TokenType::OpRParen); },
+              [this] { return try_match("-", TokenType::OpSub); },
+
+              [this] { return try_match_name(); },
+              [this] { return try_match_number(); },
+          })
     {
-        rules = {
-            [this] { return try_match("class", TokenType::KwClass); },
-            [this] { return try_match("else", TokenType::KwElse); },
-            [this] { return try_match("fun", TokenType::KwFun); },
-            [this] { return try_match("if", TokenType::KwIf); },
-            [this] { return try_match("namespace", TokenType::KwNamespace); },
-            [this] { return try_match("use", TokenType::KwUse); },
-            [this] { return try_match("var", TokenType::KwVar); },
-            [this] { return try_match("while", TokenType::KwWhile); },
-
-            // Operators with more characters should have higher priority
-            [this] { return try_match("&&", TokenType::OpAnd); },
-            [this] { return try_match("==", TokenType::OpEq); },
-            [this] { return try_match(">=", TokenType::OpGte); },
-            [this] { return try_match("<=", TokenType::OpLte); },
-            [this] { return try_match("!=", TokenType::OpNeq); },
-            [this] { return try_match("||", TokenType::OpOr); },
-            [this] { return try_match("+", TokenType::OpAdd); },
-            [this] { return try_match("=", TokenType::OpAssign); },
-            [this] { return try_match(":", TokenType::OpColon); },
-            [this] { return try_match(",", TokenType::OpComma); },
-            [this] { return try_match("/", TokenType::OpDiv); },
-            [this] { return try_match(".", TokenType::OpDot); },
-            [this] { return try_match(">", TokenType::OpGt); },
-            [this] { return try_match("{", TokenType::OpLBrace); },
-            [this] { return try_match("[", TokenType::OpLBrack); },
-            [this] { return try_match("(", TokenType::OpLParen); },
-            [this] { return try_match("<", TokenType::OpLt); },
-            [this] { return try_match("%", TokenType::OpMod); },
-            [this] { return try_match("*", TokenType::OpMul); },
-            [this] { return try_match("!", TokenType::OpNot); },
-            [this] { return try_match("}", TokenType::OpRBrace); },
-            [this] { return try_match("]", TokenType::OpRBrack); },
-            [this] { return try_match(")", TokenType::OpRParen); },
-            [this] { return try_match("-", TokenType::OpSub); },
-
-            [this] { return try_match_name(); },
-            [this] { return try_match_number(); },
-            [this] { return try_match_eof(); },
-        };
     }
 
     Token Lexer::next()
@@ -113,14 +115,14 @@ namespace fla::compiler
         }
     }
 
-    std::optional<Token> Lexer::try_match(std::string_view text,
-                                          TokenType type_if_matches)
+    std::optional<Token> Lexer::try_match(const std::string_view text,
+                                          const TokenType type_if_matches)
     {
         if (src.substr(cursor, text.length()) != text) {
             return std::nullopt;
         }
 
-        Token t = {
+        const Token t = {
             .type = type_if_matches,
             .pos = cursor,
             .len = text.length(),
@@ -140,7 +142,7 @@ namespace fla::compiler
             return std::nullopt;
         }
 
-        std::size_t pos { cursor };
+        const std::size_t pos { cursor };
         cursor += 1;
 
         std::size_t len { 1 };
@@ -149,7 +151,7 @@ namespace fla::compiler
             cursor += 1;
         }
 
-        Token t {
+        const Token t {
             .type = TokenType::Name,
             .pos = pos,
             .len = len,
@@ -168,7 +170,7 @@ namespace fla::compiler
             return std::nullopt;
         }
 
-        std::size_t pos { cursor };
+        const std::size_t pos { cursor };
         cursor += 1;
 
         std::size_t len { 1 };
@@ -177,7 +179,7 @@ namespace fla::compiler
             cursor += 1;
         }
 
-        Token t {
+        const Token t {
             .type = TokenType::Number,
             .pos = pos,
             .len = len,

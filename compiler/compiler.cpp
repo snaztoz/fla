@@ -8,11 +8,11 @@
 
 namespace fla::compiler
 {
-    int compile(std::string_view src)
+    int compile(const std::string_view src)
     {
         Parser parser { src };
 
-        if (auto res = parser.parse(); !res) {
+        if (auto res { parser.parse() }; !res) {
             std::println(stderr, "error: failed to parse ({})", res.error());
             return 1;
         }

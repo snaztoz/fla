@@ -21,13 +21,13 @@ namespace fla::compiler
     public:
         Ast ast;
 
-        Parser(std::string_view src);
+        Parser(const std::string_view src);
 
         ParseResult parse();
 
     private:
         Lexer lexer;
-        std::string_view src;
+        const std::string_view src;
 
         ParseResult parse_root();
         ParseResult parse_namespace_statement();
@@ -36,7 +36,7 @@ namespace fla::compiler
 
         ParseChildrenResult parse_nested_names();
 
-        std::size_t push_node(Node node);
+        std::size_t push_node(const Node node);
     };
 } // namespace fla::compiler
 

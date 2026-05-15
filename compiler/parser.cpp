@@ -26,7 +26,7 @@
 
 namespace fla::compiler
 {
-    Parser::Parser(std::string_view src) : ast({}), lexer(src), src(src)
+    Parser::Parser(const std::string_view src) : ast({}), lexer(src), src(src)
     {
     }
 
@@ -82,7 +82,7 @@ namespace fla::compiler
         }
 
         return push_node({ NodeType::NamespaceDeclaration, nullptr,
-                                std::move(children.value()) });
+                           std::move(children.value()) });
     }
 
     ParseResult Parser::parse_use_statement()
@@ -94,8 +94,8 @@ namespace fla::compiler
             return std::unexpected(children.error());
         }
 
-        return push_node({ NodeType::UseDeclaration, nullptr,
-                                std::move(children.value()) });
+        return push_node(
+            { NodeType::UseDeclaration, nullptr, std::move(children.value()) });
     }
 
     ParseResult Parser::parse_function_definition()
@@ -135,7 +135,7 @@ namespace fla::compiler
         return children;
     }
 
-    std::size_t Parser::push_node(Node node)
+    std::size_t Parser::push_node(const Node node)
     {
         auto idx { ast.arena.size() };
         ast.arena.push_back(node);

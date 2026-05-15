@@ -38,16 +38,16 @@ namespace fla::compiler
     using NodeChildren = std::optional<std::vector<std::size_t>>;
 
     struct Node {
-        NodeType type;
-        NodeValue value;
-        NodeChildren children;
+        const NodeType type;
+        const NodeValue value;
+        const NodeChildren children;
 
-        Node(NodeType t, NodeValue v)
+        Node(const NodeType t, const NodeValue v)
             : type(t), value(v), children(std::nullopt)
         {
         }
 
-        Node(NodeType t, NodeValue v, NodeChildren c)
+        Node(const NodeType t, const NodeValue v, const NodeChildren c)
             : type(t), value(v), children(c)
         {
         }
