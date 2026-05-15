@@ -26,7 +26,7 @@ namespace fla::compiler
         Lexer lexer;
         const std::string_view src;
 
-        ParseResult parse_root(TokenType &type);
+        ParseResult parse_root(const TokenType &type);
         ParseResult parse_namespace_statement();
         ParseResult parse_use_statement();
         ParseResult parse_function_definition();

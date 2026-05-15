@@ -45,7 +45,7 @@ namespace fla::compiler
         return ParseResult({ NodeType::Root, nullptr, std::move(children) });
     }
 
-    ParseResult Parser::parse_root(TokenType &type)
+    ParseResult Parser::parse_root(const TokenType &type)
     {
         switch (type) {
         case TokenType::KwNamespace:
