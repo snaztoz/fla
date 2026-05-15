@@ -23,7 +23,7 @@ namespace fla::compiler
             std::print(" -> {}", *int_val);
         }
 
-        std::println();
+        std::println("");
 
         for (const auto &child : node.children) {
             print_node(child, level + 1);
