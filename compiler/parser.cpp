@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -26,42 +25,16 @@
 
 namespace fla::compiler
 {
-    Parser::Parser(const std::string_view src) : ast({}), lexer(src), src(src)
+    Parser::Parser(const std::string_view src) : lexer(src), src(src)
     {
     }
 
     ParseResult Parser::parse()
     {
-        auto root { parse_root() };
-        if (!root) {
-            return root;
-        }
-
-        ast.root = root.value();
-        return root;
-    }
-
-    ParseResult Parser::parse_root()
-    {
-        std::vector<std::size_t> children;
+        std::vector<Node> children;
 
         for (auto t { lexer.peek() }; !t.is_eof(); t = lexer.peek()) {
-            ParseResult res;
-
-            switch (t.type) {
-            case TokenType::KwNamespace:
-                res = parse_namespace_statement();
-                break;
-            case TokenType::KwUse:
-                res = parse_use_statement();
-                break;
-            case TokenType::KwFun:
-                res = parse_function_definition();
-                break;
-            default:
-                return std::unexpected("unexpected token");
-            }
-
+            const auto res { parse_root(t.type) };
             if (!res) {
                 return res;
             }
@@ -69,7 +42,21 @@ namespace fla::compiler
             children.push_back(res.value());
         }
 
-        return push_node({ NodeType::Root, nullptr, std::move(children) });
+        return ParseResult({ NodeType::Root, nullptr, std::move(children) });
+    }
+
+    ParseResult Parser::parse_root(TokenType &type)
+    {
+        switch (type) {
+        case TokenType::KwNamespace:
+            return parse_namespace_statement();
+        case TokenType::KwUse:
+            return parse_use_statement();
+        case TokenType::KwFun:
+            return parse_function_definition();
+        default:
+            return std::unexpected("unexpected token");
+        }
     }
 
     ParseResult Parser::parse_namespace_statement()
@@ -81,8 +68,8 @@ namespace fla::compiler
             return std::unexpected(children.error());
         }
 
-        return push_node({ NodeType::NamespaceDeclaration, nullptr,
-                           std::move(children.value()) });
+        return ParseResult({ NodeType::NamespaceDeclaration, nullptr,
+                             std::move(children.value()) });
     }
 
     ParseResult Parser::parse_use_statement()
@@ -94,7 +81,7 @@ namespace fla::compiler
             return std::unexpected(children.error());
         }
 
-        return push_node(
+        return ParseResult(
             { NodeType::UseDeclaration, nullptr, std::move(children.value()) });
     }
 
@@ -111,35 +98,28 @@ namespace fla::compiler
 
     ParseChildrenResult Parser::parse_nested_names()
     {
-        std::vector<std::size_t> children;
+        std::vector<Node> children;
 
         Token t;
         EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, t);
 
-        children.push_back(push_node({
+        children.push_back({
             NodeType::Name,
             src.substr(t.pos, t.len),
-        }));
+        });
 
         for (t = lexer.peek(); t.type == TokenType::OpDot; t = lexer.peek()) {
             lexer.next();
 
             EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, t);
 
-            children.push_back(push_node({
+            children.push_back({
                 NodeType::Name,
                 src.substr(t.pos, t.len),
-            }));
+            });
         }
 
         return children;
-    }
-
-    std::size_t Parser::push_node(const Node node)
-    {
-        auto idx { ast.arena.size() };
-        ast.arena.push_back(node);
-        return idx;
     }
 } // namespace fla::compiler
 

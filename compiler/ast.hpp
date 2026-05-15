@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -35,27 +34,21 @@ namespace fla::compiler
     }
 
     using NodeValue = std::variant<std::nullptr_t, std::string_view, int>;
-    using NodeChildren = std::optional<std::vector<std::size_t>>;
 
     struct Node {
         const NodeType type;
         const NodeValue value;
-        const NodeChildren children;
+        const std::vector<Node> children;
 
         Node(const NodeType t, const NodeValue v)
-            : type(t), value(v), children(std::nullopt)
+            : type(t), value(v), children({})
         {
         }
 
-        Node(const NodeType t, const NodeValue v, const NodeChildren c)
+        Node(const NodeType t, const NodeValue v, const std::vector<Node> c)
             : type(t), value(v), children(c)
         {
         }
-    };
-
-    struct Ast {
-        std::vector<Node> arena;
-        std::size_t root;
     };
 } // namespace fla::compiler
 

@@ -12,15 +12,12 @@
 
 namespace fla::compiler
 {
-    using ParseResult = std::expected<std::size_t, std::string>;
-    using ParseChildrenResult =
-        std::expected<std::vector<std::size_t>, std::string>;
+    using ParseResult = std::expected<Node, std::string>;
+    using ParseChildrenResult = std::expected<std::vector<Node>, std::string>;
 
     class Parser
     {
     public:
-        Ast ast;
-
         Parser(const std::string_view src);
 
         ParseResult parse();
@@ -29,14 +26,12 @@ namespace fla::compiler
         Lexer lexer;
         const std::string_view src;
 
-        ParseResult parse_root();
+        ParseResult parse_root(TokenType &type);
         ParseResult parse_namespace_statement();
         ParseResult parse_use_statement();
         ParseResult parse_function_definition();
 
         ParseChildrenResult parse_nested_names();
-
-        std::size_t push_node(const Node node);
     };
 } // namespace fla::compiler
 
