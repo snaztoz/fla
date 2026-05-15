@@ -90,8 +90,8 @@ namespace fla::compiler
         lexer.next();
 
         EXPECT_NEXT(lexer, TokenType::Name);
-        EXPECT_NEXT(lexer, TokenType::OpLParen);
-        EXPECT_NEXT(lexer, TokenType::OpRParen);
+        EXPECT_NEXT(lexer, TokenType::SymLParen);
+        EXPECT_NEXT(lexer, TokenType::SymRParen);
 
         return std::unexpected("TODO");
     }
