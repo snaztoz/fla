@@ -89,11 +89,60 @@ namespace fla::compiler
     {
         lexer.next();
 
+        std::vector<Node> children;
+
         EXPECT_NEXT(lexer, TokenType::Name);
         EXPECT_NEXT(lexer, TokenType::SymLParen);
-        EXPECT_NEXT(lexer, TokenType::SymRParen);
 
-        return std::unexpected("TODO");
+        const auto parameters { parse_function_parameters() };
+        if (!parameters) {
+            return std::unexpected(parameters.error());
+        }
+
+        EXPECT_NEXT(lexer, TokenType::SymRParen);
+        EXPECT_NEXT(lexer, TokenType::KwDo);
+
+        // TODO: parse body
+
+        EXPECT_NEXT(lexer, TokenType::KwEnd);
+
+        children.push_back(
+            { NodeType::FunctionParameterList, nullptr, parameters.value() });
+
+        return ParseResult(
+            { NodeType::FunctionDefinition, nullptr, std::move(children) });
+    }
+
+    ParseChildrenResult Parser::parse_function_parameters()
+    {
+        std::vector<Node> parameters;
+
+        while (lexer.peek().type != TokenType::SymRParen) {
+            Token name;
+            EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, name);
+
+            Token type_notation;
+            EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, type_notation);
+
+            switch (lexer.peek().type) {
+            case TokenType::SymComma:
+                lexer.next();
+                break;
+            case TokenType::SymRParen:
+                continue;
+            default:
+                return std::unexpected("unknown token in function parameter");
+            }
+
+            parameters.push_back(
+                { NodeType::FunctionParameter,
+                  nullptr,
+                  { { NodeType::Name, src.substr(name.pos, name.len) },
+                    { NodeType::TypeNotation,
+                      src.substr(type_notation.pos, type_notation.len) } } });
+        }
+
+        return parameters;
     }
 
     ParseChildrenResult Parser::parse_nested_names()

@@ -30,7 +30,7 @@ namespace fla::compiler
         ParseResult parse_namespace_statement();
         ParseResult parse_use_statement();
         ParseResult parse_function_definition();
-
+        ParseChildrenResult parse_function_parameters();
         ParseChildrenResult parse_nested_names();
     };
 } // namespace fla::compiler

@@ -11,23 +11,35 @@
 namespace fla::compiler
 {
     enum class NodeType {
-        Root,
-        NamespaceDeclaration,
-        UseDeclaration,
+        FunctionDefinition,
+        FunctionParameter,
+        FunctionParameterList,
         Name,
+        NamespaceDeclaration,
+        Root,
+        TypeNotation,
+        UseDeclaration,
     };
 
     constexpr std::string_view node_type_string(const NodeType &nt) noexcept
     {
         switch (nt) {
-        case NodeType::Root:
-            return "root";
-        case NodeType::NamespaceDeclaration:
-            return "namespace declaration";
-        case NodeType::UseDeclaration:
-            return "use declaration";
+        case NodeType::FunctionDefinition:
+            return "function definition";
+        case NodeType::FunctionParameter:
+            return "function parameter";
+        case NodeType::FunctionParameterList:
+            return "function parameter list";
         case NodeType::Name:
             return "name";
+        case NodeType::NamespaceDeclaration:
+            return "namespace declaration";
+        case NodeType::Root:
+            return "root";
+        case NodeType::TypeNotation:
+            return "type notation";
+        case NodeType::UseDeclaration:
+            return "use declaration";
         default:
             std::unreachable();
         }
