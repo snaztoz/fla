@@ -1,6 +1,18 @@
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
+
+#if defined(_WIN32) && defined(_MSC_VER)
+
+#include <format>
+
+// Avoid editor displaying error
+#ifndef BUILD_TYPE
+#define BUILD_TYPE ""
+#endif
+
+#endif
+
 #include <fstream>
 #include <print>
 #include <sstream>
@@ -41,7 +53,7 @@ std::string read_fixture(std::filesystem::path path)
 int main()
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-    std::filesystem::path path { "Debug/tests/parser" };
+    std::filesystem::path path { std::format("{}/tests/parser", BUILD_TYPE) };
 #else
     std::filesystem::path path { "tests/parser" };
 #endif
