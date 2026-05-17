@@ -1,11 +1,11 @@
-#ifndef ORCHID_COMPILER_H
-#define ORCHID_COMPILER_H
+#ifndef FLA_COMPILER_H
+#define FLA_COMPILER_H
 
 #include <string_view>
 
-namespace orchid::compiler
+namespace fla::compiler
 {
-    int compile(std::string_view src);
+    int compile(const std::string_view src);
 }
 
 #endif

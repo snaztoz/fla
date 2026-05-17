@@ -3,7 +3,14 @@
 #include <filesystem>
 
 #if defined(_WIN32) && defined(_MSC_VER)
+
 #include <format>
+
+// Avoid editor displaying error
+#ifndef BUILD_TYPE
+#define BUILD_TYPE ""
+#endif
+
 #endif
 
 #include <fstream>
@@ -17,8 +24,7 @@ std::string read_fixture(std::filesystem::path path)
 {
     std::ifstream file(path.make_preferred());
 
-    if (!file.is_open())
-    {
+    if (!file.is_open()) {
         std::println(stderr, "failed (could not open {})",
                      path.generic_string());
         std::exit(1);
@@ -33,13 +39,11 @@ std::string read_fixture(std::filesystem::path path)
 }
 
 #define TEST_PARSE(name, fixture_path)                                         \
-    do                                                                         \
-    {                                                                          \
+    do {                                                                       \
         std::print(stderr, "test {} parsing...", name);                        \
         auto fixture { read_fixture(fixture_path) };                           \
-        orchid::compiler::Parser parser { fixture };                           \
-        if (auto res = parser.parse(); !res)                                   \
-        {                                                                      \
+        fla::compiler::Parser parser { fixture };                              \
+        if (auto res = parser.parse(); !res) {                                 \
             std::println(stderr, "failed ({})", res.error());                  \
             std::exit(1);                                                      \
         }                                                                      \
@@ -54,8 +58,9 @@ int main()
     std::filesystem::path path { "tests/parser" };
 #endif
 
-    TEST_PARSE("namespace", path / "namespace.orchid");
-    TEST_PARSE("use", path / "use.orchid");
+    TEST_PARSE("function", path / "function.fla");
+    TEST_PARSE("namespace", path / "namespace.fla");
+    TEST_PARSE("use", path / "use.fla");
 
     std::println(stderr, "all tests passed!");
 
