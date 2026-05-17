@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <format>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -7,20 +8,24 @@
 #include "ast.hpp"
 #include "parser.hpp"
 
-#define EXPECT_NEXT(lexer, expected_type)                                      \
-    do {                                                                       \
-        auto t { lexer.next() };                                               \
-        if (t.type != expected_type) {                                         \
-            return std::unexpected("unexpected token");                        \
-        }                                                                      \
+#define EXPECT_NEXT(lexer, expected_type)                                                          \
+    do {                                                                                           \
+        auto t { lexer.next() };                                                                   \
+        if (t.type != expected_type) {                                                             \
+            return std::unexpected(std::format("expecting {}, found {} instead",                   \
+                                               token_type_string(expected_type),                   \
+                                               token_type_string(t.type)));                        \
+        }                                                                                          \
     } while (0)
 
-#define EXPECT_NEXT_AND_TAKE(lexer, expected_type, t)                          \
-    do {                                                                       \
-        t = lexer.next();                                                      \
-        if (t.type != expected_type) {                                         \
-            return std::unexpected("unexpected token");                        \
-        }                                                                      \
+#define EXPECT_NEXT_AND_TAKE(lexer, expected_type, t)                                              \
+    do {                                                                                           \
+        t = lexer.next();                                                                          \
+        if (t.type != expected_type) {                                                             \
+            return std::unexpected(std::format("expecting {}, found {} instead",                   \
+                                               token_type_string(expected_type),                   \
+                                               token_type_string(t.type)));                        \
+        }                                                                                          \
     } while (0)
 
 namespace fla::compiler
@@ -55,7 +60,8 @@ namespace fla::compiler
         case TokenType::KwFun:
             return parse_function_definition();
         default:
-            return std::unexpected("unexpected token");
+            return std::unexpected(std::format("expecting top-level statement(s), found {} instead",
+                                               token_type_string(type)));
         }
     }
 
@@ -68,8 +74,8 @@ namespace fla::compiler
             return std::unexpected(children.error());
         }
 
-        return ParseResult({ NodeType::NamespaceDeclaration, nullptr,
-                             std::move(children.value()) });
+        return ParseResult(
+            { NodeType::NamespaceDeclaration, nullptr, std::move(children.value()) });
     }
 
     ParseResult Parser::parse_use_statement()
@@ -81,8 +87,7 @@ namespace fla::compiler
             return std::unexpected(children.error());
         }
 
-        return ParseResult(
-            { NodeType::UseDeclaration, nullptr, std::move(children.value()) });
+        return ParseResult({ NodeType::UseDeclaration, nullptr, std::move(children.value()) });
     }
 
     ParseResult Parser::parse_function_definition()
@@ -98,6 +103,7 @@ namespace fla::compiler
         if (!parameters) {
             return std::unexpected(parameters.error());
         }
+        children.push_back({ NodeType::FunctionParameterList, nullptr, parameters.value() });
 
         EXPECT_NEXT(lexer, TokenType::SymRParen);
         EXPECT_NEXT(lexer, TokenType::KwDo);
@@ -106,11 +112,7 @@ namespace fla::compiler
 
         EXPECT_NEXT(lexer, TokenType::KwEnd);
 
-        children.push_back(
-            { NodeType::FunctionParameterList, nullptr, parameters.value() });
-
-        return ParseResult(
-            { NodeType::FunctionDefinition, nullptr, std::move(children) });
+        return ParseResult({ NodeType::FunctionDefinition, nullptr, std::move(children) });
     }
 
     ParseChildrenResult Parser::parse_function_parameters()
@@ -121,25 +123,29 @@ namespace fla::compiler
             Token name;
             EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, name);
 
-            Token type_notation;
-            EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, type_notation);
+            const auto type_notation { parse_type_notation() };
+            if (!type_notation) {
+                return std::unexpected(type_notation.error());
+            }
 
-            switch (lexer.peek().type) {
+            const auto next { lexer.peek() };
+
+            switch (next.type) {
             case TokenType::SymComma:
                 lexer.next();
                 break;
             case TokenType::SymRParen:
                 continue;
             default:
-                return std::unexpected("unknown token in function parameter");
+                return std::unexpected(std::format("expecting {}, found {} instead",
+                                                   token_type_string(TokenType::SymRParen),
+                                                   token_type_string(next.type)));
             }
 
             parameters.push_back(
                 { NodeType::FunctionParameter,
                   nullptr,
-                  { { NodeType::Name, src.substr(name.pos, name.len) },
-                    { NodeType::TypeNotation,
-                      src.substr(type_notation.pos, type_notation.len) } } });
+                  { { NodeType::Name, src.substr(name.pos, name.len) }, type_notation.value() } });
         }
 
         return parameters;
@@ -169,6 +175,28 @@ namespace fla::compiler
         }
 
         return children;
+    }
+
+    ParseChildrenResult Parser::parse_body()
+    {
+        std::vector<Node> children;
+
+        for (auto t { lexer.peek() };; t = lexer.peek()) {
+            switch (t.type) {
+                //
+            }
+        }
+
+        return children;
+    }
+
+    ParseResult Parser::parse_type_notation()
+    {
+        Token type_notation;
+        EXPECT_NEXT_AND_TAKE(lexer, TokenType::Name, type_notation);
+
+        return ParseResult(
+            { NodeType::TypeNotation, src.substr(type_notation.pos, type_notation.len) });
     }
 } // namespace fla::compiler
 

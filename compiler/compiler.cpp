@@ -16,8 +16,7 @@ namespace fla::compiler
 
         std::print("{}{}", indentation, node_type_string(node.type));
 
-        if (const auto *string_val {
-                std::get_if<std::string_view>(&node.value) }) {
+        if (const auto *string_val { std::get_if<std::string_view>(&node.value) }) {
             std::print(" -> {}", *string_val);
         } else if (const auto *int_val { std::get_if<int>(&node.value) }) {
             std::print(" -> {}", *int_val);
@@ -36,7 +35,7 @@ namespace fla::compiler
 
         auto root { parser.parse() };
         if (!root) {
-            std::println(stderr, "error: failed to parse ({})", root.error());
+            std::println(stderr, "error: {}", root.error());
             return 1;
         }
 
