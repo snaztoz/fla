@@ -34,6 +34,7 @@ namespace fla::compiler
         ParseChildrenResult parse_nested_names();
         ParseChildrenResult parse_body();
         ParseResult parse_type_notation();
+        std::expected<Token, std::string> expect(const TokenType &expected_type);
     };
 } // namespace fla::compiler
 

@@ -3,14 +3,12 @@
 #include <filesystem>
 
 #if defined(_WIN32) && defined(_MSC_VER)
-
 #include <format>
 
 // Avoid editor displaying error
 #ifndef BUILD_TYPE
 #define BUILD_TYPE ""
 #endif
-
 #endif
 
 #include <fstream>
@@ -25,8 +23,7 @@ std::string read_fixture(std::filesystem::path path)
     std::ifstream file(path.make_preferred());
 
     if (!file.is_open()) {
-        std::println(stderr, "failed (could not open {})",
-                     path.generic_string());
+        std::println(stderr, "failed (could not open {})", path.generic_string());
         std::exit(1);
     }
 
@@ -38,16 +35,16 @@ std::string read_fixture(std::filesystem::path path)
     return buffer.str();
 }
 
-#define TEST_PARSE(name, fixture_path)                                         \
-    do {                                                                       \
-        std::print(stderr, "test {} parsing...", name);                        \
-        auto fixture { read_fixture(fixture_path) };                           \
-        fla::compiler::Parser parser { fixture };                              \
-        if (auto res = parser.parse(); !res) {                                 \
-            std::println(stderr, "failed ({})", res.error());                  \
-            std::exit(1);                                                      \
-        }                                                                      \
-        std::println(stderr, "ok");                                            \
+#define TEST_PARSE(name, fixture_path)                                                             \
+    do {                                                                                           \
+        std::print(stderr, "test {} parsing...", name);                                            \
+        auto fixture { read_fixture(fixture_path) };                                               \
+        fla::compiler::Parser parser { fixture };                                                  \
+        if (auto res = parser.parse(); !res) {                                                     \
+            std::println(stderr, "failed ({})", res.error());                                      \
+            std::exit(1);                                                                          \
+        }                                                                                          \
+        std::println(stderr, "ok");                                                                \
     } while (0);
 
 int main()
