@@ -35,7 +35,6 @@ namespace fla::compiler
               [this] { return try_match("||", TokenType::OpOr); },
               [this] { return try_match("+", TokenType::OpAdd); },
               [this] { return try_match("=", TokenType::OpAssign); },
-              [this] { return try_match(":", TokenType::OpColon); },
               [this] { return try_match("/", TokenType::OpDiv); },
               [this] { return try_match(".", TokenType::OpDot); },
               [this] { return try_match(">", TokenType::OpGt); },
