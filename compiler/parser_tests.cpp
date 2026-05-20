@@ -55,6 +55,7 @@ int main()
     std::filesystem::path path { "tests/parser" };
 #endif
 
+    TEST_PARSE("expression", path / "expression.fla");
     TEST_PARSE("function", path / "function.fla");
     TEST_PARSE("namespace", path / "namespace.fla");
     TEST_PARSE("use", path / "use.fla");

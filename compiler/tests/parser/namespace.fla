@@ -1,8 +1,8 @@
 namespace std.util.math
 
 namespace std
-    .util
-    .math
+  .util
+  .math
 
 namespace
 std
@@ -10,5 +10,5 @@ std
 .math
 
 namespace   std
-    .   util
-.   math
+  . util
+. math

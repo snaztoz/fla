@@ -8,6 +8,9 @@ namespace foo.bar
 use std.math
 
 fun main(argc int,) do
+  1045
+  bar
+  (((baz)))
 end
 )";
 

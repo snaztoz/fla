@@ -11,11 +11,13 @@
 namespace fla::compiler
 {
     enum class NodeType {
+        ExpressionGroup,
         FunctionDefinition,
         FunctionParameter,
         FunctionParameterList,
         Name,
         NamespaceDeclaration,
+        Number,
         Root,
         TypeNotation,
         UseDeclaration,
@@ -24,6 +26,8 @@ namespace fla::compiler
     constexpr std::string_view node_type_string(const NodeType &nt) noexcept
     {
         switch (nt) {
+        case NodeType::ExpressionGroup:
+            return "expression group";
         case NodeType::FunctionDefinition:
             return "function definition";
         case NodeType::FunctionParameter:
@@ -34,6 +38,8 @@ namespace fla::compiler
             return "name";
         case NodeType::NamespaceDeclaration:
             return "namespace declaration";
+        case NodeType::Number:
+            return "number";
         case NodeType::Root:
             return "root";
         case NodeType::TypeNotation:
@@ -52,8 +58,7 @@ namespace fla::compiler
         const NodeValue value;
         const std::vector<Node> children;
 
-        Node(const NodeType t, const NodeValue v)
-            : type(t), value(v), children({})
+        Node(const NodeType t, const NodeValue v) : type(t), value(v), children({})
         {
         }
 

@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <format>
+#include <iterator>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -30,9 +31,9 @@ namespace fla::compiler
         return ParseResult({ NodeType::Root, nullptr, std::move(children) });
     }
 
-    ParseResult Parser::parse_root(const TokenType &type)
+    ParseResult Parser::parse_root(const TokenType &tt)
     {
-        switch (type) {
+        switch (tt) {
         case TokenType::KwNamespace:
             return parse_namespace_statement();
         case TokenType::KwUse:
@@ -41,7 +42,7 @@ namespace fla::compiler
             return parse_function_definition();
         default:
             return std::unexpected(std::format("expecting top-level statement(s), found {} instead",
-                                               token_type_string(type)));
+                                               token_type_string(tt)));
         }
     }
 
@@ -98,7 +99,11 @@ namespace fla::compiler
             return std::unexpected(t.error());
         }
 
-        // TODO: parse body
+        const auto body { parse_body() };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+        std::move(body.value().begin(), body.value().end(), std::back_inserter(children));
 
         if (const auto t { expect(TokenType::KwEnd) }; !t) {
             return std::unexpected(t.error());
@@ -181,9 +186,13 @@ namespace fla::compiler
     {
         std::vector<Node> children;
 
-        // for (auto t { lexer.peek() };; t = lexer.peek()) {
-        //     // todo
-        // }
+        while (lexer.peek().type != TokenType::KwEnd) {
+            const auto expression { parse_expression_statement() };
+            if (!expression) {
+                return std::unexpected(expression.error());
+            }
+            children.push_back(expression.value());
+        }
 
         return children;
     }
@@ -199,12 +208,17 @@ namespace fla::compiler
                              src.substr(type_notation.value().pos, type_notation.value().len) });
     }
 
-    std::expected<Token, std::string> Parser::expect(const TokenType &expected_type)
+    ParseResult Parser::parse_expression_statement()
+    {
+        return parse_expression();
+    }
+
+    std::expected<Token, std::string> Parser::expect(const TokenType &expected_tt)
     {
         auto t { lexer.next() };
-        if (t.type != expected_type) {
+        if (t.type != expected_tt) {
             return std::unexpected(std::format("expecting {}, found {} instead",
-                                               token_type_string(expected_type),
+                                               token_type_string(expected_tt),
                                                token_type_string(t.type)));
         }
         return t;

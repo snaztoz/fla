@@ -5,3 +5,7 @@ end
 
 fun foo(x int, y int, z int,) do
 end
+
+fun main() do
+  foo
+end
