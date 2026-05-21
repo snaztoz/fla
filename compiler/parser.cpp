@@ -66,7 +66,7 @@ namespace fla::compiler
     {
         const auto kw { lexer.next() };
 
-        const auto children { parse_nested_names() };
+        auto children { parse_nested_names() };
         if (!children) {
             return std::unexpected(children.error());
         }
@@ -88,7 +88,7 @@ namespace fla::compiler
     {
         const auto kw { lexer.next() };
 
-        const auto children { parse_nested_names() };
+        auto children { parse_nested_names() };
         if (!children) {
             return std::unexpected(children.error());
         }
