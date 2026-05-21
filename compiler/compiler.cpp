@@ -12,7 +12,7 @@ namespace fla::compiler
 {
     void print_node(const Node &node, const int level)
     {
-        std::string indentation(level * 2, ' ');
+        const std::string indentation(level * 2, ' ');
 
         std::print("{}{}", indentation, node_type_string(node.type));
 
@@ -22,7 +22,7 @@ namespace fla::compiler
             std::print(" -> {}", *int_val);
         }
 
-        std::println("");
+        std::print(" ({}:{}:{})\n", node.line, node.column, node.len);
 
         for (const auto &child : node.children) {
             print_node(child, level + 1);

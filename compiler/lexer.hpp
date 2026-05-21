@@ -31,11 +31,11 @@ namespace fla::compiler
                                        const TokenType type_if_matches);
         std::optional<Token> try_match_name();
         std::optional<Token> try_match_number();
-        std::optional<Token> try_match_eof();
+        std::optional<Token> try_match_eof() const;
         void skip_whitespaces();
-        constexpr char current();
-        bool is_current_valid_name_start();
-        bool is_current_valid_name_tail();
+        constexpr char current() const;
+        bool is_current_valid_name_start() const;
+        bool is_current_valid_name_tail() const;
     };
 } // namespace fla::compiler
 

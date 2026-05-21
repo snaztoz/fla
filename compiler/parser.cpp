@@ -19,7 +19,12 @@ namespace fla::compiler
     {
         std::vector<Node> children;
 
-        for (auto t { lexer.peek() }; !t.is_eof(); t = lexer.peek()) {
+        while (true) {
+            const auto t { lexer.peek() };
+            if (t.is_eof()) {
+                break;
+            }
+
             const auto res { parse_root(t.type) };
             if (!res) {
                 return res;
@@ -28,7 +33,18 @@ namespace fla::compiler
             children.push_back(res.value());
         }
 
-        return ParseResult({ NodeType::Root, nullptr, std::move(children) });
+        const auto first { children.at(0) };
+        const auto last { children.at(children.size() - 1) };
+
+        return ParseResult({
+            NodeType::Root,
+            nullptr,
+            std::move(children),
+            first.pos,
+            last.pos - first.pos + last.len,
+            first.line,
+            first.column,
+        });
     }
 
     ParseResult Parser::parse_root(const TokenType &tt)
@@ -48,32 +64,51 @@ namespace fla::compiler
 
     ParseResult Parser::parse_namespace_statement()
     {
-        lexer.next();
+        const auto kw { lexer.next() };
 
-        auto children { parse_nested_names() };
+        const auto children { parse_nested_names() };
         if (!children) {
             return std::unexpected(children.error());
         }
 
-        return ParseResult(
-            { NodeType::NamespaceDeclaration, nullptr, std::move(children.value()) });
+        const auto last { children.value().at(children.value().size() - 1) };
+
+        return ParseResult({
+            NodeType::NamespaceDeclaration,
+            nullptr,
+            std::move(children.value()),
+            kw.pos,
+            last.pos - kw.pos + last.len,
+            kw.line,
+            kw.column,
+        });
     }
 
     ParseResult Parser::parse_use_statement()
     {
-        lexer.next();
+        const auto kw { lexer.next() };
 
-        auto children { parse_nested_names() };
+        const auto children { parse_nested_names() };
         if (!children) {
             return std::unexpected(children.error());
         }
 
-        return ParseResult({ NodeType::UseDeclaration, nullptr, std::move(children.value()) });
+        const auto last { children.value().at(children.value().size() - 1) };
+
+        return ParseResult({
+            NodeType::UseDeclaration,
+            nullptr,
+            std::move(children.value()),
+            kw.pos,
+            last.pos - kw.pos + last.len,
+            kw.line,
+            kw.column,
+        });
     }
 
     ParseResult Parser::parse_function_definition()
     {
-        lexer.next();
+        const auto kw { lexer.next() };
 
         std::vector<Node> children;
 
@@ -89,7 +124,18 @@ namespace fla::compiler
         if (!parameters) {
             return std::unexpected(parameters.error());
         }
-        children.push_back({ NodeType::FunctionParameterList, nullptr, parameters.value() });
+
+        if (!parameters.value().empty()) {
+            children.push_back({
+                NodeType::FunctionParameterList,
+                nullptr,
+                parameters.value(),
+                parameters.value()[0].pos,
+                parameters.value()[0].len,
+                parameters.value()[0].line,
+                parameters.value()[0].column,
+            });
+        }
 
         if (const auto t { expect(TokenType::SymRParen) }; !t) {
             return std::unexpected(t.error());
@@ -105,11 +151,20 @@ namespace fla::compiler
         }
         std::move(body.value().begin(), body.value().end(), std::back_inserter(children));
 
-        if (const auto t { expect(TokenType::KwEnd) }; !t) {
-            return std::unexpected(t.error());
+        const auto end { expect(TokenType::KwEnd) };
+        if (!end) {
+            return std::unexpected(end.error());
         }
 
-        return ParseResult({ NodeType::FunctionDefinition, nullptr, std::move(children) });
+        return ParseResult({
+            NodeType::FunctionDefinition,
+            nullptr,
+            std::move(children),
+            kw.pos,
+            end.value().pos - kw.pos + end.value().len,
+            kw.line,
+            kw.column,
+        });
     }
 
     ParseChildrenResult Parser::parse_function_parameters()
@@ -141,11 +196,25 @@ namespace fla::compiler
                                                    token_type_string(next.type)));
             }
 
-            parameters.push_back(
-                { NodeType::FunctionParameter,
-                  nullptr,
-                  { { NodeType::Name, src.substr(name.value().pos, name.value().len) },
-                    type_notation.value() } });
+            parameters.push_back({
+                NodeType::FunctionParameter,
+                nullptr,
+                {
+                    {
+                        NodeType::Name,
+                        src.substr(name.value().pos, name.value().len),
+                        name.value().pos,
+                        name.value().len,
+                        name.value().line,
+                        name.value().column,
+                    },
+                    type_notation.value(),
+                },
+                name.value().pos,
+                type_notation.value().pos - name.value().pos + type_notation.value().len,
+                name.value().line,
+                name.value().column,
+            });
         }
 
         return parameters;
@@ -155,27 +224,40 @@ namespace fla::compiler
     {
         std::vector<Node> children;
 
-        auto name { expect(TokenType::Name) };
-        if (!name) {
-            return std::unexpected(name.error());
+        const auto first_name { expect(TokenType::Name) };
+        if (!first_name) {
+            return std::unexpected(first_name.error());
         }
 
         children.push_back({
             NodeType::Name,
-            src.substr(name.value().pos, name.value().len),
+            src.substr(first_name.value().pos, first_name.value().len),
+            first_name.value().pos,
+            first_name.value().len,
+            first_name.value().line,
+            first_name.value().column,
         });
 
-        for (auto t { lexer.peek() }; t.type == TokenType::OpDot; t = lexer.peek()) {
+        while (true) {
+            const auto t { lexer.peek() };
+            if (t.type != TokenType::OpDot) {
+                break;
+            }
+
             lexer.next();
 
-            name = expect(TokenType::Name);
-            if (!name) {
-                return std::unexpected(name.error());
+            const auto next_name = expect(TokenType::Name);
+            if (!next_name) {
+                return std::unexpected(next_name.error());
             }
 
             children.push_back({
                 NodeType::Name,
-                src.substr(name.value().pos, name.value().len),
+                src.substr(next_name.value().pos, next_name.value().len),
+                next_name.value().pos,
+                next_name.value().len,
+                next_name.value().line,
+                next_name.value().column,
             });
         }
 
@@ -204,8 +286,14 @@ namespace fla::compiler
             return std::unexpected(type_notation.error());
         }
 
-        return ParseResult({ NodeType::TypeNotation,
-                             src.substr(type_notation.value().pos, type_notation.value().len) });
+        return ParseResult({
+            NodeType::TypeNotation,
+            src.substr(type_notation.value().pos, type_notation.value().len),
+            type_notation.value().pos,
+            type_notation.value().len,
+            type_notation.value().line,
+            type_notation.value().column,
+        });
     }
 
     ParseResult Parser::parse_expression_statement()
@@ -215,7 +303,7 @@ namespace fla::compiler
 
     std::expected<Token, std::string> Parser::expect(const TokenType &expected_tt)
     {
-        auto t { lexer.next() };
+        const auto t { lexer.next() };
         if (t.type != expected_tt) {
             return std::unexpected(std::format("expecting {}, found {} instead",
                                                token_type_string(expected_tt),

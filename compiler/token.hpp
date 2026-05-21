@@ -2,6 +2,7 @@
 #define FLA_TOKEN_H
 
 #include <cstddef>
+#include <utility>
 
 namespace fla::compiler
 {
@@ -128,13 +129,13 @@ namespace fla::compiler
     }
 
     struct Token {
-        TokenType type;
-        std::size_t pos;
-        std::size_t len;
-        std::size_t line;
-        std::size_t column;
+        const TokenType type;
+        const std::size_t pos;
+        const std::size_t len;
+        const std::size_t line;
+        const std::size_t column;
 
-        constexpr bool is_eof() noexcept
+        constexpr bool is_eof() const noexcept
         {
             return type == TokenType::Eof;
         }

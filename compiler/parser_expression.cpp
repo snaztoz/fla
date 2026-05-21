@@ -1,4 +1,5 @@
 #include <charconv>
+#include <utility>
 
 #include "ast.hpp"
 #include "lexer.hpp"
@@ -33,12 +34,23 @@ namespace fla::compiler
                 NodeType::ExpressionGroup,
                 nullptr,
                 { sub_expression.value() },
+                t.pos,
+                closing_paren.value().pos - t.pos,
+                t.line,
+                t.column,
             });
         }
 
         case TokenType::Name: {
             lexer.next();
-            return ParseResult({ NodeType::Name, src.substr(t.pos, t.len) });
+            return ParseResult({
+                NodeType::Name,
+                src.substr(t.pos, t.len),
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+            });
         }
 
         case TokenType::Number: {
@@ -48,7 +60,14 @@ namespace fla::compiler
             int num = 0;
             std::from_chars(num_str.data(), num_str.data() + num_str.size(), num);
 
-            return ParseResult({ NodeType::Number, num });
+            return ParseResult({
+                NodeType::Number,
+                num,
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+            });
         }
 
         default:

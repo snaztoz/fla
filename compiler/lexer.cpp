@@ -63,7 +63,7 @@ namespace fla::compiler
         skip_whitespaces();
 
         for (const auto &rule : rules) {
-            if (auto match = rule(); match) {
+            if (const auto match { rule() }; match) {
                 return match.value();
             }
         }
@@ -81,12 +81,12 @@ namespace fla::compiler
     {
         skip_whitespaces();
 
-        auto real_cursor = cursor;
-        auto real_curr_line = curr_line;
-        auto real_curr_column = curr_column;
+        const auto real_cursor = cursor;
+        const auto real_curr_line = curr_line;
+        const auto real_curr_column = curr_column;
 
         for (const auto &rule : rules) {
-            if (auto match = rule(); match) {
+            if (const auto match { rule() }; match) {
                 // Restore states
                 cursor = real_cursor;
                 curr_line = real_curr_line;
@@ -144,7 +144,7 @@ namespace fla::compiler
             return std::nullopt;
         }
 
-        const std::size_t pos { cursor };
+        const auto pos { cursor };
         cursor += 1;
 
         std::size_t len { 1 };
@@ -172,7 +172,7 @@ namespace fla::compiler
             return std::nullopt;
         }
 
-        const std::size_t pos { cursor };
+        const auto pos { cursor };
         cursor += 1;
 
         std::size_t len { 1 };
@@ -194,7 +194,7 @@ namespace fla::compiler
         return t;
     }
 
-    std::optional<Token> Lexer::try_match_eof()
+    std::optional<Token> Lexer::try_match_eof() const
     {
         if (cursor < src.length()) {
             return std::nullopt;
@@ -209,17 +209,17 @@ namespace fla::compiler
         };
     }
 
-    constexpr char Lexer::current()
+    constexpr char Lexer::current() const
     {
         return src[cursor];
     }
 
-    bool Lexer::is_current_valid_name_start()
+    bool Lexer::is_current_valid_name_start() const
     {
         return std::isalpha(current()) || current() == '_';
     }
 
-    bool Lexer::is_current_valid_name_tail()
+    bool Lexer::is_current_valid_name_tail() const
     {
         return std::isalnum(current()) || current() == '_';
     }
