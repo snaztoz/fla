@@ -35,7 +35,7 @@ namespace fla::compiler
                 nullptr,
                 { sub_expression.value() },
                 t.pos,
-                closing_paren.value().pos - t.pos,
+                len_between(t, closing_paren.value()),
                 t.line,
                 t.column,
             });

@@ -41,7 +41,7 @@ namespace fla::compiler
             nullptr,
             std::move(children),
             first.pos,
-            last.pos - first.pos + last.len,
+            len_between(first, last),
             first.line,
             first.column,
         });
@@ -78,7 +78,7 @@ namespace fla::compiler
             nullptr,
             std::move(children.value()),
             kw.pos,
-            last.pos - kw.pos + last.len,
+            len_between(kw, last),
             kw.line,
             kw.column,
         });
@@ -100,7 +100,7 @@ namespace fla::compiler
             nullptr,
             std::move(children.value()),
             kw.pos,
-            last.pos - kw.pos + last.len,
+            len_between(kw, last),
             kw.line,
             kw.column,
         });
@@ -161,7 +161,7 @@ namespace fla::compiler
             nullptr,
             std::move(children),
             kw.pos,
-            end.value().pos - kw.pos + end.value().len,
+            len_between(kw, end.value()),
             kw.line,
             kw.column,
         });
@@ -211,7 +211,7 @@ namespace fla::compiler
                     type_notation.value(),
                 },
                 name.value().pos,
-                type_notation.value().pos - name.value().pos + type_notation.value().len,
+                len_between(name.value(), type_notation.value()),
                 name.value().line,
                 name.value().column,
             });

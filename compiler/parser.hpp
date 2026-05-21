@@ -6,9 +6,11 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include "ast.hpp"
 #include "lexer.hpp"
+#include "token.hpp"
 
 namespace fla::compiler
 {
@@ -47,6 +49,15 @@ namespace fla::compiler
         ParseResult parse_primary_expression();
         std::expected<Token, std::string> expect(const TokenType &expected_tt);
     };
+
+    template <typename T>
+    concept Positionable = std::same_as<T, Node> || std::same_as<T, Token>;
+
+    template <Positionable P1, Positionable P2>
+    constexpr std::size_t len_between(const P1 &a, const P2 &b) noexcept
+    {
+        return b.pos - a.pos + b.len;
+    }
 } // namespace fla::compiler
 
 #endif
