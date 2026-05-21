@@ -1,0 +1,7 @@
+fun main() do
+  5
+
+  foo
+
+  (((bar)))
+end

@@ -2,15 +2,20 @@
 
 #include "compiler.hpp"
 
-const std::string_view src = R"(
-namespace foo.bar
+const std::string_view src = R"(namespace foo.bar
 
 use std.math
+
+fun main(argc int,) do
+  1045
+  bar
+  (((baz)))
+end
 )";
 
 int main()
 {
-    orchid::compiler::compile(src);
+    fla::compiler::compile(src);
 
     return 0;
 }

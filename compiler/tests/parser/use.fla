@@ -1,8 +1,8 @@
 use std.util.math
 
 use std
-    .util
-    .math
+  .util
+  .math
 
 use
 std
@@ -10,5 +10,5 @@ std
 .math
 
 use   std
-    .   util
+  .   util
 .   math
