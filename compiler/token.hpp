@@ -9,8 +9,12 @@ namespace fla::compiler
     enum class TokenType {
         Unknown,
         Eof,
+        False,
         Name,
+        Null,
         Number,
+        True,
+        KwAnd,
         KwClass,
         KwDo,
         KwElse,
@@ -18,11 +22,12 @@ namespace fla::compiler
         KwFun,
         KwIf,
         KwNamespace,
+        KwNot,
+        KwOr,
         KwUse,
         KwVar,
         KwWhile,
         OpAdd,
-        OpAnd,
         OpAssign,
         OpDiv,
         OpDot,
@@ -34,8 +39,6 @@ namespace fla::compiler
         OpMod,
         OpMul,
         OpNeq,
-        OpNot,
-        OpOr,
         OpSub,
         SymComma,
         SymLBrace,
@@ -53,10 +56,18 @@ namespace fla::compiler
             return "unknown token";
         case TokenType::Eof:
             return "EOF";
+        case TokenType::False:
+            return "false";
         case TokenType::Name:
             return "name";
+        case TokenType::Null:
+            return "null";
         case TokenType::Number:
             return "number";
+        case TokenType::True:
+            return "true";
+        case TokenType::KwAnd:
+            return "`and` keyword";
         case TokenType::KwClass:
             return "`class` keyword";
         case TokenType::KwDo:
@@ -71,6 +82,10 @@ namespace fla::compiler
             return "`if` keyword";
         case TokenType::KwNamespace:
             return "`namespace` keyword";
+        case TokenType::KwNot:
+            return "`not` keyword";
+        case TokenType::KwOr:
+            return "`or` keyword";
         case TokenType::KwUse:
             return "`use` keyword";
         case TokenType::KwVar:
@@ -79,8 +94,6 @@ namespace fla::compiler
             return "`while` keyword";
         case TokenType::OpAdd:
             return "`+`";
-        case TokenType::OpAnd:
-            return "`&&`";
         case TokenType::OpAssign:
             return "`=`";
         case TokenType::OpDiv:
@@ -103,10 +116,6 @@ namespace fla::compiler
             return "`*`";
         case TokenType::OpNeq:
             return "`!=`";
-        case TokenType::OpNot:
-            return "`!`";
-        case TokenType::OpOr:
-            return "`||`";
         case TokenType::OpSub:
             return "`-`";
         case TokenType::SymComma:

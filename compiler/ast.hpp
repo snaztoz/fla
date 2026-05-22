@@ -12,6 +12,8 @@ namespace fla::compiler
 {
     enum class NodeType {
         Add,
+        And,
+        Bool,
         Div,
         Eq,
         ExpressionGroup,
@@ -27,7 +29,10 @@ namespace fla::compiler
         Name,
         NamespaceDeclaration,
         Neq,
+        Not,
+        Null,
         Number,
+        Or,
         Root,
         Sub,
         TypeNotation,
@@ -39,6 +44,10 @@ namespace fla::compiler
         switch (nt) {
         case NodeType::Add:
             return "addition";
+        case NodeType::And:
+            return "and";
+        case NodeType::Bool:
+            return "bool";
         case NodeType::Div:
             return "division";
         case NodeType::Eq:
@@ -69,8 +78,14 @@ namespace fla::compiler
             return "namespace declaration";
         case NodeType::Neq:
             return "not equal";
+        case NodeType::Not:
+            return "not";
+        case NodeType::Null:
+            return "null";
         case NodeType::Number:
             return "number";
+        case NodeType::Or:
+            return "or";
         case NodeType::Root:
             return "root";
         case NodeType::Sub:
@@ -84,7 +99,7 @@ namespace fla::compiler
         }
     }
 
-    using NodeValue = std::variant<std::nullptr_t, std::string_view, int>;
+    using NodeValue = std::variant<std::nullptr_t, std::string_view, int, bool>;
 
     struct Node {
         NodeType type;

@@ -15,6 +15,7 @@ namespace fla::compiler
               // EOF checking should be the first to avoid out of range access
               [this] { return try_match_eof(); },
 
+              [this] { return try_match("and", TokenType::KwAnd); },
               [this] { return try_match("class", TokenType::KwClass); },
               [this] { return try_match("do", TokenType::KwDo); },
               [this] { return try_match("else", TokenType::KwElse); },
@@ -22,17 +23,17 @@ namespace fla::compiler
               [this] { return try_match("fun", TokenType::KwFun); },
               [this] { return try_match("if", TokenType::KwIf); },
               [this] { return try_match("namespace", TokenType::KwNamespace); },
+              [this] { return try_match("not", TokenType::KwNot); },
+              [this] { return try_match("or", TokenType::KwOr); },
               [this] { return try_match("use", TokenType::KwUse); },
               [this] { return try_match("var", TokenType::KwVar); },
               [this] { return try_match("while", TokenType::KwWhile); },
 
               // Operators with more characters should have higher priority
-              [this] { return try_match("&&", TokenType::OpAnd); },
               [this] { return try_match("==", TokenType::OpEq); },
               [this] { return try_match(">=", TokenType::OpGte); },
               [this] { return try_match("<=", TokenType::OpLte); },
               [this] { return try_match("!=", TokenType::OpNeq); },
-              [this] { return try_match("||", TokenType::OpOr); },
               [this] { return try_match("+", TokenType::OpAdd); },
               [this] { return try_match("=", TokenType::OpAssign); },
               [this] { return try_match("/", TokenType::OpDiv); },
@@ -41,7 +42,6 @@ namespace fla::compiler
               [this] { return try_match("<", TokenType::OpLt); },
               [this] { return try_match("%", TokenType::OpMod); },
               [this] { return try_match("*", TokenType::OpMul); },
-              [this] { return try_match("!", TokenType::OpNot); },
               [this] { return try_match("-", TokenType::OpSub); },
 
               [this] { return try_match(",", TokenType::SymComma); },
@@ -52,6 +52,9 @@ namespace fla::compiler
               [this] { return try_match("]", TokenType::SymRBrack); },
               [this] { return try_match(")", TokenType::SymRParen); },
 
+              [this] { return try_match("false", TokenType::False); },
+              [this] { return try_match("null", TokenType::Null); },
+              [this] { return try_match("true", TokenType::True); },
               [this] { return try_match_name(); },
               [this] { return try_match_number(); },
           })

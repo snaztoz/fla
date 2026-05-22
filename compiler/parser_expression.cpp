@@ -17,7 +17,18 @@ namespace fla::compiler
 
     ParseResult Parser::parse_expression()
     {
-        return parse_equality_expression();
+        return parse_logical_and_or_expression();
+    }
+
+    ParseResult Parser::parse_logical_and_or_expression()
+    {
+        constexpr std::array op_mapping {
+            std::pair { TokenType::KwAnd, NodeType::And },
+            std::pair { TokenType::KwOr, NodeType::Or },
+        };
+
+        return parse_binary_operation(
+            op_mapping, [this] { return parse_equality_expression(); }, lexer);
     }
 
     ParseResult Parser::parse_equality_expression()
@@ -96,9 +107,44 @@ namespace fla::compiler
             });
         }
 
+        case TokenType::True: {
+            lexer.next();
+            return ParseResult({
+                NodeType::Bool,
+                true,
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+            });
+        }
+
+        case TokenType::False: {
+            lexer.next();
+            return ParseResult({
+                NodeType::Bool,
+                false,
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+            });
+        }
+
+        case TokenType::Null: {
+            lexer.next();
+            return ParseResult({
+                NodeType::Null,
+                nullptr,
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+            });
+        }
+
         case TokenType::Name: {
             lexer.next();
-
             return ParseResult({
                 NodeType::Name,
                 src.substr(t.pos, t.len),
