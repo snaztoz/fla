@@ -4,4 +4,6 @@ fun main() do
   foo
 
   (((bar)))
+
+  foo = bar = 3 + 10 * (abc - 7 / -2) * 5 >= 0 == true != not not false or false and 1 > 5
 end

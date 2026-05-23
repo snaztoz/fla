@@ -20,6 +20,8 @@ namespace fla::compiler
             std::print(" -> {}", *string_val);
         } else if (const auto *int_val { std::get_if<int>(&node.value) }) {
             std::print(" -> {}", *int_val);
+        } else if (const auto *bool_val { std::get_if<bool>(&node.value) }) {
+            std::print(" -> {}", *bool_val);
         }
 
         std::print(" ({}:{}:{})\n", node.line, node.column, node.len);
