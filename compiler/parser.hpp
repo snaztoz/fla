@@ -44,8 +44,7 @@ namespace fla::compiler
         ParseResult parse_comparison_expression();
         ParseResult parse_additive_expression();
         ParseResult parse_multiplicative_expression();
-        // ParseResult parse_unary_expression();
-        // ParseResult parse_prefix_expression();
+        ParseResult parse_unary_expression();
         ParseResult parse_primary_expression();
         std::expected<Token, std::string> expect(const TokenType &expected_tt);
     };

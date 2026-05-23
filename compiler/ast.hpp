@@ -29,6 +29,7 @@ namespace fla::compiler
         Mul,
         Name,
         NamespaceDeclaration,
+        Neg,
         Neq,
         Not,
         Null,
@@ -79,6 +80,8 @@ namespace fla::compiler
             return "name";
         case NodeType::NamespaceDeclaration:
             return "namespace declaration";
+        case NodeType::Neg:
+            return "negation";
         case NodeType::Neq:
             return "not equal";
         case NodeType::Not:

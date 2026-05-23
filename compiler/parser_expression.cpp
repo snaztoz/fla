@@ -85,7 +85,33 @@ namespace fla::compiler
         };
 
         return parse_binary_operation(
-            op_mapping, [this] { return parse_primary_expression(); }, lexer);
+            op_mapping, [this] { return parse_unary_expression(); }, lexer);
+    }
+
+    ParseResult Parser::parse_unary_expression()
+    {
+        const auto t { lexer.peek() };
+
+        if (t.type != TokenType::OpSub && t.type != TokenType::KwNot) {
+            return parse_primary_expression();
+        }
+
+        lexer.next();
+
+        const auto sub_expr { parse_unary_expression() };
+        if (!sub_expr) {
+            return sub_expr;
+        }
+
+        return ParseResult({
+            (t.type == TokenType::OpSub) ? NodeType::Neg : NodeType::Not,
+            nullptr,
+            { sub_expr.value() },
+            t.pos,
+            len_between(t, sub_expr.value()),
+            t.line,
+            t.column,
+        });
     }
 
     ParseResult Parser::parse_primary_expression()
