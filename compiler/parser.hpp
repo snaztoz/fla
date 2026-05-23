@@ -38,7 +38,7 @@ namespace fla::compiler
         ParseResult parse_type_notation();
         ParseResult parse_expression_statement();
         ParseResult parse_expression();
-        // ParseResult parse_assignment();
+        ParseResult parse_assignment();
         ParseResult parse_logical_and_or_expression();
         ParseResult parse_equality_expression();
         ParseResult parse_comparison_expression();

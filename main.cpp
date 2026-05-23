@@ -10,7 +10,7 @@ fun main(argc int,) do
   1045
   bar
   (((baz)))
-  5 + 123 * (10 - 4 / 5) * 2 <= 0 == true != false and true
+  foo = bar = 5 + 123 * (10 - 4 / 5) * 2 <= 0 == true != false and true
 end
 )";
 

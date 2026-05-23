@@ -17,7 +17,17 @@ namespace fla::compiler
 
     ParseResult Parser::parse_expression()
     {
-        return parse_logical_and_or_expression();
+        return parse_assignment();
+    }
+
+    ParseResult Parser::parse_assignment()
+    {
+        constexpr std::array op_mapping {
+            std::pair { TokenType::OpAssign, NodeType::Assign },
+        };
+
+        return parse_binary_operation(
+            op_mapping, [this] { return parse_logical_and_or_expression(); }, lexer);
     }
 
     ParseResult Parser::parse_logical_and_or_expression()

@@ -5,5 +5,5 @@ fun main() do
 
   (((bar)))
 
-  3 + 10 * (abc - 7 / 2) * 5 >= 0 == true != false or false and 1 > 5
+  foo = bar = 3 + 10 * (abc - 7 / 2) * 5 >= 0 == true != false or false and 1 > 5
 end

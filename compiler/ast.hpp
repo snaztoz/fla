@@ -13,6 +13,7 @@ namespace fla::compiler
     enum class NodeType {
         Add,
         And,
+        Assign,
         Bool,
         Div,
         Eq,
@@ -46,6 +47,8 @@ namespace fla::compiler
             return "addition";
         case NodeType::And:
             return "and";
+        case NodeType::Assign:
+            return "assign";
         case NodeType::Bool:
             return "bool";
         case NodeType::Div:
