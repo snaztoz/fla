@@ -76,7 +76,7 @@ namespace fla::compiler
         return ParseResult({
             NodeType::NamespaceDeclaration,
             nullptr,
-            std::move(*children),
+            *children,
             kw.pos,
             len_between(kw, last),
             kw.line,
@@ -98,7 +98,7 @@ namespace fla::compiler
         return ParseResult({
             NodeType::UseDeclaration,
             nullptr,
-            std::move(*children),
+            *children,
             kw.pos,
             len_between(kw, last),
             kw.line,
