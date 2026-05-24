@@ -21,6 +21,7 @@ namespace fla::compiler
         FunctionDefinition,
         FunctionParameter,
         FunctionParameterList,
+        FunctionReturnTypeNotation,
         Gt,
         Gte,
         Lt,
@@ -64,6 +65,8 @@ namespace fla::compiler
             return "function parameter";
         case NodeType::FunctionParameterList:
             return "function parameter list";
+        case NodeType::FunctionReturnTypeNotation:
+            return "function return type notation";
         case NodeType::Gt:
             return "greater than";
         case NodeType::Gte:

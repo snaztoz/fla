@@ -41,7 +41,7 @@ namespace fla::compiler
             return 1;
         }
 
-        print_node(root.value(), 0);
+        print_node(*root, 0);
 
         return 0;
     }

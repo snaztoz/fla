@@ -67,7 +67,7 @@ namespace fla::compiler
 
         for (const auto &rule : rules) {
             if (const auto match { rule() }; match) {
-                return match.value();
+                return *match;
             }
         }
 
@@ -95,7 +95,7 @@ namespace fla::compiler
                 curr_line = real_curr_line;
                 curr_column = real_curr_column;
 
-                return match.value();
+                return *match;
             }
         }
 

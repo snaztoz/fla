@@ -3,7 +3,7 @@ fun foo() do end
 fun foo(s string) do
 end
 
-fun foo(x int, y int, z int,) do
+fun foo(x int, y int, z int,) string do
 end
 
 fun main() do
