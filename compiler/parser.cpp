@@ -30,7 +30,7 @@ namespace fla::compiler
                 return res;
             }
 
-            children.push_back(res.value());
+            children.push_back(std::move(*res));
         }
 
         const auto first { children.at(0) };
@@ -66,17 +66,17 @@ namespace fla::compiler
     {
         const auto kw { lexer.next() };
 
-        auto children { parse_nested_names() };
+        const auto children { parse_nested_names() };
         if (!children) {
             return std::unexpected(children.error());
         }
 
-        const auto last { children.value().at(children.value().size() - 1) };
+        const auto last { children->at(children->size() - 1) };
 
         return ParseResult({
             NodeType::NamespaceDeclaration,
             nullptr,
-            std::move(children.value()),
+            std::move(*children),
             kw.pos,
             len_between(kw, last),
             kw.line,
@@ -88,17 +88,17 @@ namespace fla::compiler
     {
         const auto kw { lexer.next() };
 
-        auto children { parse_nested_names() };
+        const auto children { parse_nested_names() };
         if (!children) {
             return std::unexpected(children.error());
         }
 
-        const auto last { children.value().at(children.value().size() - 1) };
+        const auto last { children->at(children->size() - 1) };
 
         return ParseResult({
             NodeType::UseDeclaration,
             nullptr,
-            std::move(children.value()),
+            std::move(*children),
             kw.pos,
             len_between(kw, last),
             kw.line,
@@ -125,20 +125,27 @@ namespace fla::compiler
             return std::unexpected(parameters.error());
         }
 
-        if (!parameters.value().empty()) {
-            children.push_back({
-                NodeType::FunctionParameterList,
-                nullptr,
-                parameters.value(),
-                parameters.value()[0].pos,
-                parameters.value()[0].len,
-                parameters.value()[0].line,
-                parameters.value()[0].column,
-            });
+        if (!parameters->empty()) {
+            const auto pos { parameters->at(0).pos };
+            const auto len { parameters->at(0).len };
+            const auto line { parameters->at(0).line };
+            const auto column { parameters->at(0).column };
+
+            children.emplace_back(NodeType::FunctionParameterList, nullptr, std::move(*parameters),
+                                  pos, len, line, column);
         }
 
         if (const auto t { expect(TokenType::SymRParen) }; !t) {
             return std::unexpected(t.error());
+        }
+
+        // Return type is optional
+        if (lexer.peek().type != TokenType::KwDo) {
+            const auto return_type_notation { parse_function_return_type_notation() };
+            if (!return_type_notation) {
+                return std::unexpected(return_type_notation.error());
+            }
+            children.push_back(std::move(*return_type_notation));
         }
 
         if (const auto t { expect(TokenType::KwDo) }; !t) {
@@ -149,7 +156,7 @@ namespace fla::compiler
         if (!body) {
             return std::unexpected(body.error());
         }
-        std::move(body.value().begin(), body.value().end(), std::back_inserter(children));
+        std::move(body->begin(), body->end(), std::back_inserter(children));
 
         const auto end { expect(TokenType::KwEnd) };
         if (!end) {
@@ -161,7 +168,7 @@ namespace fla::compiler
             nullptr,
             std::move(children),
             kw.pos,
-            len_between(kw, end.value()),
+            len_between(kw, *end),
             kw.line,
             kw.column,
         });
@@ -196,28 +203,47 @@ namespace fla::compiler
                                                    token_type_string(next.type)));
             }
 
-            parameters.push_back({
-                NodeType::FunctionParameter,
-                nullptr,
+            const std::vector<Node> children = {
                 {
-                    {
-                        NodeType::Name,
-                        src.substr(name.value().pos, name.value().len),
-                        name.value().pos,
-                        name.value().len,
-                        name.value().line,
-                        name.value().column,
-                    },
-                    type_notation.value(),
+                    NodeType::Name,
+                    src.substr(name->pos, name->len),
+                    name->pos,
+                    name->len,
+                    name->line,
+                    name->column,
                 },
-                name.value().pos,
-                len_between(name.value(), type_notation.value()),
-                name.value().line,
-                name.value().column,
-            });
+                *type_notation,
+            };
+
+            parameters.emplace_back(NodeType::FunctionParameter, nullptr, std::move(children),
+                                    name->pos, len_between(*name, *type_notation), name->line,
+                                    name->column);
         }
 
         return parameters;
+    }
+
+    ParseResult Parser::parse_function_return_type_notation()
+    {
+        const auto type_notation { parse_type_notation() };
+        if (!type_notation) {
+            return std::unexpected(type_notation.error());
+        }
+
+        const auto pos { type_notation->pos };
+        const auto len { type_notation->len };
+        const auto line { type_notation->line };
+        const auto column { type_notation->column };
+
+        return ParseResult({
+            NodeType::FunctionReturnTypeNotation,
+            nullptr,
+            { std::move(*type_notation) },
+            pos,
+            len,
+            line,
+            column,
+        });
     }
 
     ParseChildrenResult Parser::parse_nested_names()
@@ -229,14 +255,9 @@ namespace fla::compiler
             return std::unexpected(first_name.error());
         }
 
-        children.push_back({
-            NodeType::Name,
-            src.substr(first_name.value().pos, first_name.value().len),
-            first_name.value().pos,
-            first_name.value().len,
-            first_name.value().line,
-            first_name.value().column,
-        });
+        children.emplace_back(NodeType::Name, src.substr(first_name->pos, first_name->len),
+                              first_name->pos, first_name->len, first_name->line,
+                              first_name->column);
 
         while (true) {
             const auto t { lexer.peek() };
@@ -251,14 +272,9 @@ namespace fla::compiler
                 return std::unexpected(next_name.error());
             }
 
-            children.push_back({
-                NodeType::Name,
-                src.substr(next_name.value().pos, next_name.value().len),
-                next_name.value().pos,
-                next_name.value().len,
-                next_name.value().line,
-                next_name.value().column,
-            });
+            children.emplace_back(NodeType::Name, src.substr(next_name->pos, next_name->len),
+                                  next_name->pos, next_name->len, next_name->line,
+                                  next_name->column);
         }
 
         return children;
@@ -273,7 +289,7 @@ namespace fla::compiler
             if (!expression) {
                 return std::unexpected(expression.error());
             }
-            children.push_back(expression.value());
+            children.push_back(std::move(*expression));
         }
 
         return children;
@@ -288,11 +304,11 @@ namespace fla::compiler
 
         return ParseResult({
             NodeType::TypeNotation,
-            src.substr(type_notation.value().pos, type_notation.value().len),
-            type_notation.value().pos,
-            type_notation.value().len,
-            type_notation.value().line,
-            type_notation.value().column,
+            src.substr(type_notation->pos, type_notation->len),
+            type_notation->pos,
+            type_notation->len,
+            type_notation->line,
+            type_notation->column,
         });
     }
 

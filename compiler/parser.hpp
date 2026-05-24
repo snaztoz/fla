@@ -33,6 +33,7 @@ namespace fla::compiler
         ParseResult parse_use_statement();
         ParseResult parse_function_definition();
         ParseChildrenResult parse_function_parameters();
+        ParseResult parse_function_return_type_notation();
         ParseChildrenResult parse_nested_names();
         ParseChildrenResult parse_body();
         ParseResult parse_type_notation();

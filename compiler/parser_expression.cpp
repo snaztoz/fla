@@ -103,12 +103,14 @@ namespace fla::compiler
             return sub_expr;
         }
 
+        const auto len { len_between(t, *sub_expr) };
+
         return ParseResult({
             (t.type == TokenType::OpSub) ? NodeType::Neg : NodeType::Not,
             nullptr,
-            { sub_expr.value() },
+            { std::move(*sub_expr) },
             t.pos,
-            len_between(t, sub_expr.value()),
+            len,
             t.line,
             t.column,
         });
@@ -122,9 +124,9 @@ namespace fla::compiler
         case TokenType::SymLParen: {
             lexer.next();
 
-            const auto sub_expression { parse_expression() };
-            if (!sub_expression) {
-                return std::unexpected(sub_expression.error());
+            const auto sub_expr { parse_expression() };
+            if (!sub_expr) {
+                return std::unexpected(sub_expr.error());
             }
 
             const auto closing_paren { expect(TokenType::SymRParen) };
@@ -135,9 +137,9 @@ namespace fla::compiler
             return ParseResult({
                 NodeType::ExpressionGroup,
                 nullptr,
-                { sub_expression.value() },
+                { std::move(*sub_expr) },
                 t.pos,
-                len_between(t, closing_paren.value()),
+                len_between(t, *closing_paren),
                 t.line,
                 t.column,
             });
@@ -222,7 +224,7 @@ namespace fla::compiler
             return expr;
         }
 
-        auto lhs { expr.value() };
+        auto lhs { *expr };
 
         while (true) {
             std::optional<NodeType> node_type { std::nullopt };
@@ -247,12 +249,12 @@ namespace fla::compiler
             }
 
             const auto pos { lhs.pos };
-            const auto len { len_between(lhs, rhs.value()) };
+            const auto len { len_between(lhs, *rhs) };
             const auto line { lhs.line };
             const auto column { lhs.column };
-            const std::vector<Node> children = { std::move(lhs), rhs.value() };
+            const std::vector<Node> children = { std::move(lhs), std::move(*rhs) };
 
-            lhs = { node_type.value(), nullptr, children, pos, len, line, column };
+            lhs = { *node_type, nullptr, children, pos, len, line, column };
         }
 
         return lhs;

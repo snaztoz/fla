@@ -6,6 +6,9 @@ const std::string_view src = R"(namespace foo.bar
 
 use std.math
 
+fun helper() string do
+end
+
 fun main(argc int,) do
   1045
   bar
