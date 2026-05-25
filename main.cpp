@@ -1,8 +1,6 @@
-#include <string_view>
+#include "fla/compiler.h"
 
-#include "compiler.hpp"
-
-const std::string_view src = R"(namespace foo.bar
+const char *src = R"(namespace foo.bar
 
 use std.math
 
@@ -19,7 +17,7 @@ end
 
 int main()
 {
-    fla::compiler::compile(src);
+    fla_compile(src);
 
     return 0;
 }

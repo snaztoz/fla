@@ -4,9 +4,15 @@
 #include <variant>
 
 #include "compiler.hpp"
+#include "fla/compiler.h"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "token.hpp"
+
+int fla_compile(const char *src)
+{
+    return fla::compiler::compile(src);
+}
 
 namespace fla::compiler
 {
