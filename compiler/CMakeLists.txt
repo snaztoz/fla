@@ -3,6 +3,7 @@ add_library(flac
     ast.hpp
     compiler.cpp
     compiler.hpp
+    error.hpp
     lexer.cpp
     lexer.hpp
     parser_expression.cpp

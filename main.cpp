@@ -1,3 +1,5 @@
+#include <print>
+
 #include "fla/compiler.h"
 
 const char *src = R"(namespace foo.bar
@@ -17,7 +19,14 @@ end
 
 int main()
 {
-    fla_compile(src);
+    FlaCompilerError err {};
 
-    return 0;
+    const auto res { fla_compile(src, &err) };
+    if (res != 0) {
+        std::println("{}", err.msg);
+    }
+
+    fla_free_compiler_error(&err);
+
+    return res;
 }

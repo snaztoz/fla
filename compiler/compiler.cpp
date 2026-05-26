@@ -1,17 +1,55 @@
-#include <cstdio>
+#include <cstdlib>
 #include <print>
 #include <string>
+#include <string_view>
 #include <variant>
 
 #include "compiler.hpp"
+#include "error.hpp"
 #include "fla/compiler.h"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "token.hpp"
 
-int fla_compile(const char *src)
+extern "C" {
+int fla_compile(const char *src, struct FlaCompilerError *err)
 {
-    return fla::compiler::compile(src);
+    try {
+        const auto result { fla::compiler::compile(src) };
+        if (!result) {
+            throw result.error();
+        }
+    } catch (const fla::compiler::Error &e) {
+        err->pos = e.pos;
+        err->len = e.len;
+        err->line = e.line;
+        err->col = e.col;
+
+        const auto msg_len { e.msg.length() + 1 };
+
+        err->msg = static_cast<char *>(std::malloc(msg_len));
+        if (err->msg == nullptr) {
+            return 99;
+        }
+
+        std::memcpy(err->msg, e.msg.c_str(), msg_len);
+
+        return 1;
+    } catch (const std::exception &e) {
+        std::println("error: ", e.what());
+        return 1;
+    }
+
+    return 0;
+}
+
+int fla_free_compiler_error(struct FlaCompilerError *err)
+{
+    if (err && err->msg) {
+        std::free(err->msg);
+    }
+    return 0;
+}
 }
 
 namespace fla::compiler
@@ -37,18 +75,17 @@ namespace fla::compiler
         }
     }
 
-    int compile(const std::string_view src)
+    std::expected<void, Error> compile(const std::string_view src)
     {
         Parser parser { src };
 
         auto root { parser.parse() };
         if (!root) {
-            std::println(stderr, "error: {}", root.error());
-            return 1;
+            return std::unexpected(root.error());
         }
 
         print_node(*root, 0);
 
-        return 0;
+        return {};
     }
 } // namespace fla::compiler

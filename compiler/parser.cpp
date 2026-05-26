@@ -25,7 +25,7 @@ namespace fla::compiler
                 break;
             }
 
-            const auto res { parse_root(t.type) };
+            const auto res { parse_root(t) };
             if (!res) {
                 return res;
             }
@@ -47,9 +47,9 @@ namespace fla::compiler
         });
     }
 
-    ParseResult Parser::parse_root(const TokenType &tt)
+    ParseResult Parser::parse_root(const Token &t)
     {
-        switch (tt) {
+        switch (t.type) {
         case TokenType::KwNamespace:
             return parse_namespace_statement();
         case TokenType::KwUse:
@@ -57,8 +57,14 @@ namespace fla::compiler
         case TokenType::KwFun:
             return parse_function_definition();
         default:
-            return std::unexpected(std::format("expecting top-level statement(s), found {} instead",
-                                               token_type_string(tt)));
+            return std::unexpected(Error {
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+                std::format("expecting top-level statement(s), found {} instead",
+                            token_type_string(t.type)),
+            });
         }
     }
 
@@ -198,9 +204,15 @@ namespace fla::compiler
             case TokenType::SymRParen:
                 continue;
             default:
-                return std::unexpected(std::format("expecting {}, found {} instead",
-                                                   token_type_string(TokenType::SymRParen),
-                                                   token_type_string(next.type)));
+                return std::unexpected(Error {
+                    next.pos,
+                    next.len,
+                    next.line,
+                    next.column,
+                    std::format("expecting {}, found {} instead",
+                                token_type_string(TokenType::SymRParen),
+                                token_type_string(next.type)),
+                });
             }
 
             const std::vector<Node> children = {
@@ -317,13 +329,18 @@ namespace fla::compiler
         return parse_expression();
     }
 
-    std::expected<Token, std::string> Parser::expect(const TokenType &expected_tt)
+    std::expected<Token, Error> Parser::expect(const TokenType &expected_tt)
     {
         const auto t { lexer.next() };
         if (t.type != expected_tt) {
-            return std::unexpected(std::format("expecting {}, found {} instead",
-                                               token_type_string(expected_tt),
-                                               token_type_string(t.type)));
+            return std::unexpected(Error {
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+                std::format("expecting {}, found {} instead", token_type_string(expected_tt),
+                            token_type_string(t.type)),
+            });
         }
         return t;
     }
