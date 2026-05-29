@@ -10,10 +10,8 @@
 
 namespace fla::cli
 {
-    std::expected<std::string, std::string> read_content()
+    std::expected<std::string, std::string> read_content(std::string &path)
     {
-        const auto path { "./temp/main.fla" };
-
         std::ifstream file(path);
         if (!file.is_open()) {
             return std::unexpected(std::format("unable to open {}", path));
@@ -25,9 +23,9 @@ namespace fla::cli
         return buffer.str();
     }
 
-    int run_compiler()
+    int run_compiler(std::string &path)
     {
-        const auto src { read_content() };
+        const auto src { read_content(path) };
         if (!src) {
             std::println("error: {}", src.error());
             return 1;
