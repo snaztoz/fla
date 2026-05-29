@@ -1,30 +1,41 @@
+#include <expected>
+#include <format>
+#include <fstream>
 #include <print>
+#include <sstream>
+#include <string>
 
 #include "compiler.hpp"
 #include "fla/compiler.h"
 
 namespace fla::cli
 {
-    const char *src = R"(namespace foo.bar
+    std::expected<std::string, std::string> read_content()
+    {
+        const auto path { "./temp/main.fla" };
 
-    use std.math
+        std::ifstream file(path);
+        if (!file.is_open()) {
+            return std::unexpected(std::format("unable to open {}", path));
+        }
 
-    fun helper() string do
-    end
+        std::stringstream buffer;
+        buffer << file.rdbuf();
 
-    fun main(argc int,) do
-    1045
-    bar
-    (((baz)))
-    foo = bar = 5 + 123 * (10 - 4 / -5) * 2 <= 0 == true != not not false and true
-    end
-    )";
+        return buffer.str();
+    }
 
     int run_compiler()
     {
+        const auto src { read_content() };
+        if (!src) {
+            std::println("error: {}", src.error());
+            return 1;
+        }
+
         FlaCompilerError err {};
 
-        const auto res { fla_compile(src, &err) };
+        const auto res { fla_compile(src->c_str(), &err) };
         if (res != 0) {
             std::println("{}", err.msg);
         }
