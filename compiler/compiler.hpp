@@ -1,11 +1,15 @@
-#ifndef _FLA_COMPILER_H
-#define _FLA_COMPILER_H
+#ifndef FLA_COMPILER_COMPILER_H
+#define FLA_COMPILER_COMPILER_H
 
+#include <expected>
+#include <string>
 #include <string_view>
+
+#include "error.hpp"
 
 namespace fla::compiler
 {
-    int compile(const std::string_view src);
+    std::expected<void, Error> compile(const std::string_view src);
 }
 
 #endif

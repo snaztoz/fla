@@ -9,13 +9,14 @@
 #include <type_traits>
 
 #include "ast.hpp"
+#include "error.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
 
 namespace fla::compiler
 {
-    using ParseResult = std::expected<Node, std::string>;
-    using ParseChildrenResult = std::expected<std::vector<Node>, std::string>;
+    using ParseResult = std::expected<Node, Error>;
+    using ParseChildrenResult = std::expected<std::vector<Node>, Error>;
 
     class Parser
     {
@@ -28,7 +29,7 @@ namespace fla::compiler
         Lexer lexer;
         const std::string_view src;
 
-        ParseResult parse_root(const TokenType &type);
+        ParseResult parse_root(const Token &t);
         ParseResult parse_namespace_statement();
         ParseResult parse_use_statement();
         ParseResult parse_function_definition();
@@ -47,7 +48,7 @@ namespace fla::compiler
         ParseResult parse_multiplicative_expression();
         ParseResult parse_unary_expression();
         ParseResult parse_primary_expression();
-        std::expected<Token, std::string> expect(const TokenType &expected_tt);
+        std::expected<Token, Error> expect(const TokenType &expected_tt);
     };
 
     template <typename T>

@@ -38,10 +38,10 @@ std::string read_fixture(std::filesystem::path path)
 #define TEST_PARSE(name, fixture_path)                                                             \
     do {                                                                                           \
         std::print(stderr, "test {} parsing...", name);                                            \
-        auto fixture { read_fixture(fixture_path) };                                               \
+        const auto fixture { read_fixture(fixture_path) };                                         \
         fla::compiler::Parser parser { fixture };                                                  \
-        if (auto res = parser.parse(); !res) {                                                     \
-            std::println(stderr, "failed ({})", res.error());                                      \
+        if (const auto res = parser.parse(); !res) {                                               \
+            std::println(stderr, "failed ({})", res.error().msg);                                  \
             std::exit(1);                                                                          \
         }                                                                                          \
         std::println(stderr, "ok");                                                                \
@@ -50,9 +50,9 @@ std::string read_fixture(std::filesystem::path path)
 int main()
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-    std::filesystem::path path { std::format("{}/tests/parser", BUILD_TYPE) };
+    const std::filesystem::path path { std::format("{}/tests/parser", BUILD_TYPE) };
 #else
-    std::filesystem::path path { "tests/parser" };
+    const std::filesystem::path path { "tests/parser" };
 #endif
 
     TEST_PARSE("expression", path / "expression.fla");
