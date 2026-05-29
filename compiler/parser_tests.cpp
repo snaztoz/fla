@@ -38,10 +38,10 @@ std::string read_fixture(std::filesystem::path path)
 #define TEST_PARSE(name, fixture_path)                                                             \
     do {                                                                                           \
         std::print(stderr, "test {} parsing...", name);                                            \
-        const auto fixture { read_fixture(fixture_path) };                                               \
+        const auto fixture { read_fixture(fixture_path) };                                         \
         fla::compiler::Parser parser { fixture };                                                  \
-        if (const auto res = parser.parse(); !res) {                                                     \
-            std::println(stderr, "failed ({})", res.error().msg);                                      \
+        if (const auto res = parser.parse(); !res) {                                               \
+            std::println(stderr, "failed ({})", res.error().msg);                                  \
             std::exit(1);                                                                          \
         }                                                                                          \
         std::println(stderr, "ok");                                                                \
