@@ -1,5 +1,5 @@
-#ifndef FLA_PARSER_H
-#define FLA_PARSER_H
+#ifndef FLA_COMPILER_PARSER_H
+#define FLA_COMPILER_PARSER_H
 
 #include <cstddef>
 #include <expected>

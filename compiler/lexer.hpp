@@ -1,5 +1,5 @@
-#ifndef FLA_LEXER_H
-#define FLA_LEXER_H
+#ifndef FLA_COMPILER_LEXER_H
+#define FLA_COMPILER_LEXER_H
 
 #include <cstddef>
 #include <functional>
