@@ -1,6 +1,6 @@
 add_executable(fla
-    compiler.cpp
-    compiler.hpp
+    command.cpp
+    command.hpp
     main.cpp
 )
 
