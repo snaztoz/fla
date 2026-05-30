@@ -1,5 +1,5 @@
-#ifndef FLA_TOKEN_H
-#define FLA_TOKEN_H
+#ifndef FLA_COMPILER_TOKEN_H
+#define FLA_COMPILER_TOKEN_H
 
 #include <cstddef>
 #include <utility>

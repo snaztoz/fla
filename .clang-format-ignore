@@ -1,1 +1,2 @@
+include/fla/version.h.in
 vendor/**
