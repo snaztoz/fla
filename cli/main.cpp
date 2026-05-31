@@ -17,9 +17,9 @@ int main(int argc, char **argv)
 
     CLI11_PARSE(app, argc, argv);
 
-    if (*compile.command) {
+    if (compile.should_run()) {
         return compile.run();
-    } else if (*version.command) {
+    } else if (version.should_run()) {
         return version.run();
     }
 
