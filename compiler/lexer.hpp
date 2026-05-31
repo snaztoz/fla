@@ -16,7 +16,7 @@ namespace fla::compiler
     class Lexer
     {
     public:
-        Lexer(const std::string_view src);
+        explicit Lexer(const std::string_view src);
         Token next();
         Token peek();
 
