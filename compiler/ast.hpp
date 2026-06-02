@@ -15,6 +15,7 @@ namespace fla::compiler
         And,
         Assign,
         Bool,
+        ConstantDeclaration,
         Div,
         Eq,
         ExpressionGroup,
@@ -40,6 +41,7 @@ namespace fla::compiler
         Sub,
         TypeNotation,
         UseDeclaration,
+        VariableDeclaration,
     };
 
     constexpr std::string_view node_type_string(const NodeType &nt) noexcept
@@ -53,6 +55,8 @@ namespace fla::compiler
             return "assign";
         case NodeType::Bool:
             return "bool";
+        case NodeType::ConstantDeclaration:
+            return "constant declaration";
         case NodeType::Div:
             return "division";
         case NodeType::Eq:
@@ -103,6 +107,8 @@ namespace fla::compiler
             return "type notation";
         case NodeType::UseDeclaration:
             return "use declaration";
+        case NodeType::VariableDeclaration:
+            return "variable declaration";
         default:
             std::unreachable();
         }

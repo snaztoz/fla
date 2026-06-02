@@ -1,0 +1,7 @@
+fun main() do
+  var foo = 10 + 5
+
+  const bar = name * 5
+
+  var abc int = 100
+end

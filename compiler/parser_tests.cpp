@@ -41,7 +41,8 @@ std::string read_fixture(std::filesystem::path path)
         const auto fixture { read_fixture(fixture_path) };                                         \
         fla::compiler::Parser parser { fixture };                                                  \
         if (const auto res = parser.parse(); !res) {                                               \
-            std::println(stderr, "failed ({})", res.error().msg);                                  \
+            std::println(stderr, "failed ({}:{}:{})", res.error().line, res.error().col,           \
+                         res.error().msg);                                                         \
             std::exit(1);                                                                          \
         }                                                                                          \
         std::println(stderr, "ok");                                                                \
@@ -59,6 +60,7 @@ int main()
     TEST_PARSE("function", path / "function.fla");
     TEST_PARSE("namespace", path / "namespace.fla");
     TEST_PARSE("use", path / "use.fla");
+    TEST_PARSE("variable", path / "variable.fla");
 
     std::println(stderr, "all tests passed!");
 
