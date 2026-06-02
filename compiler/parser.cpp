@@ -2,6 +2,7 @@
 #include <format>
 #include <iterator>
 #include <memory>
+#include <set>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -292,16 +293,53 @@ namespace fla::compiler
         return children;
     }
 
+    using BodyStatementRuleTokenPrefixes = std::set<TokenType>;
+    using BodyStatementRuleParser = std::function<ParseResult(void)>;
+
     ParseChildrenResult Parser::parse_body()
     {
         std::vector<Node> children;
 
-        while (lexer.peek().type != TokenType::KwEnd) {
-            const auto expression { parse_expression_statement() };
-            if (!expression) {
-                return std::unexpected(expression.error());
+        const auto rules = {
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwConst, TokenType::KwVar },
+                [this] { return parse_variable_declaration(); }),
+        };
+
+        while (true) {
+            const auto t { lexer.peek() };
+            if (t.type == TokenType::KwEnd) {
+                break;
             }
-            children.push_back(std::move(*expression));
+
+            auto found = false;
+
+            for (const auto &[prefix, parse_rule] : rules) {
+                if (!prefix.contains(t.type)) {
+                    continue;
+                }
+
+                const auto statement { parse_rule() };
+                if (!statement) {
+                    return std::unexpected(statement.error());
+                }
+
+                children.push_back(std::move(*statement));
+                found = true;
+
+                break;
+            }
+
+            if (found) {
+                continue;
+            }
+
+            const auto statement { parse_expression_statement() };
+            if (!statement) {
+                return std::unexpected(statement.error());
+            }
+
+            children.push_back(std::move(*statement));
         }
 
         return children;
@@ -321,6 +359,55 @@ namespace fla::compiler
             type_notation->len,
             type_notation->line,
             type_notation->column,
+        });
+    }
+
+    ParseResult Parser::parse_variable_declaration()
+    {
+        std::vector<Node> children;
+
+        const auto kw { lexer.next() };
+
+        const auto name { expect(TokenType::Name) };
+        if (!name) {
+            return std::unexpected(name.error());
+        }
+        children.emplace_back(NodeType::Name, src.substr(name->pos, name->len), name->pos,
+                              name->len, name->line, name->column);
+
+        if (lexer.peek().type != TokenType::OpAssign) {
+            const auto type_notation { parse_type_notation() };
+            if (!type_notation) {
+                return std::unexpected(type_notation.error());
+            }
+            children.push_back(std::move(*type_notation));
+        }
+
+        if (const auto t { expect(TokenType::OpAssign) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        const auto expression { parse_expression() };
+        if (!expression) {
+            return expression;
+        }
+
+        const auto pos { kw.pos };
+        const auto len { len_between(kw, *expression) };
+        const auto line { kw.line };
+        const auto column { kw.column };
+
+        children.push_back(std::move(*expression));
+
+        return ParseResult({
+            kw.type == TokenType::KwVar ? NodeType::VariableDeclaration
+                                        : NodeType::ConstantDeclaration,
+            nullptr,
+            std::move(children),
+            pos,
+            len,
+            line,
+            column,
         });
     }
 

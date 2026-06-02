@@ -1,5 +1,6 @@
 #include <array>
 #include <charconv>
+#include <format>
 #include <functional>
 #include <optional>
 #include <span>
@@ -211,7 +212,13 @@ namespace fla::compiler
         }
 
         default:
-            std::unreachable();
+            return std::unexpected(Error {
+                t.pos,
+                t.len,
+                t.line,
+                t.column,
+                std::format("expecting an expression, found {} instead", token_type_string(t.type)),
+            });
         }
     }
 

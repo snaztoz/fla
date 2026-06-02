@@ -7,27 +7,37 @@
 
 namespace fla::cli
 {
-    class CompileCommand
+    class Command
     {
     public:
+        bool should_run() const
+        {
+            return command->parsed();
+        }
+
+        virtual int run() const = 0;
+
+    protected:
         CLI::App *command;
+    };
 
-        CompileCommand(CLI::App &base);
+    class CompileCommand : public Command
+    {
+    public:
+        explicit CompileCommand(CLI::App &base);
 
-        int run() const;
+        int run() const override;
 
     private:
         std::string src_path;
     };
 
-    class VersionCommand
+    class VersionCommand : public Command
     {
     public:
-        CLI::App *command;
+        explicit VersionCommand(CLI::App &base);
 
-        VersionCommand(CLI::App &base);
-
-        int run() const;
+        int run() const override;
     };
 } // namespace fla::cli
 

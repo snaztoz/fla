@@ -30,15 +30,23 @@ int fla_compile(const char *src, struct FlaCompilerError *err)
 
         err->msg = static_cast<char *>(std::malloc(msg_len));
         if (err->msg == nullptr) {
-            return 99;
+            return 2;
         }
 
         std::memcpy(err->msg, e.msg.c_str(), msg_len);
 
         return 1;
     } catch (const std::exception &e) {
-        std::println("error: ", e.what());
-        return 1;
+        const auto msg_len { std::strlen(e.what()) + 1 };
+
+        err->msg = static_cast<char *>(std::malloc(msg_len));
+        if (err->msg == nullptr) {
+            return 2;
+        }
+
+        std::memcpy(err->msg, e.what(), msg_len);
+
+        return 3;
     }
 
     return 0;

@@ -44,7 +44,7 @@ namespace fla::cli
 
         const auto res { fla_compile(src->c_str(), &err) };
         if (res != 0) {
-            std::println("{}", err.msg);
+            std::println("error: {}", err.msg);
         }
 
         fla_free_compiler_error(&err);

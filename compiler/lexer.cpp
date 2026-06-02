@@ -17,6 +17,7 @@ namespace fla::compiler
 
               [this] { return try_match("and", TokenType::KwAnd); },
               [this] { return try_match("class", TokenType::KwClass); },
+              [this] { return try_match("const", TokenType::KwConst); },
               [this] { return try_match("do", TokenType::KwDo); },
               [this] { return try_match("else", TokenType::KwElse); },
               [this] { return try_match("end", TokenType::KwEnd); },
@@ -55,6 +56,7 @@ namespace fla::compiler
               [this] { return try_match("false", TokenType::False); },
               [this] { return try_match("null", TokenType::Null); },
               [this] { return try_match("true", TokenType::True); },
+
               [this] { return try_match_name(); },
               [this] { return try_match_number(); },
           })

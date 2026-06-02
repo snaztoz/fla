@@ -21,7 +21,7 @@ namespace fla::compiler
     class Parser
     {
     public:
-        Parser(const std::string_view src);
+        explicit Parser(const std::string_view src);
 
         ParseResult parse();
 
@@ -38,6 +38,7 @@ namespace fla::compiler
         ParseChildrenResult parse_nested_names();
         ParseChildrenResult parse_body();
         ParseResult parse_type_notation();
+        ParseResult parse_variable_declaration();
         ParseResult parse_expression_statement();
         ParseResult parse_expression();
         ParseResult parse_assignment();
