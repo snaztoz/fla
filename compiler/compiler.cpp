@@ -74,7 +74,7 @@ namespace fla::compiler
             std::print(" -> {}", *bool_val);
         }
 
-        std::print(" ({}:{}:{})\n", node.line, node.column, node.len);
+        std::print(" ({}:{}:{})\n", node.line, node.col, node.len);
 
         for (const auto &child : node.children) {
             print_node(child, level + 1);

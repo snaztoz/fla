@@ -31,7 +31,7 @@ namespace fla::compiler
     };
 
     Lexer::Lexer(std::string_view s)
-        : src(s), cursor(0), curr_line(1), curr_column(1),
+        : src(s), cursor(0), curr_line(1), curr_col(1),
           rules({
               // EOF checking should be the first to avoid out of range access
               [this] { return try_match_eof(); },
@@ -80,7 +80,7 @@ namespace fla::compiler
             .pos = cursor,
             .len = 0,
             .line = curr_line,
-            .column = curr_column,
+            .col = curr_col,
         };
     }
 
@@ -90,14 +90,14 @@ namespace fla::compiler
 
         const auto real_cursor = cursor;
         const auto real_curr_line = curr_line;
-        const auto real_curr_column = curr_column;
+        const auto real_curr_col = curr_col;
 
         for (const auto &rule : rules) {
             if (const auto match { rule() }; match) {
                 // Restore states
                 cursor = real_cursor;
                 curr_line = real_curr_line;
-                curr_column = real_curr_column;
+                curr_col = real_curr_col;
 
                 return *match;
             }
@@ -108,7 +108,7 @@ namespace fla::compiler
             .pos = cursor,
             .len = 0,
             .line = curr_line,
-            .column = curr_column,
+            .col = curr_col,
         };
     }
 
@@ -117,9 +117,9 @@ namespace fla::compiler
         while (cursor < src.length() && std::isspace(current())) {
             if (current() == '\n') {
                 curr_line += 1;
-                curr_column = 0;
+                curr_col = 0;
             }
-            curr_column += 1;
+            curr_col += 1;
             cursor += 1;
         }
     }
@@ -136,11 +136,11 @@ namespace fla::compiler
             .pos = cursor,
             .len = text.length(),
             .line = curr_line,
-            .column = curr_column,
+            .col = curr_col,
         };
 
         cursor += text.length();
-        curr_column += text.length();
+        curr_col += text.length();
 
         return t;
     }
@@ -168,10 +168,10 @@ namespace fla::compiler
             .pos = pos,
             .len = len,
             .line = curr_line,
-            .column = curr_column,
+            .col = curr_col,
         };
 
-        curr_column += len;
+        curr_col += len;
 
         return t;
     }
@@ -196,10 +196,10 @@ namespace fla::compiler
             .pos = pos,
             .len = len,
             .line = curr_line,
-            .column = curr_column,
+            .col = curr_col,
         };
 
-        curr_column += len;
+        curr_col += len;
 
         return t;
     }
@@ -215,7 +215,7 @@ namespace fla::compiler
             .pos = cursor,
             .len = 0,
             .line = curr_line,
-            .column = curr_column,
+            .col = curr_col,
         };
     }
 

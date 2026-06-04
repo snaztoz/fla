@@ -35,7 +35,7 @@ target_include_directories(flac_parser_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 add_custom_command(TARGET flac_parser_tests POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/tests"
-            "$<TARGET_FILE_DIR:flac_parser_tests>/tests"
+            "${CMAKE_CURRENT_BINARY_DIR}/tests"
 )
 
 add_test(NAME ParserTests COMMAND flac_parser_tests)

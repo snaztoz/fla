@@ -122,17 +122,17 @@ namespace fla::compiler
         std::size_t pos;
         std::size_t len;
         std::size_t line;
-        std::size_t column;
+        std::size_t col;
 
         Node(const NodeType t, const NodeValue v, const std::size_t pos, const std::size_t len,
-             const std::size_t line, const std::size_t column)
-            : type(t), value(v), children({}), pos(pos), len(len), line(line), column(column)
+             const std::size_t line, const std::size_t col)
+            : type(t), value(v), children({}), pos(pos), len(len), line(line), col(col)
         {
         }
 
         Node(const NodeType t, const NodeValue v, const std::vector<Node> c, const std::size_t pos,
-             const std::size_t len, const std::size_t line, const std::size_t column)
-            : type(t), value(v), children(c), pos(pos), len(len), line(line), column(column)
+             const std::size_t len, const std::size_t line, const std::size_t col)
+            : type(t), value(v), children(c), pos(pos), len(len), line(line), col(col)
         {
         }
     };
