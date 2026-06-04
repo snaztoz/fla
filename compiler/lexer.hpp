@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <map>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -27,10 +28,10 @@ namespace fla::compiler
         std::size_t curr_column;
         const LexerRules rules;
 
-        std::optional<Token> try_match(const std::string_view text,
-                                       const TokenType type_if_matches);
-        std::optional<Token> try_match_name();
+        std::optional<Token> try_match();
         std::optional<Token> try_match_number();
+        std::optional<Token> try_match_sym(const std::string_view text,
+                                           const TokenType type_if_matches);
         std::optional<Token> try_match_eof() const;
         void skip_whitespaces();
         constexpr char current() const;

@@ -4,4 +4,6 @@ fun main() do
   const bar = name * 5
 
   var abc int = 100
+
+  var variable = 100
 end
