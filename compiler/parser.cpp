@@ -1,7 +1,5 @@
-#include <cstddef>
 #include <format>
 #include <iterator>
-#include <memory>
 #include <set>
 #include <string_view>
 #include <utility>
@@ -44,7 +42,7 @@ namespace fla::compiler
             first.pos,
             len_between(first, last),
             first.line,
-            first.column,
+            first.col,
         });
     }
 
@@ -62,7 +60,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
                 std::format("expecting top-level statement(s), found {} instead",
                             token_type_string(t.type)),
             });
@@ -87,7 +85,7 @@ namespace fla::compiler
             kw.pos,
             len_between(kw, last),
             kw.line,
-            kw.column,
+            kw.col,
         });
     }
 
@@ -109,7 +107,7 @@ namespace fla::compiler
             kw.pos,
             len_between(kw, last),
             kw.line,
-            kw.column,
+            kw.col,
         });
     }
 
@@ -136,10 +134,10 @@ namespace fla::compiler
             const auto pos { parameters->at(0).pos };
             const auto len { parameters->at(0).len };
             const auto line { parameters->at(0).line };
-            const auto column { parameters->at(0).column };
+            const auto col { parameters->at(0).col };
 
             children.emplace_back(NodeType::FunctionParameterList, nullptr, std::move(*parameters),
-                                  pos, len, line, column);
+                                  pos, len, line, col);
         }
 
         if (const auto t { expect(TokenType::SymRParen) }; !t) {
@@ -177,7 +175,7 @@ namespace fla::compiler
             kw.pos,
             len_between(kw, *end),
             kw.line,
-            kw.column,
+            kw.col,
         });
     }
 
@@ -209,7 +207,7 @@ namespace fla::compiler
                     next.pos,
                     next.len,
                     next.line,
-                    next.column,
+                    next.col,
                     std::format("expecting {}, found {} instead",
                                 token_type_string(TokenType::SymRParen),
                                 token_type_string(next.type)),
@@ -223,14 +221,14 @@ namespace fla::compiler
                     name->pos,
                     name->len,
                     name->line,
-                    name->column,
+                    name->col,
                 },
                 *type_notation,
             };
 
             parameters.emplace_back(NodeType::FunctionParameter, nullptr, std::move(children),
                                     name->pos, len_between(*name, *type_notation), name->line,
-                                    name->column);
+                                    name->col);
         }
 
         return parameters;
@@ -246,7 +244,7 @@ namespace fla::compiler
         const auto pos { type_notation->pos };
         const auto len { type_notation->len };
         const auto line { type_notation->line };
-        const auto column { type_notation->column };
+        const auto col { type_notation->col };
 
         return ParseResult({
             NodeType::FunctionReturnTypeNotation,
@@ -255,7 +253,7 @@ namespace fla::compiler
             pos,
             len,
             line,
-            column,
+            col,
         });
     }
 
@@ -269,8 +267,7 @@ namespace fla::compiler
         }
 
         children.emplace_back(NodeType::Name, src.substr(first_name->pos, first_name->len),
-                              first_name->pos, first_name->len, first_name->line,
-                              first_name->column);
+                              first_name->pos, first_name->len, first_name->line, first_name->col);
 
         while (true) {
             const auto t { lexer.peek() };
@@ -286,8 +283,7 @@ namespace fla::compiler
             }
 
             children.emplace_back(NodeType::Name, src.substr(next_name->pos, next_name->len),
-                                  next_name->pos, next_name->len, next_name->line,
-                                  next_name->column);
+                                  next_name->pos, next_name->len, next_name->line, next_name->col);
         }
 
         return children;
@@ -358,7 +354,7 @@ namespace fla::compiler
             type_notation->pos,
             type_notation->len,
             type_notation->line,
-            type_notation->column,
+            type_notation->col,
         });
     }
 
@@ -373,7 +369,7 @@ namespace fla::compiler
             return std::unexpected(name.error());
         }
         children.emplace_back(NodeType::Name, src.substr(name->pos, name->len), name->pos,
-                              name->len, name->line, name->column);
+                              name->len, name->line, name->col);
 
         if (lexer.peek().type != TokenType::OpAssign) {
             const auto type_notation { parse_type_notation() };
@@ -395,7 +391,7 @@ namespace fla::compiler
         const auto pos { kw.pos };
         const auto len { len_between(kw, *expression) };
         const auto line { kw.line };
-        const auto column { kw.column };
+        const auto col { kw.col };
 
         children.push_back(std::move(*expression));
 
@@ -407,7 +403,7 @@ namespace fla::compiler
             pos,
             len,
             line,
-            column,
+            col,
         });
     }
 
@@ -424,7 +420,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
                 std::format("expecting {}, found {} instead", token_type_string(expected_tt),
                             token_type_string(t.type)),
             });

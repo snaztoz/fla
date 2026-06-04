@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <map>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -25,7 +24,7 @@ namespace fla::compiler
         const std::string_view src;
         std::size_t cursor;
         std::size_t curr_line;
-        std::size_t curr_column;
+        std::size_t curr_col;
         const LexerRules rules;
 
         std::optional<Token> try_match();

@@ -2,6 +2,7 @@
 #define FLA_COMPILER_TOKEN_H
 
 #include <cstddef>
+#include <string_view>
 #include <utility>
 
 namespace fla::compiler
@@ -145,7 +146,7 @@ namespace fla::compiler
         const std::size_t pos;
         const std::size_t len;
         const std::size_t line;
-        const std::size_t column;
+        const std::size_t col;
 
         constexpr bool is_eof() const noexcept
         {

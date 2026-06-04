@@ -1,3 +1,3 @@
 @echo off
 
-cmake -B build/ -S . && cmake --build build/ -j
+cmake -G Ninja -B build/ -S . && cmake --build build/ -j

@@ -3,14 +3,11 @@
 #include <print>
 #include <string>
 #include <string_view>
-#include <variant>
 
 #include "compiler.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
-#include "lexer.hpp"
 #include "parser.hpp"
-#include "token.hpp"
 
 extern "C" {
 int fla_compile(const char *src, struct FlaCompilerError *err)
@@ -77,7 +74,7 @@ namespace fla::compiler
             std::print(" -> {}", *bool_val);
         }
 
-        std::print(" ({}:{}:{})\n", node.line, node.column, node.len);
+        std::print(" ({}:{}:{})\n", node.line, node.col, node.len);
 
         for (const auto &child : node.children) {
             print_node(child, level + 1);

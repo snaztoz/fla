@@ -113,7 +113,7 @@ namespace fla::compiler
             t.pos,
             len,
             t.line,
-            t.column,
+            t.col,
         });
     }
 
@@ -142,7 +142,7 @@ namespace fla::compiler
                 t.pos,
                 len_between(t, *closing_paren),
                 t.line,
-                t.column,
+                t.col,
             });
         }
 
@@ -154,7 +154,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
             });
         }
 
@@ -166,7 +166,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
             });
         }
 
@@ -178,7 +178,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
             });
         }
 
@@ -190,7 +190,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
             });
         }
 
@@ -207,7 +207,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
             });
         }
 
@@ -216,7 +216,7 @@ namespace fla::compiler
                 t.pos,
                 t.len,
                 t.line,
-                t.column,
+                t.col,
                 std::format("expecting an expression, found {} instead", token_type_string(t.type)),
             });
         }
@@ -258,10 +258,10 @@ namespace fla::compiler
             const auto pos { lhs.pos };
             const auto len { len_between(lhs, *rhs) };
             const auto line { lhs.line };
-            const auto column { lhs.column };
+            const auto col { lhs.col };
             const std::vector<Node> children = { std::move(lhs), std::move(*rhs) };
 
-            lhs = { *node_type, nullptr, children, pos, len, line, column };
+            lhs = { *node_type, nullptr, children, pos, len, line, col };
         }
 
         return lhs;
