@@ -1,8 +1,8 @@
 #include <cctype>
 #include <cstddef>
 #include <functional>
+#include <map>
 #include <optional>
-#include <vector>
 
 #include "lexer.hpp"
 #include "token.hpp"

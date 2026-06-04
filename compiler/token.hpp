@@ -2,6 +2,7 @@
 #define FLA_COMPILER_TOKEN_H
 
 #include <cstddef>
+#include <string_view>
 #include <utility>
 
 namespace fla::compiler

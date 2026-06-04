@@ -3,14 +3,11 @@
 #include <print>
 #include <string>
 #include <string_view>
-#include <variant>
 
 #include "compiler.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
-#include "lexer.hpp"
 #include "parser.hpp"
-#include "token.hpp"
 
 extern "C" {
 int fla_compile(const char *src, struct FlaCompilerError *err)
