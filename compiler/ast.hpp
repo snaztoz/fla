@@ -49,9 +49,9 @@ namespace fla::compiler
         case NodeType::Add:
             return "addition";
         case NodeType::And:
-            return "and";
+            return "logical and";
         case NodeType::Assign:
-            return "assign";
+            return "assignment";
         case NodeType::Bool:
             return "bool";
         case NodeType::ConstantDeclaration:
@@ -59,7 +59,7 @@ namespace fla::compiler
         case NodeType::Div:
             return "division";
         case NodeType::Eq:
-            return "equal";
+            return "equality checking";
         case NodeType::ExpressionGroup:
             return "expression group";
         case NodeType::FunctionDefinition:
@@ -71,13 +71,13 @@ namespace fla::compiler
         case NodeType::FunctionReturnTypeNotation:
             return "function return type notation";
         case NodeType::Gt:
-            return "greater than";
+            return "greater than comparison";
         case NodeType::Gte:
-            return "greater than or equal";
+            return "greater than or equal comparison";
         case NodeType::Lt:
-            return "less than";
+            return "less than comparison";
         case NodeType::Lte:
-            return "less than or equal";
+            return "less than or equal comparison";
         case NodeType::Mod:
             return "modulo";
         case NodeType::Mul:
@@ -89,15 +89,15 @@ namespace fla::compiler
         case NodeType::Neg:
             return "negation";
         case NodeType::Neq:
-            return "not equal";
+            return "inequality checking";
         case NodeType::Not:
-            return "not";
+            return "logical not";
         case NodeType::Null:
             return "null";
         case NodeType::Number:
             return "number";
         case NodeType::Or:
-            return "or";
+            return "logical or";
         case NodeType::Root:
             return "root";
         case NodeType::Sub:
