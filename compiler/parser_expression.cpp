@@ -1,214 +1,365 @@
-#include <array>
 #include <charconv>
 #include <format>
-#include <functional>
-#include <optional>
-#include <span>
+#include <memory>
+#include <set>
 #include <utility>
 
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "token.hpp"
 
 namespace fla::compiler
 {
-    ParseResult
-    parse_binary_operation(const std::span<const std::pair<TokenType, NodeType>> op_mapping,
-                           const std::function<ParseResult()> operand_op, Lexer &lexer);
+    const std::set<TokenType> logical_and_or_ops = { TokenType::KwAnd, TokenType::KwOr };
+    const std::set<TokenType> equality_ops = { TokenType::OpEq, TokenType::OpNeq };
+    const std::set<TokenType> comparison_ops = {
+        TokenType::OpGt,
+        TokenType::OpGte,
+        TokenType::OpLt,
+        TokenType::OpLte,
+    };
+    const std::set<TokenType> additive_ops = { TokenType::OpAdd, TokenType::OpSub };
+    const std::set<TokenType> multiplicative_ops = { TokenType::OpMul, TokenType::OpDiv,
+                                                     TokenType::OpMod };
 
-    ParseResult Parser::parse_expression()
+    Metadata make_binary_op_metadata(const Node &lhs, const Node &rhs)
     {
-        return parse_assignment();
+        const auto lhs_meta { get_node_metadata(lhs) };
+        const auto rhs_meta { get_node_metadata(rhs) };
+
+        const auto pos { lhs_meta.pos };
+        const auto len { rhs_meta.pos - lhs_meta.pos + rhs_meta.len };
+        const auto line { lhs_meta.line };
+        const auto col { lhs_meta.col };
+
+        return { pos, len, line, col };
     }
 
-    ParseResult Parser::parse_assignment()
-    {
-        constexpr std::array op_mapping {
-            std::pair { TokenType::OpAssign, NodeType::Assign },
-        };
+    ParseResult parse_assignment(ParserContext &ctx);
+    ParseResult parse_logical_and_or_expression(ParserContext &ctx);
+    ParseResult parse_equality_expression(ParserContext &ctx);
+    ParseResult parse_comparison_expression(ParserContext &ctx);
+    ParseResult parse_additive_expression(ParserContext &ctx);
+    ParseResult parse_multiplicative_expression(ParserContext &ctx);
+    ParseResult parse_unary_expression(ParserContext &ctx);
+    ParseResult parse_primary_expression(ParserContext &ctx);
 
-        return parse_binary_operation(
-            op_mapping, [this] { return parse_logical_and_or_expression(); }, lexer);
+    ParseResult parse_expression(ParserContext &ctx)
+    {
+        return parse_assignment(ctx);
     }
 
-    ParseResult Parser::parse_logical_and_or_expression()
+    ParseResult parse_assignment(ParserContext &ctx)
     {
-        constexpr std::array op_mapping {
-            std::pair { TokenType::KwAnd, NodeType::And },
-            std::pair { TokenType::KwOr, NodeType::Or },
-        };
+        auto lhs { parse_logical_and_or_expression(ctx) };
+        if (!lhs) {
+            return lhs;
+        }
 
-        return parse_binary_operation(
-            op_mapping, [this] { return parse_equality_expression(); }, lexer);
+        if (const auto t { ctx.lexer.peek() }; t.type != TokenType::OpAssign) {
+            return lhs;
+        }
+        ctx.lexer.next();
+
+        auto rhs { parse_logical_and_or_expression(ctx) };
+        if (!rhs) {
+            return rhs;
+        }
+
+        const auto meta { make_binary_op_metadata(*lhs, *rhs) };
+
+        return std::make_unique<Assign>(std::move(*lhs), std::move(*rhs), meta);
     }
 
-    ParseResult Parser::parse_equality_expression()
+    ParseResult parse_logical_and_or_expression(ParserContext &ctx)
     {
-        constexpr std::array op_mapping {
-            std::pair { TokenType::OpEq, NodeType::Eq },
-            std::pair { TokenType::OpNeq, NodeType::Neq },
-        };
+        auto expr { parse_equality_expression(ctx) };
+        if (!expr) {
+            return expr;
+        }
 
-        return parse_binary_operation(
-            op_mapping, [this] { return parse_comparison_expression(); }, lexer);
+        Node lhs { std::move(*expr) };
+
+        while (true) {
+            const auto op { ctx.lexer.peek() };
+            if (!logical_and_or_ops.contains(op.type)) {
+                break;
+            }
+
+            ctx.lexer.next();
+
+            auto rhs { parse_equality_expression(ctx) };
+            if (!rhs) {
+                return std::unexpected(rhs.error());
+            }
+
+            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+
+            if (op.type == TokenType::KwAnd) {
+                lhs.emplace<std::unique_ptr<And>>(
+                    std::make_unique<And>(std::move(lhs), std::move(*rhs), meta));
+            } else {
+                lhs.emplace<std::unique_ptr<Or>>(
+                    std::make_unique<Or>(std::move(lhs), std::move(*rhs), meta));
+            }
+        }
+
+        return lhs;
     }
 
-    ParseResult Parser::parse_comparison_expression()
+    ParseResult parse_equality_expression(ParserContext &ctx)
     {
-        constexpr std::array op_mapping {
-            std::pair { TokenType::OpGt, NodeType::Gt },
-            std::pair { TokenType::OpGte, NodeType::Gte },
-            std::pair { TokenType::OpLt, NodeType::Lt },
-            std::pair { TokenType::OpLte, NodeType::Lte },
-        };
+        auto expr { parse_comparison_expression(ctx) };
+        if (!expr) {
+            return expr;
+        }
 
-        return parse_binary_operation(
-            op_mapping, [this] { return parse_additive_expression(); }, lexer);
+        Node lhs { std::move(*expr) };
+
+        while (true) {
+            const auto op { ctx.lexer.peek() };
+            if (!equality_ops.contains(op.type)) {
+                break;
+            }
+
+            ctx.lexer.next();
+
+            auto rhs { parse_comparison_expression(ctx) };
+            if (!rhs) {
+                return std::unexpected(rhs.error());
+            }
+
+            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+
+            if (op.type == TokenType::OpEq) {
+                lhs.emplace<std::unique_ptr<Eq>>(
+                    std::make_unique<Eq>(std::move(lhs), std::move(*rhs), meta));
+            } else {
+                lhs.emplace<std::unique_ptr<Neq>>(
+                    std::make_unique<Neq>(std::move(lhs), std::move(*rhs), meta));
+            }
+        }
+
+        return lhs;
     }
 
-    ParseResult Parser::parse_additive_expression()
+    ParseResult parse_comparison_expression(ParserContext &ctx)
     {
-        constexpr std::array op_mapping {
-            std::pair { TokenType::OpAdd, NodeType::Add },
-            std::pair { TokenType::OpSub, NodeType::Sub },
-        };
+        auto expr { parse_additive_expression(ctx) };
+        if (!expr) {
+            return expr;
+        }
 
-        return parse_binary_operation(
-            op_mapping, [this] { return parse_multiplicative_expression(); }, lexer);
+        Node lhs { std::move(*expr) };
+
+        while (true) {
+            const auto op { ctx.lexer.peek() };
+            if (!comparison_ops.contains(op.type)) {
+                break;
+            }
+
+            ctx.lexer.next();
+
+            auto rhs { parse_additive_expression(ctx) };
+            if (!rhs) {
+                return std::unexpected(rhs.error());
+            }
+
+            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+
+            if (op.type == TokenType::OpGt) {
+                lhs.emplace<std::unique_ptr<Gt>>(
+                    std::make_unique<Gt>(std::move(lhs), std::move(*rhs), meta));
+            } else if (op.type == TokenType::OpGte) {
+                lhs.emplace<std::unique_ptr<Gte>>(
+                    std::make_unique<Gte>(std::move(lhs), std::move(*rhs), meta));
+            } else if (op.type == TokenType::OpLt) {
+                lhs.emplace<std::unique_ptr<Lt>>(
+                    std::make_unique<Lt>(std::move(lhs), std::move(*rhs), meta));
+            } else {
+                lhs.emplace<std::unique_ptr<Lte>>(
+                    std::make_unique<Lte>(std::move(lhs), std::move(*rhs), meta));
+            }
+        }
+
+        return lhs;
     }
 
-    ParseResult Parser::parse_multiplicative_expression()
+    ParseResult parse_additive_expression(ParserContext &ctx)
     {
-        constexpr std::array op_mapping {
-            std::pair { TokenType::OpMul, NodeType::Mul },
-            std::pair { TokenType::OpDiv, NodeType::Div },
-            std::pair { TokenType::OpMod, NodeType::Mod },
-        };
+        auto expr { parse_multiplicative_expression(ctx) };
+        if (!expr) {
+            return expr;
+        }
 
-        return parse_binary_operation(
-            op_mapping, [this] { return parse_unary_expression(); }, lexer);
+        Node lhs { std::move(*expr) };
+
+        while (true) {
+            const auto op { ctx.lexer.peek() };
+            if (!additive_ops.contains(op.type)) {
+                break;
+            }
+
+            ctx.lexer.next();
+
+            auto rhs { parse_multiplicative_expression(ctx) };
+            if (!rhs) {
+                return std::unexpected(rhs.error());
+            }
+
+            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+
+            if (op.type == TokenType::OpAdd) {
+                lhs.emplace<std::unique_ptr<Add>>(
+                    std::make_unique<Add>(std::move(lhs), std::move(*rhs), meta));
+            } else {
+                lhs.emplace<std::unique_ptr<Sub>>(
+                    std::make_unique<Sub>(std::move(lhs), std::move(*rhs), meta));
+            }
+        }
+
+        return lhs;
     }
 
-    ParseResult Parser::parse_unary_expression()
+    ParseResult parse_multiplicative_expression(ParserContext &ctx)
     {
-        const auto t { lexer.peek() };
+        auto expr { parse_unary_expression(ctx) };
+        if (!expr) {
+            return expr;
+        }
+
+        Node lhs { std::move(*expr) };
+
+        while (true) {
+            const auto op { ctx.lexer.peek() };
+            if (!multiplicative_ops.contains(op.type)) {
+                break;
+            }
+
+            ctx.lexer.next();
+
+            auto rhs { parse_unary_expression(ctx) };
+            if (!rhs) {
+                return std::unexpected(rhs.error());
+            }
+
+            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+
+            if (op.type == TokenType::OpMul) {
+                lhs.emplace<std::unique_ptr<Mul>>(
+                    std::make_unique<Mul>(std::move(lhs), std::move(*rhs), meta));
+            } else if (op.type == TokenType::OpDiv) {
+                lhs.emplace<std::unique_ptr<Div>>(
+                    std::make_unique<Div>(std::move(lhs), std::move(*rhs), meta));
+            } else {
+                lhs.emplace<std::unique_ptr<Mod>>(
+                    std::make_unique<Mod>(std::move(lhs), std::move(*rhs), meta));
+            }
+        }
+
+        return lhs;
+    }
+
+    ParseResult parse_unary_expression(ParserContext &ctx)
+    {
+        const auto t { ctx.lexer.peek() };
 
         if (t.type != TokenType::OpSub && t.type != TokenType::KwNot) {
-            return parse_primary_expression();
+            return parse_primary_expression(ctx);
         }
 
-        lexer.next();
+        ctx.lexer.next();
 
-        const auto sub_expr { parse_unary_expression() };
-        if (!sub_expr) {
-            return sub_expr;
+        auto sub_expression { parse_unary_expression(ctx) };
+        if (!sub_expression) {
+            return std::unexpected(sub_expression.error());
         }
 
-        const auto len { len_between(t, *sub_expr) };
+        const auto sub_expression_meta { get_node_metadata(*sub_expression) };
+        const auto len { sub_expression_meta.pos - t.pos + sub_expression_meta.len };
+        const Metadata meta { t.pos, len, t.line, t.col };
 
-        return ParseResult({
-            (t.type == TokenType::OpSub) ? NodeType::Neg : NodeType::Not,
-            nullptr,
-            { std::move(*sub_expr) },
-            t.pos,
-            len,
-            t.line,
-            t.col,
-        });
+        if (t.type == TokenType::OpSub) {
+            return std::make_unique<Neg>(Neg { std::move(*sub_expression), meta });
+        } else {
+            return std::make_unique<Not>(Not { std::move(*sub_expression), meta });
+        }
     }
 
-    ParseResult Parser::parse_primary_expression()
+    ParseResult parse_primary_expression(ParserContext &ctx)
     {
-        const auto t { lexer.peek() };
+        const auto t { ctx.lexer.peek() };
 
         switch (t.type) {
         case TokenType::SymLParen: {
-            lexer.next();
+            ctx.lexer.next();
 
-            const auto sub_expr { parse_expression() };
+            auto sub_expr { parse_expression(ctx) };
             if (!sub_expr) {
                 return std::unexpected(sub_expr.error());
             }
 
-            const auto closing_paren { expect(TokenType::SymRParen) };
+            const auto closing_paren { expect(ctx, TokenType::SymRParen) };
             if (!closing_paren) {
                 return std::unexpected(closing_paren.error());
             }
 
-            return ParseResult({
-                NodeType::ExpressionGroup,
-                nullptr,
-                { std::move(*sub_expr) },
-                t.pos,
-                len_between(t, *closing_paren),
-                t.line,
-                t.col,
+            return std::make_unique<ExpressionGroup>(ExpressionGroup {
+                std::move(*sub_expr),
+                Metadata {
+                    t.pos,
+                    closing_paren->pos - t.pos + closing_paren->len,
+                    t.line,
+                    t.col,
+                },
             });
         }
 
         case TokenType::True: {
-            lexer.next();
-            return ParseResult({
-                NodeType::Bool,
-                true,
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-            });
+            ctx.lexer.next();
+
+            return Literal { true, Metadata { t.pos, t.len, t.line, t.col } };
         }
 
         case TokenType::False: {
-            lexer.next();
-            return ParseResult({
-                NodeType::Bool,
+            ctx.lexer.next();
+
+            return Literal {
                 false,
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-            });
+                Metadata { t.pos, t.len, t.line, t.col },
+            };
         }
 
         case TokenType::Null: {
-            lexer.next();
-            return ParseResult({
-                NodeType::Null,
+            ctx.lexer.next();
+
+            return Literal {
                 nullptr,
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-            });
+                Metadata { t.pos, t.len, t.line, t.col },
+            };
         }
 
         case TokenType::Name: {
-            lexer.next();
-            return ParseResult({
-                NodeType::Name,
-                src.substr(t.pos, t.len),
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-            });
+            ctx.lexer.next();
+
+            return Name {
+                std::string { ctx.src.substr(t.pos, t.len) },
+                Metadata { t.pos, t.len, t.line, t.col },
+            };
         }
 
         case TokenType::Number: {
-            lexer.next();
+            ctx.lexer.next();
 
-            const auto num_str = src.substr(t.pos, t.len);
+            const auto num_str = ctx.src.substr(t.pos, t.len);
             int num = 0;
             std::from_chars(num_str.data(), num_str.data() + num_str.size(), num);
 
-            return ParseResult({
-                NodeType::Number,
+            return Literal {
                 num,
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-            });
+                Metadata { t.pos, t.len, t.line, t.col },
+            };
         }
 
         default:
@@ -220,50 +371,5 @@ namespace fla::compiler
                 std::format("expecting an expression, found {} instead", token_type_string(t.type)),
             });
         }
-    }
-
-    ParseResult
-    parse_binary_operation(const std::span<const std::pair<TokenType, NodeType>> op_mapping,
-                           const std::function<ParseResult()> sub_expr, Lexer &lexer)
-    {
-        const auto expr { sub_expr() };
-        if (!expr) {
-            return expr;
-        }
-
-        auto lhs { *expr };
-
-        while (true) {
-            std::optional<NodeType> node_type { std::nullopt };
-
-            const auto op { lexer.peek() };
-            for (const auto &[mapping_op, mapping_node] : op_mapping) {
-                if (op.type == mapping_op) {
-                    node_type = mapping_node;
-                    break;
-                }
-            }
-
-            if (!node_type.has_value()) {
-                break;
-            }
-
-            lexer.next();
-
-            const auto rhs { sub_expr() };
-            if (!rhs) {
-                return rhs;
-            }
-
-            const auto pos { lhs.pos };
-            const auto len { len_between(lhs, *rhs) };
-            const auto line { lhs.line };
-            const auto col { lhs.col };
-            const std::vector<Node> children = { std::move(lhs), std::move(*rhs) };
-
-            lhs = { *node_type, nullptr, children, pos, len, line, col };
-        }
-
-        return lhs;
     }
 } // namespace fla::compiler

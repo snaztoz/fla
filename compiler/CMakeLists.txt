@@ -1,5 +1,6 @@
 add_library(flac
     ../include/fla/compiler.h
+    ast.cpp
     ast.hpp
     compiler.cpp
     compiler.hpp

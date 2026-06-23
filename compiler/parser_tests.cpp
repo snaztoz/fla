@@ -29,8 +29,8 @@ std::string read_fixture(std::filesystem::path path)
     do {                                                                                           \
         std::print(stderr, "test {} parsing...", name);                                            \
         const auto fixture { read_fixture(fixture_path) };                                         \
-        fla::compiler::Parser parser { fixture };                                                  \
-        if (const auto res = parser.parse(); !res) {                                               \
+        fla::compiler::ParserContext parser_ctx { fla::compiler::Lexer { fixture }, fixture };     \
+        if (const auto res = fla::compiler::parse(parser_ctx); !res) {                             \
             std::println(stderr, "failed, {} ({}:{})", res.error().line, res.error().col,          \
                          res.error().msg);                                                         \
             std::exit(1);                                                                          \
