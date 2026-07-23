@@ -2,7 +2,6 @@
 #include <format>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -13,7 +12,6 @@
 
 namespace fla::compiler
 {
-    using ParseBodyResult = std::expected<std::vector<Node>, Error>;
     using ParseNameResult = std::expected<Name, Error>;
     using ParseNestedNamesResult = std::expected<std::vector<Name>, Error>;
     using ParseTypeNotationResult = std::expected<TypeNotation, Error>;
@@ -26,11 +24,8 @@ namespace fla::compiler
     ParseResult parse_function_definition(ParserContext &ctx);
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
-    ParseBodyResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
     ParseTypeNotationResult parse_type_notation(ParserContext &ctx);
     ParseResult parse_variable_declaration(ParserContext &ctx);
-    ParseResult parse_if_statement(ParserContext &ctx);
-    ParseResult parse_else_statement(ParserContext &ctx);
     ParseResult parse_expression_statement(ParserContext &ctx);
     ParseNameResult parse_name(ParserContext &ctx);
 
@@ -268,8 +263,6 @@ namespace fla::compiler
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
-            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwIf }, [&ctx] { return parse_if_statement(ctx); }),
         };
 
         while (true) {
@@ -364,91 +357,6 @@ namespace fla::compiler
             std::move(*expression),
             meta,
         });
-    }
-
-    ParseResult parse_if_statement(ParserContext &ctx)
-    {
-        const auto kw { ctx.lexer.next() };
-
-        auto cond_expression { parse_expression(ctx) };
-        if (!cond_expression) {
-            return cond_expression;
-        }
-
-        if (const auto kw_do { expect(ctx, TokenType::KwDo) }; !kw_do) {
-            return std::unexpected(kw_do.error());
-        }
-
-        auto body { parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
-        if (!body) {
-            return std::unexpected(body.error());
-        }
-
-        if (ctx.lexer.peek().type != TokenType::KwElse) {
-            const auto end { expect(ctx, TokenType::KwEnd) };
-            if (!end) {
-                return std::unexpected(end.error());
-            }
-
-            return std::make_unique<IfStatement>(IfStatement { std::move(*cond_expression),
-                                                               std::move(*body),
-                                                               std::nullopt,
-                                                               {
-                                                                   kw.pos,
-                                                                   end->pos - kw.pos + end->len,
-                                                                   kw.line,
-                                                                   kw.col,
-                                                               } });
-        }
-
-        auto else_branch { parse_else_statement(ctx) };
-        if (!else_branch) {
-            return std::unexpected(else_branch.error());
-        }
-
-        const auto else_branch_metadata { get_node_metadata(*else_branch) };
-
-        return std::make_unique<IfStatement>(
-            IfStatement { std::move(*cond_expression),
-                          std::move(*body),
-                          std::move(*else_branch),
-                          {
-                              kw.pos,
-                              else_branch_metadata.pos - kw.pos + else_branch_metadata.len,
-                              kw.line,
-                              kw.col,
-                          } });
-    }
-
-    ParseResult parse_else_statement(ParserContext &ctx)
-    {
-        const auto kw { ctx.lexer.next() };
-
-        if (ctx.lexer.peek().type == TokenType::KwIf) {
-            return parse_if_statement(ctx);
-        }
-
-        if (const auto kw_do { expect(ctx, TokenType::KwDo) }; !kw_do) {
-            return std::unexpected(kw_do.error());
-        }
-
-        auto body { parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
-        if (!body) {
-            return std::unexpected(body.error());
-        }
-
-        const auto end { expect(ctx, TokenType::KwEnd) };
-        if (!end) {
-            return std::unexpected(end.error());
-        }
-
-        return std::make_unique<ElseStatement>(ElseStatement { std::move(*body),
-                                                               {
-                                                                   kw.pos,
-                                                                   end->pos - kw.pos + end->len,
-                                                                   kw.line,
-                                                                   kw.col,
-                                                               } });
     }
 
     ParseResult parse_expression_statement(ParserContext &ctx)

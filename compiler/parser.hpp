@@ -2,6 +2,7 @@
 #define FLA_COMPILER_PARSER_H
 
 #include <expected>
+#include <set>
 #include <string_view>
 
 #include "ast.hpp"
@@ -11,6 +12,7 @@
 
 namespace fla::compiler
 {
+    using ParseBodyResult = std::expected<std::vector<Node>, Error>;
     using ParseResult = std::expected<Node, Error>;
 
     struct ParserContext {
@@ -19,6 +21,7 @@ namespace fla::compiler
     };
 
     ParseResult parse(ParserContext &ctx);
+    ParseBodyResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
     ParseResult parse_expression(ParserContext &ctx);
     std::expected<Token, Error> expect(ParserContext &ctx, const TokenType &expected_tt);
 } // namespace fla::compiler

@@ -14,4 +14,10 @@ fun main() do
   else do
     150
   end
+
+  var dynamic = if a == 5 do
+    true
+  else do
+    false
+  end
 end

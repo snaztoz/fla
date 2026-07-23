@@ -44,6 +44,8 @@ namespace fla::compiler
     ParseResult parse_multiplicative_expression(ParserContext &ctx);
     ParseResult parse_unary_expression(ParserContext &ctx);
     ParseResult parse_primary_expression(ParserContext &ctx);
+    ParseResult parse_if_expression(ParserContext &ctx);
+    ParseResult parse_else_branch(ParserContext &ctx);
 
     ParseResult parse_expression(ParserContext &ctx)
     {
@@ -316,6 +318,10 @@ namespace fla::compiler
             });
         }
 
+        case TokenType::KwIf: {
+            return parse_if_expression(ctx);
+        }
+
         case TokenType::True: {
             ctx.lexer.next();
 
@@ -371,5 +377,90 @@ namespace fla::compiler
                 std::format("expecting an expression, found {} instead", token_type_string(t.type)),
             });
         }
+    }
+
+    ParseResult parse_if_expression(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        auto cond_expression { parse_expression(ctx) };
+        if (!cond_expression) {
+            return cond_expression;
+        }
+
+        if (const auto kw_do { expect(ctx, TokenType::KwDo) }; !kw_do) {
+            return std::unexpected(kw_do.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        if (ctx.lexer.peek().type != TokenType::KwElse) {
+            const auto end { expect(ctx, TokenType::KwEnd) };
+            if (!end) {
+                return std::unexpected(end.error());
+            }
+
+            return std::make_unique<IfStatement>(IfStatement { std::move(*cond_expression),
+                                                               std::move(*body),
+                                                               std::nullopt,
+                                                               {
+                                                                   kw.pos,
+                                                                   end->pos - kw.pos + end->len,
+                                                                   kw.line,
+                                                                   kw.col,
+                                                               } });
+        }
+
+        auto else_branch { parse_else_branch(ctx) };
+        if (!else_branch) {
+            return std::unexpected(else_branch.error());
+        }
+
+        const auto else_branch_metadata { get_node_metadata(*else_branch) };
+
+        return std::make_unique<IfStatement>(
+            IfStatement { std::move(*cond_expression),
+                          std::move(*body),
+                          std::move(*else_branch),
+                          {
+                              kw.pos,
+                              else_branch_metadata.pos - kw.pos + else_branch_metadata.len,
+                              kw.line,
+                              kw.col,
+                          } });
+    }
+
+    ParseResult parse_else_branch(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        if (ctx.lexer.peek().type == TokenType::KwIf) {
+            return parse_if_expression(ctx);
+        }
+
+        if (const auto kw_do { expect(ctx, TokenType::KwDo) }; !kw_do) {
+            return std::unexpected(kw_do.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        const auto end { expect(ctx, TokenType::KwEnd) };
+        if (!end) {
+            return std::unexpected(end.error());
+        }
+
+        return std::make_unique<ElseStatement>(ElseStatement { std::move(*body),
+                                                               {
+                                                                   kw.pos,
+                                                                   end->pos - kw.pos + end->len,
+                                                                   kw.line,
+                                                                   kw.col,
+                                                               } });
     }
 } // namespace fla::compiler
