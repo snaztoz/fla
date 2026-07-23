@@ -38,11 +38,13 @@ namespace fla::compiler
     struct Assign;
     struct ConstantDeclaration;
     struct Div;
+    struct ElseStatement;
     struct Eq;
     struct ExpressionGroup;
     struct FunctionDefinition;
     struct Gt;
     struct Gte;
+    struct IfStatement;
     struct Lt;
     struct Lte;
     struct Mod;
@@ -60,8 +62,9 @@ namespace fla::compiler
     using Node =
         std::variant<Literal, Name, TypeNotation, std::unique_ptr<Add>, std::unique_ptr<And>,
                      std::unique_ptr<Assign>, std::unique_ptr<ConstantDeclaration>,
-                     std::unique_ptr<Div>, std::unique_ptr<Eq>, std::unique_ptr<ExpressionGroup>,
-                     std::unique_ptr<FunctionDefinition>, std::unique_ptr<Gt>, std::unique_ptr<Gte>,
+                     std::unique_ptr<Div>, std::unique_ptr<ElseStatement>, std::unique_ptr<Eq>,
+                     std::unique_ptr<ExpressionGroup>, std::unique_ptr<FunctionDefinition>,
+                     std::unique_ptr<Gt>, std::unique_ptr<Gte>, std::unique_ptr<IfStatement>,
                      std::unique_ptr<Lt>, std::unique_ptr<Lte>, std::unique_ptr<Mod>,
                      std::unique_ptr<Mul>, std::unique_ptr<NamespaceDeclaration>,
                      std::unique_ptr<Neg>, std::unique_ptr<Neq>, std::unique_ptr<Not>,
@@ -105,6 +108,11 @@ namespace fla::compiler
         Metadata meta;
     };
 
+    struct ElseStatement {
+        std::vector<Node> body;
+        Metadata meta;
+    };
+
     struct ExpressionGroup {
         Node expression;
         Metadata meta;
@@ -127,6 +135,13 @@ namespace fla::compiler
     struct Gte {
         Node lhs;
         Node rhs;
+        Metadata meta;
+    };
+
+    struct IfStatement {
+        Node cond;
+        std::vector<Node> body;
+        std::optional<Node> else_statement;
         Metadata meta;
     };
 
