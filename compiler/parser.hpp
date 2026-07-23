@@ -1,8 +1,8 @@
 #ifndef FLA_COMPILER_PARSER_H
 #define FLA_COMPILER_PARSER_H
 
-#include <cstddef>
 #include <expected>
+#include <set>
 #include <string_view>
 
 #include "ast.hpp"
@@ -12,51 +12,18 @@
 
 namespace fla::compiler
 {
+    using ParseBodyResult = std::expected<std::vector<Node>, Error>;
     using ParseResult = std::expected<Node, Error>;
-    using ParseChildrenResult = std::expected<std::vector<Node>, Error>;
 
-    class Parser
-    {
-    public:
-        explicit Parser(const std::string_view src);
-
-        ParseResult parse();
-
-    private:
+    struct ParserContext {
         Lexer lexer;
         const std::string_view src;
-
-        ParseResult parse_root(const Token &t);
-        ParseResult parse_namespace_statement();
-        ParseResult parse_use_statement();
-        ParseResult parse_function_definition();
-        ParseChildrenResult parse_function_parameters();
-        ParseResult parse_function_return_type_notation();
-        ParseChildrenResult parse_nested_names();
-        ParseChildrenResult parse_body();
-        ParseResult parse_type_notation();
-        ParseResult parse_variable_declaration();
-        ParseResult parse_expression_statement();
-        ParseResult parse_expression();
-        ParseResult parse_assignment();
-        ParseResult parse_logical_and_or_expression();
-        ParseResult parse_equality_expression();
-        ParseResult parse_comparison_expression();
-        ParseResult parse_additive_expression();
-        ParseResult parse_multiplicative_expression();
-        ParseResult parse_unary_expression();
-        ParseResult parse_primary_expression();
-        std::expected<Token, Error> expect(const TokenType &expected_tt);
     };
 
-    template <typename T>
-    concept Positionable = std::same_as<T, Node> || std::same_as<T, Token>;
-
-    template <Positionable P1, Positionable P2>
-    constexpr std::size_t len_between(const P1 &a, const P2 &b) noexcept
-    {
-        return b.pos - a.pos + b.len;
-    }
+    ParseResult parse(ParserContext &ctx);
+    ParseBodyResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
+    ParseResult parse_expression(ParserContext &ctx);
+    std::expected<Token, Error> expect(ParserContext &ctx, const TokenType &expected_tt);
 } // namespace fla::compiler
 
 #endif

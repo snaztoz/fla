@@ -3,7 +3,9 @@
 #include <print>
 #include <string>
 #include <string_view>
+#include <variant>
 
+#include "ast.hpp"
 #include "compiler.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
@@ -64,28 +66,139 @@ namespace fla::compiler
     {
         const std::string indentation(level * 2, ' ');
 
-        std::print("{}{}", indentation, node_type_string(node.type));
+        std::print("{}{}", indentation, get_node_repr(node));
 
-        if (const auto *string_val { std::get_if<std::string_view>(&node.value) }) {
-            std::print(" -> {}", *string_val);
-        } else if (const auto *int_val { std::get_if<int>(&node.value) }) {
-            std::print(" -> {}", *int_val);
-        } else if (const auto *bool_val { std::get_if<bool>(&node.value) }) {
-            std::print(" -> {}", *bool_val);
-        }
+        const Metadata meta { get_node_metadata(node) };
+        std::print(" ({}:{}:{})\n", meta.line, meta.col, meta.len);
 
-        std::print(" ({}:{}:{})\n", node.line, node.col, node.len);
-
-        for (const auto &child : node.children) {
-            print_node(child, level + 1);
-        }
+        std::visit(
+            overloaded {
+                [](const Literal &) {},
+                [](const Name &) {},
+                [](const TypeNotation &) {},
+                [level](const std::unique_ptr<Add> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<And> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Assign> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<ConstantDeclaration> &n) {
+                    print_node(n->name, level + 1);
+                    if (n->type_notation) {
+                        print_node(*n->type_notation, level + 1);
+                    }
+                    print_node(n->expression, level + 1);
+                },
+                [level](const std::unique_ptr<Div> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Eq> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<ElseStatement> &n) {
+                    for (const auto &statement : n->body) {
+                        print_node(statement, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<ExpressionGroup> &n) {
+                    print_node(n->expression, level + 1);
+                },
+                [level](const std::unique_ptr<FunctionDefinition> &n) {
+                    print_node(n->name, level + 1);
+                    for (const auto &param : n->parameters) {
+                        print_node(param.first, level + 1);
+                        print_node(param.second, level + 1);
+                    }
+                    for (const auto &statement : n->body) {
+                        print_node(statement, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<Gt> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Gte> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<IfStatement> &n) {
+                    print_node(n->cond, level + 1);
+                    for (const auto &statement : n->body) {
+                        print_node(statement, level + 1);
+                    }
+                    if (n->else_statement) {
+                        print_node(*n->else_statement, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<Lt> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Lte> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Mod> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Mul> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<NamespaceDeclaration> &n) {
+                    for (const auto &segment : n->name_segments) {
+                        print_node(segment, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<Neg> &n) { print_node(n->expression, level + 1); },
+                [level](const std::unique_ptr<Neq> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Not> &n) { print_node(n->expression, level + 1); },
+                [level](const std::unique_ptr<Or> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<Root> &n) {
+                    for (const auto &statement : n->body) {
+                        print_node(statement, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<Sub> &n) {
+                    print_node(n->lhs, level + 1);
+                    print_node(n->rhs, level + 1);
+                },
+                [level](const std::unique_ptr<UseDeclaration> &n) {
+                    for (const auto &segment : n->name_segments) {
+                        print_node(segment, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<VariableDeclaration> &n) {
+                    print_node(n->name, level + 1);
+                    if (n->type_notation) {
+                        print_node(*n->type_notation, level + 1);
+                    }
+                    print_node(n->expression, level + 1);
+                },
+            },
+            node);
     }
 
     std::expected<void, Error> compile(const std::string_view src)
     {
-        Parser parser { src };
+        ParserContext parser_ctx { Lexer { src }, src };
 
-        auto root { parser.parse() };
+        auto root { parse(parser_ctx) };
         if (!root) {
             return std::unexpected(root.error());
         }

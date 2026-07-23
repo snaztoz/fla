@@ -1,0 +1,23 @@
+fun main() do
+  if 1 + 1 == 5 do
+    5
+  end
+
+  if foo do
+  else do
+  end
+
+  if foo do
+    50
+  else if 2 > 5 and bar do
+    100
+  else do
+    150
+  end
+
+  var dynamic = if a == 5 do
+    true
+  else do
+    false
+  end
+end
