@@ -67,6 +67,7 @@ namespace fla::compiler
                 [](const std::unique_ptr<VariableDeclaration> &) -> std::string {
                     return "variable declaration";
                 },
+                [](const std::unique_ptr<WhileLoop> &) -> std::string { return "while loop"; },
             },
             node);
     }

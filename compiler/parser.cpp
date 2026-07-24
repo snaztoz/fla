@@ -26,6 +26,7 @@ namespace fla::compiler
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
     ParseTypeNotationResult parse_type_notation(ParserContext &ctx);
     ParseResult parse_variable_declaration(ParserContext &ctx);
+    ParseResult parse_while_statement(ParserContext &ctx);
     ParseResult parse_expression_statement(ParserContext &ctx);
     ParseNameResult parse_name(ParserContext &ctx);
 
@@ -263,6 +264,8 @@ namespace fla::compiler
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwWhile }, [&ctx] { return parse_while_statement(ctx); }),
         };
 
         while (true) {
@@ -357,6 +360,39 @@ namespace fla::compiler
             std::move(*expression),
             meta,
         });
+    }
+
+    ParseResult parse_while_statement(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        auto cond_expression { parse_expression(ctx) };
+        if (!cond_expression) {
+            return cond_expression;
+        }
+
+        if (const auto kw_do { expect(ctx, TokenType::KwDo) }; !kw_do) {
+            return std::unexpected(kw_do.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        const auto kw_end { expect(ctx, TokenType::KwEnd) };
+        if (!kw_end) {
+            return std::unexpected(kw_end.error());
+        }
+
+        return std::make_unique<WhileLoop>(WhileLoop { std::move(*cond_expression),
+                                                       std::move(*body),
+                                                       {
+                                                           kw.pos,
+                                                           kw_end->pos - kw.pos + kw_end->len,
+                                                           kw.line,
+                                                           kw.col,
+                                                       } });
     }
 
     ParseResult parse_expression_statement(ParserContext &ctx)

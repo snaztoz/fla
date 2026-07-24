@@ -190,6 +190,12 @@ namespace fla::compiler
                     }
                     print_node(n->expression, level + 1);
                 },
+                [level](const std::unique_ptr<WhileLoop> &n) {
+                    print_node(n->cond, level + 1);
+                    for (const auto &statement : n->body) {
+                        print_node(statement, level + 1);
+                    }
+                },
             },
             node);
     }
