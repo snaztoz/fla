@@ -103,7 +103,7 @@ namespace fla::compiler
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);
                 },
-                [level](const std::unique_ptr<ElseStatement> &n) {
+                [level](const std::unique_ptr<ElseBranch> &n) {
                     for (const auto &statement : n->body) {
                         print_node(statement, level + 1);
                     }
@@ -129,7 +129,7 @@ namespace fla::compiler
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);
                 },
-                [level](const std::unique_ptr<IfStatement> &n) {
+                [level](const std::unique_ptr<IfExpression> &n) {
                     print_node(n->cond, level + 1);
                     for (const auto &statement : n->body) {
                         print_node(statement, level + 1);

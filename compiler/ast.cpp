@@ -30,9 +30,7 @@ namespace fla::compiler
                 },
                 [](const std::unique_ptr<Div> &) -> std::string { return "division"; },
                 [](const std::unique_ptr<Eq> &) -> std::string { return "equality checking"; },
-                [](const std::unique_ptr<ElseStatement> &) -> std::string {
-                    return "else statement";
-                },
+                [](const std::unique_ptr<ElseBranch> &) -> std::string { return "else branch"; },
                 [](const std::unique_ptr<ExpressionGroup> &) -> std::string {
                     return "expression group";
                 },
@@ -45,7 +43,9 @@ namespace fla::compiler
                 [](const std::unique_ptr<Gte> &) -> std::string {
                     return "greater-than or equal comparison";
                 },
-                [](const std::unique_ptr<IfStatement> &) -> std::string { return "if statement"; },
+                [](const std::unique_ptr<IfExpression> &) -> std::string {
+                    return "if expression";
+                },
                 [](const std::unique_ptr<Lt> &) -> std::string { return "less-than comparison"; },
                 [](const std::unique_ptr<Lte> &) -> std::string {
                     return "less-than or equal comparison";
