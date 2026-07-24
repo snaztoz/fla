@@ -403,15 +403,17 @@ namespace fla::compiler
                 return std::unexpected(end.error());
             }
 
-            return std::make_unique<IfStatement>(IfStatement { std::move(*cond_expression),
-                                                               std::move(*body),
-                                                               std::nullopt,
-                                                               {
-                                                                   kw.pos,
-                                                                   end->pos - kw.pos + end->len,
-                                                                   kw.line,
-                                                                   kw.col,
-                                                               } });
+            return std::make_unique<IfExpression>(IfExpression {
+                std::move(*cond_expression),
+                std::move(*body),
+                std::nullopt,
+                {
+                    kw.pos,
+                    end->pos - kw.pos + end->len,
+                    kw.line,
+                    kw.col,
+                },
+            });
         }
 
         auto else_branch { parse_else_branch(ctx) };
@@ -421,16 +423,17 @@ namespace fla::compiler
 
         const auto else_branch_metadata { get_node_metadata(*else_branch) };
 
-        return std::make_unique<IfStatement>(
-            IfStatement { std::move(*cond_expression),
-                          std::move(*body),
-                          std::move(*else_branch),
-                          {
-                              kw.pos,
-                              else_branch_metadata.pos - kw.pos + else_branch_metadata.len,
-                              kw.line,
-                              kw.col,
-                          } });
+        return std::make_unique<IfExpression>(IfExpression {
+            std::move(*cond_expression),
+            std::move(*body),
+            std::move(*else_branch),
+            {
+                kw.pos,
+                else_branch_metadata.pos - kw.pos + else_branch_metadata.len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_else_branch(ParserContext &ctx)
@@ -455,12 +458,14 @@ namespace fla::compiler
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<ElseStatement>(ElseStatement { std::move(*body),
-                                                               {
-                                                                   kw.pos,
-                                                                   end->pos - kw.pos + end->len,
-                                                                   kw.line,
-                                                                   kw.col,
-                                                               } });
+        return std::make_unique<ElseBranch>(ElseBranch {
+            std::move(*body),
+            {
+                kw.pos,
+                end->pos - kw.pos + end->len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 } // namespace fla::compiler
