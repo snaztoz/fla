@@ -12,11 +12,8 @@
 
 namespace fla::compiler
 {
-    using ParseNameResult = std::expected<Name, Error>;
     using ParseNestedNamesResult = std::expected<std::vector<Name>, Error>;
-    using ParseTypeNotationResult = std::expected<TypeNotation, Error>;
-    using ParseFunctionParametersResult =
-        std::expected<std::vector<std::pair<Name, TypeNotation>>, Error>;
+    using ParseFunctionParametersResult = std::expected<std::vector<std::pair<Name, Node>>, Error>;
 
     ParseResult parse_root(ParserContext &ctx, const Token &t);
     ParseResult parse_namespace_statement(ParserContext &ctx);
@@ -24,11 +21,9 @@ namespace fla::compiler
     ParseResult parse_function_definition(ParserContext &ctx);
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
-    ParseTypeNotationResult parse_type_notation(ParserContext &ctx);
     ParseResult parse_variable_declaration(ParserContext &ctx);
     ParseResult parse_while_statement(ParserContext &ctx);
     ParseResult parse_expression_statement(ParserContext &ctx);
-    ParseNameResult parse_name(ParserContext &ctx);
 
     ParseResult parse(ParserContext &ctx)
     {
@@ -136,7 +131,7 @@ namespace fla::compiler
             return std::unexpected(t.error());
         }
 
-        const auto parameters { parse_function_parameters(ctx) };
+        auto parameters { parse_function_parameters(ctx) };
         if (!parameters) {
             return std::unexpected(parameters.error());
         }
@@ -146,13 +141,13 @@ namespace fla::compiler
         }
 
         // Return type is optional
-        std::optional<TypeNotation> return_type_notation;
+        std::optional<TypeNotationNode> return_tn;
         if (ctx.lexer.peek().type != TokenType::KwDo) {
-            const auto tn { parse_type_notation(ctx) };
+            auto tn { parse_type_notation_node(ctx) };
             if (!tn) {
                 return std::unexpected(tn.error());
             }
-            return_type_notation.emplace(std::move(*tn));
+            return_tn.emplace(std::move(*tn));
         }
 
         if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
@@ -172,7 +167,7 @@ namespace fla::compiler
         return std::make_unique<FunctionDefinition>(
             FunctionDefinition { std::move(*name),
                                  std::move(*parameters),
-                                 std::move(return_type_notation),
+                                 std::move(return_tn),
                                  std::move(*body),
                                  {
                                      kw.pos,
@@ -184,7 +179,7 @@ namespace fla::compiler
 
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx)
     {
-        std::vector<std::pair<Name, TypeNotation>> parameters;
+        std::vector<std::pair<Name, Node>> parameters;
 
         while (ctx.lexer.peek().type != TokenType::SymRParen) {
             auto name { parse_name(ctx) };
@@ -192,12 +187,12 @@ namespace fla::compiler
                 return std::unexpected(name.error());
             }
 
-            auto type_notation { parse_type_notation(ctx) };
-            if (!type_notation) {
-                return std::unexpected(type_notation.error());
+            auto tn { parse_type_notation_node(ctx) };
+            if (!tn) {
+                return std::unexpected(tn.error());
             }
 
-            parameters.push_back(std::make_pair(*name, *type_notation));
+            parameters.push_back(std::make_pair(*name, std::move(*tn)));
 
             const auto next { ctx.lexer.peek() };
 
@@ -307,18 +302,6 @@ namespace fla::compiler
         return body;
     }
 
-    ParseTypeNotationResult parse_type_notation(ParserContext &ctx)
-    {
-        const auto type_notation { parse_name(ctx) };
-        if (!type_notation) {
-            return std::unexpected(type_notation.error());
-        }
-
-        const auto meta { get_node_metadata(*type_notation) };
-
-        return TypeNotation { std::move(*type_notation), meta };
-    }
-
     ParseResult parse_variable_declaration(ParserContext &ctx)
     {
         const auto kw { ctx.lexer.next() };
@@ -328,13 +311,13 @@ namespace fla::compiler
             return std::unexpected(name.error());
         }
 
-        std::optional<TypeNotation> type_notation;
+        std::optional<TypeNotationNode> tn;
         if (ctx.lexer.peek().type != TokenType::OpAssign) {
-            const auto tn { parse_type_notation(ctx) };
-            if (!tn) {
-                return std::unexpected(tn.error());
+            auto tnn { parse_type_notation_node(ctx) };
+            if (!tnn) {
+                return std::unexpected(tnn.error());
             }
-            type_notation.emplace(std::move(*tn));
+            tn.emplace(std::move(*tnn));
         }
 
         if (const auto t { expect(ctx, TokenType::OpAssign) }; !t) {
@@ -356,7 +339,7 @@ namespace fla::compiler
 
         return std::make_unique<VariableDeclaration>(VariableDeclaration {
             std::move(*name),
-            type_notation,
+            std::move(tn),
             std::move(*expression),
             meta,
         });

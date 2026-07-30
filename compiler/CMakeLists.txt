@@ -8,6 +8,7 @@ add_library(flac
     lexer.cpp
     lexer.hpp
     parser_expression.cpp
+    parser_type_notation.cpp
     parser.cpp
     parser.hpp
     token.hpp

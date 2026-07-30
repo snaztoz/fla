@@ -1,9 +1,15 @@
-fun main() do
+fun normal_expression() do
   5
+end
 
+fun identifier() do
   foo
+end
 
+fun grouped_expression() do
   (((bar)))
+end
 
+fun complex_expression() do
   foo = 3 + 10 * (abc - 7 / -2) * 5 >= 0 == true != not not false or false and 1 > 5
 end

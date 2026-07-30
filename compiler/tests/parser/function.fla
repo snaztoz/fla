@@ -1,11 +1,14 @@
-fun foo() do end
+fun empty_function() do end
 
-fun foo(s string) do
+fun function_with_single_parameter(s string) do
 end
 
-fun foo(x int, y int, z int,) string do
+fun function_with_multiple_parameters(x int, y int, z int,) do
 end
 
-fun main() do
+fun function_with_return_type() string do
+end
+
+fun function_with_body() do
   foo
 end
