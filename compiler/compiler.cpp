@@ -62,6 +62,25 @@ int fla_free_compiler_error(struct FlaCompilerError *err)
 
 namespace fla::compiler
 {
+    void print_type_notation(const TypeNotation &tn, const int level)
+    {
+        const std::string indentation(level * 2, ' ');
+
+        std::print("{}{}", indentation, get_type_notation_repr(tn));
+
+        const Metadata meta { get_type_notation_metadata(tn) };
+        std::print(" ({}:{}:{})\n", meta.line, meta.col, meta.len);
+
+        std::visit(overloaded {
+                       [](const Name &) {},
+                       [level](const std::unique_ptr<ArrayTypeNotation> &t) {
+                           print_type_notation(t->element_tn, level + 1);
+                       },
+                       [](const std::unique_ptr<FunctionTypeNotation> &) { std::print("TODO"); },
+                   },
+                   tn);
+    }
+
     void print_node(const Node &node, const int level)
     {
         const std::string indentation(level * 2, ' ');
@@ -75,7 +94,7 @@ namespace fla::compiler
             overloaded {
                 [](const Literal &) {},
                 [](const Name &) {},
-                [](const TypeNotation &) {},
+                [](const TypeNotationNode &) {},
                 [level](const std::unique_ptr<Add> &n) {
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);
@@ -113,12 +132,25 @@ namespace fla::compiler
                 },
                 [level](const std::unique_ptr<FunctionDefinition> &n) {
                     print_node(n->name, level + 1);
+
+                    const std::string child_indentation((level + 1) * 2, ' ');
+
                     for (const auto &param : n->parameters) {
-                        print_node(param.first, level + 1);
-                        print_node(param.second, level + 1);
+                        std::println("{}{{parameter}}", child_indentation);
+                        print_node(param.first, level + 2);
+                        print_node(param.second, level + 2);
                     }
-                    for (const auto &statement : n->body) {
-                        print_node(statement, level + 1);
+
+                    if (n->return_type_notation) {
+                        std::println("{}{{return}}", child_indentation);
+                        print_node(*n->return_type_notation, level + 2);
+                    }
+
+                    if (!n->body.empty()) {
+                        std::println("{}{{body}}", child_indentation);
+                        for (const auto &statement : n->body) {
+                            print_node(statement, level + 2);
+                        }
                     }
                 },
                 [level](const std::unique_ptr<Gt> &n) {

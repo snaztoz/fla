@@ -28,8 +28,25 @@ namespace fla::compiler
         Metadata meta;
     };
 
-    struct TypeNotation {
-        Name name;
+    struct ArrayTypeNotation;
+    struct FunctionTypeNotation;
+
+    using TypeNotation = std::variant<Name, std::unique_ptr<ArrayTypeNotation>,
+                                      std::unique_ptr<FunctionTypeNotation>>;
+
+    struct ArrayTypeNotation {
+        TypeNotation element_tn;
+        Metadata meta;
+    };
+
+    struct FunctionTypeNotation {
+        std::vector<TypeNotation> parameter_tns;
+        std::optional<TypeNotation> return_tn;
+        Metadata meta;
+    };
+
+    struct TypeNotationNode {
+        TypeNotation tn;
         Metadata meta;
     };
 
@@ -61,7 +78,7 @@ namespace fla::compiler
     struct WhileLoop;
 
     using Node = std::variant<
-        Literal, Name, TypeNotation, std::unique_ptr<Add>, std::unique_ptr<And>,
+        Literal, Name, TypeNotationNode, std::unique_ptr<Add>, std::unique_ptr<And>,
         std::unique_ptr<Assign>, std::unique_ptr<ConstantDeclaration>, std::unique_ptr<Div>,
         std::unique_ptr<ElseBranch>, std::unique_ptr<Eq>, std::unique_ptr<ExpressionGroup>,
         std::unique_ptr<FunctionDefinition>, std::unique_ptr<Gt>, std::unique_ptr<Gte>,
@@ -91,7 +108,7 @@ namespace fla::compiler
 
     struct ConstantDeclaration {
         Name name;
-        std::optional<TypeNotation> type_notation;
+        std::optional<Node> type_notation;
         Node expression;
         Metadata meta;
     };
@@ -120,8 +137,8 @@ namespace fla::compiler
 
     struct FunctionDefinition {
         Name name;
-        std::vector<std::pair<Name, TypeNotation>> parameters;
-        std::optional<TypeNotation> return_type_notation;
+        std::vector<std::pair<Name, Node>> parameters;
+        std::optional<Node> return_type_notation;
         std::vector<Node> body;
         Metadata meta;
     };
@@ -214,7 +231,7 @@ namespace fla::compiler
 
     struct VariableDeclaration {
         Name name;
-        std::optional<TypeNotation> type_notation;
+        std::optional<Node> type_notation;
         Node expression;
         Metadata meta;
     };
@@ -231,6 +248,10 @@ namespace fla::compiler
 
     std::string get_node_repr(const Node &node);
     const Metadata &get_node_metadata(const Node &node);
+
+    std::string get_type_notation_node_repr(const TypeNotationNode &tn);
+    std::string get_type_notation_repr(const TypeNotation &tn);
+    const Metadata &get_type_notation_metadata(const TypeNotation &tn);
 } // namespace fla::compiler
 
 #endif

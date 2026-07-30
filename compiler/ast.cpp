@@ -1,5 +1,6 @@
 #include <format>
 #include <memory>
+#include <variant>
 
 #include "ast.hpp"
 
@@ -19,8 +20,8 @@ namespace fla::compiler
                     }
                 },
                 [](const Name &n) -> std::string { return std::format("name `{}`", n.name); },
-                [](const TypeNotation &n) -> std::string {
-                    return std::format("type notation `{}`", n.name.name);
+                [](const TypeNotationNode &n) -> std::string {
+                    return std::format("type notation `{}`", get_type_notation_node_repr(n));
                 },
                 [](const std::unique_ptr<Add> &) -> std::string { return "addition"; },
                 [](const std::unique_ptr<And> &) -> std::string { return "logical and"; },
@@ -83,5 +84,46 @@ namespace fla::compiler
                 }
             },
             node);
+    }
+
+    std::string get_type_notation_node_repr(const TypeNotationNode &tn)
+    {
+        if (const auto name = std::get_if<Name>(&tn.tn)) {
+            return std::format("{}", name->name);
+        } else {
+            return get_type_notation_repr(tn.tn);
+        }
+    }
+
+    std::string get_type_notation_repr(const TypeNotation &tn)
+    {
+        return std::visit(
+            overloaded {
+                [](const std::unique_ptr<ArrayTypeNotation> &tn) -> std::string {
+                    return std::format("[]{}", get_type_notation_repr(tn->element_tn));
+                },
+                [](const std::unique_ptr<FunctionTypeNotation> &tn) -> std::string {
+                    std::string return_tn { "" };
+                    if (tn->return_tn) {
+                        return_tn += " " + get_type_notation_repr(*tn->return_tn);
+                    }
+                    return std::format("fun(){}", return_tn);
+                },
+                [](const Name &tn) -> std::string { return std::format("{}", tn.name); },
+            },
+            tn);
+    }
+
+    const Metadata &get_type_notation_metadata(const TypeNotation &tn)
+    {
+        return std::visit<const Metadata &>(
+            [](const auto &n) -> const Metadata & {
+                if constexpr (requires { n->meta; }) {
+                    return n->meta;
+                } else {
+                    return n.meta;
+                }
+            },
+            tn);
     }
 } // namespace fla::compiler

@@ -1,5 +1,5 @@
 fun main() do
-  while !true do
+  while not true do
     5
   end
 end

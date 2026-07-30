@@ -45,6 +45,7 @@ int main()
     TEST_PARSE("expression", path / "expression.fla");
     TEST_PARSE("function", path / "function.fla");
     TEST_PARSE("if_else", path / "if_else.fla");
+    TEST_PARSE("loop", path / "loop.fla");
     TEST_PARSE("namespace", path / "namespace.fla");
     TEST_PARSE("use", path / "use.fla");
     TEST_PARSE("variable", path / "variable.fla");
