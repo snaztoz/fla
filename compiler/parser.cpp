@@ -15,9 +15,9 @@ namespace fla::compiler
     using ParseNestedNamesResult = std::expected<std::vector<Name>, Error>;
     using ParseFunctionParametersResult = std::expected<std::vector<std::pair<Name, Node>>, Error>;
 
-    ParseResult parse_root(ParserContext &ctx, const Token &t);
     ParseResult parse_namespace_statement(ParserContext &ctx);
     ParseResult parse_use_statement(ParserContext &ctx);
+    ParseResult parse_class_definition(ParserContext &ctx);
     ParseResult parse_function_definition(ParserContext &ctx);
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
@@ -27,57 +27,25 @@ namespace fla::compiler
 
     ParseResult parse(ParserContext &ctx)
     {
-        std::vector<Node> body;
-
-        while (true) {
-            const auto t { ctx.lexer.peek() };
-            if (t.is_eof()) {
-                break;
-            }
-
-            auto res { parse_root(ctx, t) };
-            if (!res) {
-                return res;
-            }
-
-            body.push_back(std::move(*res));
+        auto body { parse_body(ctx, { TokenType::Eof }) };
+        if (!body) {
+            return std::unexpected(body.error());
         }
 
-        if (body.size() == 0) {
-            return std::make_unique<Root>(Root { std::move(body), { 0, 0, 0, 0 } });
+        if (body->size() == 0) {
+            return std::make_unique<Root>(Root { std::move(*body), { 0, 0, 0, 0 } });
         }
 
-        const auto first { get_node_metadata(body.at(0)) };
-        const auto last { get_node_metadata(body.at(body.size() - 1)) };
+        const auto first { get_node_metadata(body->at(0)) };
+        const auto last { get_node_metadata(body->at(body->size() - 1)) };
 
-        return std::make_unique<Root>(Root { std::move(body),
+        return std::make_unique<Root>(Root { std::move(*body),
                                              {
                                                  first.pos,
                                                  last.pos - first.pos + last.len,
                                                  first.line,
                                                  first.col,
                                              } });
-    }
-
-    ParseResult parse_root(ParserContext &ctx, const Token &t)
-    {
-        switch (t.type) {
-        case TokenType::KwNamespace:
-            return parse_namespace_statement(ctx);
-        case TokenType::KwUse:
-            return parse_use_statement(ctx);
-        case TokenType::KwFun:
-            return parse_function_definition(ctx);
-        default:
-            return std::unexpected(Error {
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-                std::format("expecting top-level statement(s), found {} instead",
-                            token_type_string(t.type)),
-            });
-        }
     }
 
     ParseResult parse_namespace_statement(ParserContext &ctx)
@@ -120,6 +88,39 @@ namespace fla::compiler
                                                                      kw.line,
                                                                      kw.col,
                                                                  } });
+    }
+
+    ParseResult parse_class_definition(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        const auto name { parse_name(ctx) };
+        if (!name) {
+            return std::unexpected(name.error());
+        }
+
+        if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        const auto end { expect(ctx, TokenType::KwEnd) };
+        if (!end) {
+            return std::unexpected(end.error());
+        }
+
+        return std::make_unique<ClassDefinition>(ClassDefinition { std::move(*name),
+                                                                   std::move(*body),
+                                                                   {
+                                                                       kw.pos,
+                                                                       end->pos - kw.pos + end->len,
+                                                                       kw.line,
+                                                                       kw.col,
+                                                                   } });
     }
 
     ParseResult parse_function_definition(ParserContext &ctx)
@@ -261,6 +262,14 @@ namespace fla::compiler
 
         const auto rules = {
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwNamespace }, [&ctx] { return parse_namespace_statement(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwUse }, [&ctx] { return parse_use_statement(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwClass }, [&ctx] { return parse_class_definition(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwFun }, [&ctx] { return parse_function_definition(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
@@ -324,18 +333,35 @@ namespace fla::compiler
             tn.emplace(std::move(*tnn));
         }
 
-        if (const auto t { expect(ctx, TokenType::OpAssign) }; !t) {
-            return std::unexpected(t.error());
+        std::optional<Node> expression;
+        if (ctx.lexer.peek().type == TokenType::OpAssign) {
+            ctx.lexer.next();
+
+            auto expr { parse_expression(ctx) };
+            if (!expr) {
+                return expr;
+            }
+
+            expression.emplace(std::move(*expr));
         }
 
-        auto expression { parse_expression(ctx) };
-        if (!expression) {
-            return expression;
+        if (!tn && !expression) {
+            const auto name_metadata { get_node_metadata(*name) };
+
+            return std::unexpected(Error {
+                kw.pos,
+                name_metadata.pos - kw.pos + name_metadata.len,
+                kw.line,
+                kw.col,
+                std::format("expecting either type notation or initial value are provided"),
+            });
         }
-        const auto expression_meta { get_node_metadata(*expression) };
+
+        const auto tail_meta { expression.has_value() ? get_node_metadata(*expression)
+                                                      : get_type_notation_metadata(tn->tn) };
 
         const auto pos { kw.pos };
-        const auto len { expression_meta.pos - kw.pos + expression_meta.len };
+        const auto len { tail_meta.pos - kw.pos + tail_meta.len };
         const auto line { kw.line };
         const auto col { kw.col };
 
@@ -344,7 +370,7 @@ namespace fla::compiler
         return std::make_unique<VariableDeclaration>(VariableDeclaration {
             std::move(*name),
             std::move(tn),
-            std::move(*expression),
+            std::move(expression),
             meta,
         });
     }

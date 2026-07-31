@@ -107,6 +107,17 @@ namespace fla::compiler
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);
                 },
+                [level](const std::unique_ptr<ClassDefinition> &n) {
+                    print_node(n->name, level + 1);
+
+                    const std::string child_indentation((level + 1) * 2, ' ');
+                    if (!n->body.empty()) {
+                        std::println("{}{{body}}", child_indentation);
+                        for (const auto &statement : n->body) {
+                            print_node(statement, level + 2);
+                        }
+                    }
+                },
                 [level](const std::unique_ptr<ConstantDeclaration> &n) {
                     print_node(n->name, level + 1);
                     if (n->type_notation) {
@@ -220,7 +231,9 @@ namespace fla::compiler
                     if (n->type_notation) {
                         print_node(*n->type_notation, level + 1);
                     }
-                    print_node(n->expression, level + 1);
+                    if (n->expression) {
+                        print_node(*n->expression, level + 1);
+                    }
                 },
                 [level](const std::unique_ptr<WhileLoop> &n) {
                     print_node(n->cond, level + 1);

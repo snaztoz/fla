@@ -26,6 +26,9 @@ namespace fla::compiler
                 [](const std::unique_ptr<Add> &) -> std::string { return "addition"; },
                 [](const std::unique_ptr<And> &) -> std::string { return "logical and"; },
                 [](const std::unique_ptr<Assign> &) -> std::string { return "assignment"; },
+                [](const std::unique_ptr<ClassDefinition> &) -> std::string {
+                    return "class definition";
+                },
                 [](const std::unique_ptr<ConstantDeclaration> &) -> std::string {
                     return "constant declaration";
                 },
