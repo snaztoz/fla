@@ -10,6 +10,36 @@ bool is_parseable(std::string_view src)
     return !!fla::compiler::parse(parser_ctx);
 }
 
+TEST_CASE("parse-class", "[parser]")
+{
+    SECTION("simple")
+    {
+        REQUIRE(is_parseable(R"(
+            class Person do
+            end
+        )"));
+    }
+
+    SECTION("variable-member")
+    {
+        REQUIRE(is_parseable(R"(
+            class Person do
+                var name string
+            end
+        )"));
+    }
+
+    SECTION("method-member")
+    {
+        REQUIRE(is_parseable(R"(
+            class Person do
+                fun greet() do
+                end
+            end
+        )"));
+    }
+}
+
 TEST_CASE("parse-expression", "[parser]")
 {
     SECTION("simple")
