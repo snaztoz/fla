@@ -127,6 +127,10 @@ namespace fla::compiler
     std::optional<Token> Lexer::try_match_sym(const std::string_view text,
                                               const TokenType type_if_matches)
     {
+        if (cursor + text.length() > src.length()) {
+            return std::nullopt;
+        }
+
         if (src.substr(cursor, text.length()) != text) {
             return std::nullopt;
         }
@@ -178,7 +182,7 @@ namespace fla::compiler
 
     std::optional<Token> Lexer::try_match_number()
     {
-        if (!std::isdigit(current())) {
+        if (cursor >= src.length() || !std::isdigit(current())) {
             return std::nullopt;
         }
 
@@ -186,7 +190,7 @@ namespace fla::compiler
         cursor += 1;
 
         std::size_t len { 1 };
-        while (std::isdigit(current())) {
+        while (cursor < src.length() && std::isdigit(current())) {
             len += 1;
             cursor += 1;
         }
@@ -226,11 +230,11 @@ namespace fla::compiler
 
     bool Lexer::is_current_valid_name_start() const
     {
-        return std::isalpha(current()) || current() == '_';
+        return cursor < src.length() && (std::isalpha(current()) || current() == '_');
     }
 
     bool Lexer::is_current_valid_name_tail() const
     {
-        return std::isalnum(current()) || current() == '_';
+        return cursor < src.length() && (std::isalnum(current()) || current() == '_');
     }
 }; // namespace fla::compiler

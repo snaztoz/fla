@@ -1,5 +1,0 @@
-fun main() do
-  while not true do
-    5
-  end
-end

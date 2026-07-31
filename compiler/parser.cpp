@@ -43,6 +43,10 @@ namespace fla::compiler
             body.push_back(std::move(*res));
         }
 
+        if (body.size() == 0) {
+            return std::make_unique<Root>(Root { std::move(body), { 0, 0, 0, 0 } });
+        }
+
         const auto first { get_node_metadata(body.at(0)) };
         const auto last { get_node_metadata(body.at(body.size() - 1)) };
 
