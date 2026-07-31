@@ -63,6 +63,7 @@ namespace fla::compiler
                 [](const std::unique_ptr<Neq> &) -> std::string { return "inequality checking"; },
                 [](const std::unique_ptr<Not> &) -> std::string { return "logical not"; },
                 [](const std::unique_ptr<Or> &) -> std::string { return "logical or"; },
+                [](const std::unique_ptr<PublicScope> &) -> std::string { return "public scope"; },
                 [](const std::unique_ptr<Root> &) -> std::string { return "root"; },
                 [](const std::unique_ptr<Sub> &) -> std::string { return "subtraction"; },
                 [](const std::unique_ptr<UseDeclaration> &) -> std::string {

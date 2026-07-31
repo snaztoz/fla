@@ -21,6 +21,7 @@ namespace fla::compiler
         { "namespace", TokenType::KwNamespace },
         { "not", TokenType::KwNot },
         { "or", TokenType::KwOr },
+        { "public", TokenType::KwPublic },
         { "use", TokenType::KwUse },
         { "var", TokenType::KwVar },
         { "while", TokenType::KwWhile },

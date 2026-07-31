@@ -26,6 +26,7 @@ namespace fla::compiler
         KwNamespace,
         KwNot,
         KwOr,
+        KwPublic,
         KwUse,
         KwVar,
         KwWhile,
@@ -90,6 +91,8 @@ namespace fla::compiler
             return "`not` keyword";
         case TokenType::KwOr:
             return "`or` keyword";
+        case TokenType::KwPublic:
+            return "`public` keyword";
         case TokenType::KwUse:
             return "`use` keyword";
         case TokenType::KwVar:

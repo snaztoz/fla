@@ -72,6 +72,7 @@ namespace fla::compiler
     struct Neq;
     struct Not;
     struct Or;
+    struct PublicScope;
     struct Root;
     struct Sub;
     struct UseDeclaration;
@@ -86,9 +87,9 @@ namespace fla::compiler
         std::unique_ptr<Gt>, std::unique_ptr<Gte>, std::unique_ptr<IfExpression>,
         std::unique_ptr<Lt>, std::unique_ptr<Lte>, std::unique_ptr<Mod>, std::unique_ptr<Mul>,
         std::unique_ptr<NamespaceDeclaration>, std::unique_ptr<Neg>, std::unique_ptr<Neq>,
-        std::unique_ptr<Not>, std::unique_ptr<Or>, std::unique_ptr<Root>, std::unique_ptr<Sub>,
-        std::unique_ptr<UseDeclaration>, std::unique_ptr<VariableDeclaration>,
-        std::unique_ptr<WhileLoop>>;
+        std::unique_ptr<Not>, std::unique_ptr<Or>, std::unique_ptr<PublicScope>,
+        std::unique_ptr<Root>, std::unique_ptr<Sub>, std::unique_ptr<UseDeclaration>,
+        std::unique_ptr<VariableDeclaration>, std::unique_ptr<WhileLoop>>;
 
     struct Add {
         Node lhs;
@@ -218,6 +219,11 @@ namespace fla::compiler
     struct Or {
         Node lhs;
         Node rhs;
+        Metadata meta;
+    };
+
+    struct PublicScope {
+        std::vector<Node> body;
         Metadata meta;
     };
 

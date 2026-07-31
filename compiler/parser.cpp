@@ -17,6 +17,7 @@ namespace fla::compiler
 
     ParseResult parse_namespace_statement(ParserContext &ctx);
     ParseResult parse_use_statement(ParserContext &ctx);
+    ParseResult parse_public_scope(ParserContext &ctx);
     ParseResult parse_class_definition(ParserContext &ctx);
     ParseResult parse_function_definition(ParserContext &ctx);
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
@@ -88,6 +89,33 @@ namespace fla::compiler
                                                                      kw.line,
                                                                      kw.col,
                                                                  } });
+    }
+
+    ParseResult parse_public_scope(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        const auto end { expect(ctx, TokenType::KwEnd) };
+        if (!end) {
+            return std::unexpected(end.error());
+        }
+
+        return std::make_unique<PublicScope>(PublicScope { std::move(*body),
+                                                           {
+                                                               kw.pos,
+                                                               end->pos - kw.pos + end->len,
+                                                               kw.line,
+                                                               kw.col,
+                                                           } });
     }
 
     ParseResult parse_class_definition(ParserContext &ctx)
@@ -262,16 +290,18 @@ namespace fla::compiler
 
         const auto rules = {
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwNamespace }, [&ctx] { return parse_namespace_statement(ctx); }),
-            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwUse }, [&ctx] { return parse_use_statement(ctx); }),
-            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwClass }, [&ctx] { return parse_class_definition(ctx); }),
-            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwFun }, [&ctx] { return parse_function_definition(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwFun }, [&ctx] { return parse_function_definition(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwNamespace }, [&ctx] { return parse_namespace_statement(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwPublic }, [&ctx] { return parse_public_scope(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwUse }, [&ctx] { return parse_use_statement(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwWhile }, [&ctx] { return parse_while_statement(ctx); }),
         };
