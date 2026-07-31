@@ -10,9 +10,9 @@ bool is_parseable(std::string_view src)
     return !!fla::compiler::parse(parser_ctx);
 }
 
-TEST_CASE("parsing expression", "parse-expression")
+TEST_CASE("parse-expression", "[parser]")
 {
-    SECTION("simple expression")
+    SECTION("simple")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -30,7 +30,7 @@ TEST_CASE("parsing expression", "parse-expression")
         )"));
     };
 
-    SECTION("grouped expression")
+    SECTION("grouped")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -39,7 +39,7 @@ TEST_CASE("parsing expression", "parse-expression")
         )"));
     };
 
-    SECTION("complex expression")
+    SECTION("complex")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -49,16 +49,16 @@ TEST_CASE("parsing expression", "parse-expression")
     };
 }
 
-TEST_CASE("parsing function", "parse-function")
+TEST_CASE("parse-function", "[parser]")
 {
-    SECTION("empty function")
+    SECTION("empty")
     {
         REQUIRE(is_parseable(R"(
             fun main() do end
         )"));
     }
 
-    SECTION("function with single parameter")
+    SECTION("single-parameter")
     {
         REQUIRE(is_parseable(R"(
             fun main(s string) do
@@ -66,7 +66,7 @@ TEST_CASE("parsing function", "parse-function")
         )"));
     }
 
-    SECTION("function with multiple parameters")
+    SECTION("multiple-parameters")
     {
         REQUIRE(is_parseable(R"(
             fun main(x int, y int, z int,) do
@@ -74,7 +74,7 @@ TEST_CASE("parsing function", "parse-function")
         )"));
     }
 
-    SECTION("function with return type")
+    SECTION("return-type")
     {
         REQUIRE(is_parseable(R"(
             fun main() string do
@@ -82,7 +82,7 @@ TEST_CASE("parsing function", "parse-function")
         )"));
     }
 
-    SECTION("function with body")
+    SECTION("body")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -92,9 +92,9 @@ TEST_CASE("parsing function", "parse-function")
     }
 }
 
-TEST_CASE("parsing if-else", "parse-if-else")
+TEST_CASE("parse-if-else", "[parser]")
 {
-    SECTION("basic if")
+    SECTION("basic")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -105,7 +105,7 @@ TEST_CASE("parsing if-else", "parse-if-else")
         )"));
     }
 
-    SECTION("basic if else")
+    SECTION("if-else")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -116,7 +116,7 @@ TEST_CASE("parsing if-else", "parse-if-else")
         )"));
     }
 
-    SECTION("multiple if else branches")
+    SECTION("multiple-branches")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -131,7 +131,7 @@ TEST_CASE("parsing if-else", "parse-if-else")
         )"));
     }
 
-    SECTION("if else expression")
+    SECTION("expression")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -145,9 +145,9 @@ TEST_CASE("parsing if-else", "parse-if-else")
     }
 }
 
-TEST_CASE("parsing while-loop", "parse-while-loop")
+TEST_CASE("parse-while-loop", "[parser]")
 {
-    SECTION("basic while-loop")
+    SECTION("basic")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -159,55 +159,49 @@ TEST_CASE("parsing while-loop", "parse-while-loop")
     }
 }
 
-TEST_CASE("parsing namespace", "parse-namespace")
+TEST_CASE("parse-namespace", "[parser]")
 {
-    SECTION("namespace statement")
-    {
-        REQUIRE(is_parseable(R"(
-            namespace std.util.math
+    REQUIRE(is_parseable(R"(
+        namespace std.util.math
 
-            namespace std
-                .util
-                .math
-
-            namespace
-            std
+        namespace std
             .util
             .math
 
-            namespace   std
-                . util
-            . math
-        )"));
-    }
+        namespace
+        std
+        .util
+        .math
+
+        namespace   std
+            . util
+        . math
+    )"));
 }
 
-TEST_CASE("parsing use", "parse-use")
+TEST_CASE("parse-use", "[parser]")
 {
-    SECTION("use statement")
-    {
-        REQUIRE(is_parseable(R"(
-            use std.util.math
+    REQUIRE(is_parseable(R"(
+        use std.util.math
 
-            use std
-                .util
-                .math
-
-            use
-            std
+        use std
             .util
             .math
 
-            use   std
-                . util
-            . math
-        )"));
-    }
+        use
+        std
+        .util
+        .math
+
+        use   std
+            . util
+        . math
+    )"));
 }
 
-TEST_CASE("parsing variable", "parse-variable")
+TEST_CASE("parse-variable", "[parser]")
 {
-    SECTION("variable assignment")
+    SECTION("variable-assignment")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -216,7 +210,7 @@ TEST_CASE("parsing variable", "parse-variable")
         )"));
     }
 
-    SECTION("constant assignment")
+    SECTION("constant-assignment")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
@@ -225,7 +219,7 @@ TEST_CASE("parsing variable", "parse-variable")
         )"));
     }
 
-    SECTION("variable & constant assignment with type notation")
+    SECTION("type-notation")
     {
         REQUIRE(is_parseable(R"(
             fun main() do
