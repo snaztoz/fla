@@ -23,21 +23,18 @@ endif()
 target_include_directories(flac PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(flac PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+
 # Tests
 
-add_executable(flac_parser_tests parser_tests.cpp)
+add_executable(flac-tests
+    ${CMAKE_SOURCE_DIR}/vendor/Catch2/catch_amalgamated.cpp
+    tests.cpp)
 
-target_compile_definitions(flac_parser_tests PRIVATE BUILD_TYPE="$<CONFIG>")
+target_compile_definitions(flac-tests PRIVATE BUILD_TYPE="$<CONFIG>")
 
-target_link_libraries(flac_parser_tests PRIVATE flac)
+target_link_libraries(flac-tests PRIVATE flac)
 
-target_include_directories(flac_parser_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(flac-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(flac-tests SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/vendor)
 
-# Copy tests/ into build/ directory
-add_custom_command(TARGET flac_parser_tests POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/tests"
-            "${CMAKE_CURRENT_BINARY_DIR}/tests"
-)
-
-add_test(NAME ParserTests COMMAND flac_parser_tests)
+add_test(NAME CompilerTests COMMAND flac-tests)
