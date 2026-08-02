@@ -10,23 +10,16 @@
 namespace fla::compiler
 {
     const std::map<std::string_view, TokenType> keywords {
-        { "and", TokenType::KwAnd },
-        { "class", TokenType::KwClass },
-        { "const", TokenType::KwConst },
-        { "do", TokenType::KwDo },
-        { "else", TokenType::KwElse },
-        { "end", TokenType::KwEnd },
-        { "fun", TokenType::KwFun },
-        { "if", TokenType::KwIf },
-        { "namespace", TokenType::KwNamespace },
-        { "not", TokenType::KwNot },
-        { "or", TokenType::KwOr },
-        { "use", TokenType::KwUse },
-        { "var", TokenType::KwVar },
-        { "while", TokenType::KwWhile },
+        { "and", TokenType::KwAnd },       { "class", TokenType::KwClass },
+        { "const", TokenType::KwConst },   { "declare", TokenType::KwDeclare },
+        { "do", TokenType::KwDo },         { "else", TokenType::KwElse },
+        { "end", TokenType::KwEnd },       { "fun", TokenType::KwFun },
+        { "if", TokenType::KwIf },         { "namespace", TokenType::KwNamespace },
+        { "not", TokenType::KwNot },       { "or", TokenType::KwOr },
+        { "public", TokenType::KwPublic }, { "use", TokenType::KwUse },
+        { "var", TokenType::KwVar },       { "while", TokenType::KwWhile },
 
-        { "false", TokenType::False },
-        { "null", TokenType::Null },
+        { "false", TokenType::False },     { "null", TokenType::Null },
         { "true", TokenType::True },
     };
 

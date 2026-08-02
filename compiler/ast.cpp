@@ -29,6 +29,9 @@ namespace fla::compiler
                 [](const std::unique_ptr<ClassDefinition> &) -> std::string {
                     return "class definition";
                 },
+                [](const std::unique_ptr<ClassForwardDeclaration> &) -> std::string {
+                    return "class forward declaration";
+                },
                 [](const std::unique_ptr<ConstantDeclaration> &) -> std::string {
                     return "constant declaration";
                 },
@@ -40,6 +43,9 @@ namespace fla::compiler
                 },
                 [](const std::unique_ptr<FunctionDefinition> &) -> std::string {
                     return "function definition";
+                },
+                [](const std::unique_ptr<FunctionForwardDeclaration> &) -> std::string {
+                    return "function forward declaration";
                 },
                 [](const std::unique_ptr<Gt> &) -> std::string {
                     return "greater-than comparison";
@@ -63,6 +69,7 @@ namespace fla::compiler
                 [](const std::unique_ptr<Neq> &) -> std::string { return "inequality checking"; },
                 [](const std::unique_ptr<Not> &) -> std::string { return "logical not"; },
                 [](const std::unique_ptr<Or> &) -> std::string { return "logical or"; },
+                [](const std::unique_ptr<PublicScope> &) -> std::string { return "public scope"; },
                 [](const std::unique_ptr<Root> &) -> std::string { return "root"; },
                 [](const std::unique_ptr<Sub> &) -> std::string { return "subtraction"; },
                 [](const std::unique_ptr<UseDeclaration> &) -> std::string {
