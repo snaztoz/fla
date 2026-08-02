@@ -20,6 +20,7 @@ namespace fla::compiler
     ParseResult parse_public_scope(ParserContext &ctx);
     ParseResult parse_class_definition(ParserContext &ctx);
     ParseResult parse_function_definition(ParserContext &ctx);
+    ParseResult parse_forward_declaration(ParserContext &ctx);
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
     ParseResult parse_variable_declaration(ParserContext &ctx);
@@ -210,6 +211,82 @@ namespace fla::compiler
                                  } });
     }
 
+    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &declare_t)
+    {
+        auto name { parse_name(ctx) };
+        if (!name) {
+            return name;
+        }
+
+        const auto name_metadata { get_node_metadata(*name) };
+
+        return std::make_unique<ClassForwardDeclaration>(
+            ClassForwardDeclaration { std::move(*name),
+                                      {
+                                          declare_t.pos,
+                                          name_metadata.pos - declare_t.pos + name_metadata.len,
+                                          declare_t.line,
+                                          declare_t.col,
+                                      } });
+    }
+
+    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &declare_t)
+    {
+        auto name { parse_name(ctx) };
+        if (!name) {
+            return name;
+        }
+
+        if (const auto t { expect(ctx, TokenType::SymLParen) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        if (const auto t { expect(ctx, TokenType::SymRParen) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        auto return_tn { parse_type_notation_node(ctx) };
+        if (!return_tn) {
+            return return_tn;
+        }
+
+        const auto return_tn_metadata { get_type_notation_metadata(return_tn->tn) };
+
+        return std::make_unique<FunctionForwardDeclaration>(FunctionForwardDeclaration {
+            std::move(*name),
+            {},
+            std::move(*return_tn),
+            {
+                declare_t.pos,
+                return_tn_metadata.pos - declare_t.pos + return_tn_metadata.len,
+                declare_t.line,
+                declare_t.col,
+            } });
+    }
+
+    ParseResult parse_forward_declaration(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        const auto entity { ctx.lexer.next() };
+        if (entity.type != TokenType::KwClass && entity.type != TokenType::KwFun) {
+            return std::unexpected(Error {
+                entity.pos,
+                entity.len,
+                entity.line,
+                entity.col,
+                std::format("expecting `class` or `fun` keywords, found {} instead",
+                            token_type_string(entity.type)),
+            });
+        }
+
+        if (entity.type == TokenType::KwClass) {
+            return parse_class_forward_declaration(ctx, kw);
+        } else {
+            return parse_function_forward_declaration(ctx, kw);
+        }
+    }
+
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx)
     {
         std::vector<std::pair<Name, Node>> parameters;
@@ -294,6 +371,8 @@ namespace fla::compiler
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwDeclare }, [&ctx] { return parse_forward_declaration(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwFun }, [&ctx] { return parse_function_definition(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(

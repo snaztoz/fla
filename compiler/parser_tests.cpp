@@ -46,6 +46,33 @@ TEST_CASE("parse-public", "[parser]")
     }
 }
 
+TEST_CASE("parse-forward-declaration", "[parser]")
+{
+    SECTION("class")
+    {
+        REQUIRE(is_parseable(R"(
+            declare class Person
+        )"));
+    }
+
+    SECTION("function")
+    {
+        REQUIRE(is_parseable(R"(
+            declare fun greet() string
+        )"));
+    }
+
+    SECTION("nested-inside-scope")
+    {
+        REQUIRE(is_parseable(R"(
+            public do
+                declare class Person
+                declare fun greet() string
+            end
+        )"));
+    }
+}
+
 TEST_CASE("parse-class", "[parser]")
 {
     SECTION("simple")

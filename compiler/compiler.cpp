@@ -118,6 +118,9 @@ namespace fla::compiler
                         }
                     }
                 },
+                [level](const std::unique_ptr<ClassForwardDeclaration> &n) {
+                    print_node(n->name, level + 1);
+                },
                 [level](const std::unique_ptr<ConstantDeclaration> &n) {
                     print_node(n->name, level + 1);
                     if (n->type_notation) {
@@ -163,6 +166,19 @@ namespace fla::compiler
                             print_node(statement, level + 2);
                         }
                     }
+                },
+                [level](const std::unique_ptr<FunctionForwardDeclaration> &n) {
+                    print_node(n->name, level + 1);
+
+                    const std::string child_indentation((level + 1) * 2, ' ');
+
+                    for (const auto &param_tn : n->parameter_tns) {
+                        std::println("{}{{parameter}}", child_indentation);
+                        print_node(param_tn, level + 2);
+                    }
+
+                    std::println("{}{{return}}", child_indentation);
+                    print_node(n->return_tn, level + 2);
                 },
                 [level](const std::unique_ptr<Gt> &n) {
                     print_node(n->lhs, level + 1);
