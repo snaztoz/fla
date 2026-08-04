@@ -268,7 +268,7 @@ namespace fla::compiler
 
     std::expected<void, Error> compile(const std::string_view src)
     {
-        ParserContext parser_ctx { Lexer { src }, src };
+        ParserContext parser_ctx { src };
 
         auto root { parse(parser_ctx) };
         if (!root) {

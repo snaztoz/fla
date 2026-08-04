@@ -20,6 +20,10 @@ namespace fla::compiler
     struct ParserContext {
         Lexer lexer;
         const std::string_view src;
+
+        ParserContext(const std::string_view s) : lexer(s), src(s)
+        {
+        }
     };
 
     ParseResult parse(ParserContext &ctx);

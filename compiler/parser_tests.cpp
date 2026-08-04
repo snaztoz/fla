@@ -6,7 +6,7 @@
 
 bool is_parseable(std::string_view src)
 {
-    fla::compiler::ParserContext parser_ctx { fla::compiler::Lexer { src }, src };
+    fla::compiler::ParserContext parser_ctx { src };
     return !!fla::compiler::parse(parser_ctx);
 }
 
