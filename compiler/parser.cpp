@@ -15,6 +15,7 @@ namespace fla::compiler
     using ParseNestedNamesResult = std::expected<std::vector<Name>, Error>;
     using ParseFunctionParametersResult = std::expected<std::vector<std::pair<Name, Node>>, Error>;
 
+    ParseResult parse_root(ParserContext &ctx);
     ParseResult parse_namespace_statement(ParserContext &ctx);
     ParseResult parse_use_statement(ParserContext &ctx);
     ParseResult parse_public_scope(ParserContext &ctx);
