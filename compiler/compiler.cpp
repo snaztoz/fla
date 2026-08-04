@@ -62,25 +62,6 @@ int fla_free_compiler_error(struct FlaCompilerError *err)
 
 namespace fla::compiler
 {
-    void print_type_notation(const TypeNotation &tn, const int level)
-    {
-        const std::string indentation(level * 2, ' ');
-
-        std::print("{}{}", indentation, get_type_notation_repr(tn));
-
-        const Metadata meta { get_type_notation_metadata(tn) };
-        std::print(" ({}:{}:{})\n", meta.line, meta.col, meta.len);
-
-        std::visit(overloaded {
-                       [](const Name &) {},
-                       [level](const std::unique_ptr<ArrayTypeNotation> &t) {
-                           print_type_notation(t->element_tn, level + 1);
-                       },
-                       [](const std::unique_ptr<FunctionTypeNotation> &) { std::print("TODO"); },
-                   },
-                   tn);
-    }
-
     void print_node(const Node &node, const int level)
     {
         const std::string indentation(level * 2, ' ');
@@ -268,9 +249,7 @@ namespace fla::compiler
 
     std::expected<void, Error> compile(const std::string_view src)
     {
-        ParserContext parser_ctx { src };
-
-        auto root { parse(parser_ctx) };
+        auto root { parse(src) };
         if (!root) {
             return std::unexpected(root.error());
         }

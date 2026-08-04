@@ -26,7 +26,8 @@ namespace fla::compiler
         }
     };
 
-    ParseResult parse(ParserContext &ctx);
+    ParseResult parse(std::string_view src);
+    ParseResult parse_root(ParserContext &ctx);
     ParseBodyResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
     ParseTypeNotationResult parse_type_notation_node(ParserContext &ctx);
     ParseResult parse_expression(ParserContext &ctx);

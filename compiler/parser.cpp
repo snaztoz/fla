@@ -27,7 +27,13 @@ namespace fla::compiler
     ParseResult parse_while_statement(ParserContext &ctx);
     ParseResult parse_expression_statement(ParserContext &ctx);
 
-    ParseResult parse(ParserContext &ctx)
+    ParseResult parse(const std::string_view src)
+    {
+        ParserContext parser_ctx { src };
+        return parse_root(parser_ctx);
+    }
+
+    ParseResult parse_root(ParserContext &ctx)
     {
         auto body { parse_body(ctx, { TokenType::Eof }) };
         if (!body) {
