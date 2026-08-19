@@ -24,6 +24,7 @@ namespace fla::compiler
         KwEnd,
         KwFun,
         KwIf,
+        KwInterface,
         KwNamespace,
         KwNot,
         KwOr,
@@ -88,6 +89,8 @@ namespace fla::compiler
             return "`fun` keyword";
         case TokenType::KwIf:
             return "`if` keyword";
+        case TokenType::KwInterface:
+            return "`interface` keyword";
         case TokenType::KwNamespace:
             return "`namespace` keyword";
         case TokenType::KwNot:

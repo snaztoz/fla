@@ -237,6 +237,26 @@ TEST_CASE("parse-if-else", "[parser]")
     }
 }
 
+TEST_CASE("parse-interface", "[parser]")
+{
+    SECTION("simple")
+    {
+        REQUIRE(is_parseable(R"(
+            interface Person do
+            end
+        )"));
+    }
+
+    SECTION("method-member")
+    {
+        REQUIRE(is_parseable(R"(
+            class Person do
+                declare fun greet() string
+            end
+        )"));
+    }
+}
+
 TEST_CASE("parse-while-loop", "[parser]")
 {
     SECTION("basic")

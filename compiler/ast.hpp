@@ -65,6 +65,7 @@ namespace fla::compiler
     struct Gt;
     struct Gte;
     struct IfExpression;
+    struct InterfaceDefinition;
     struct Lt;
     struct Lte;
     struct Mod;
@@ -81,20 +82,19 @@ namespace fla::compiler
     struct VariableDeclaration;
     struct WhileLoop;
 
-    using Node =
-        std::variant<Literal, Name, TypeNotationNode, std::unique_ptr<Add>, std::unique_ptr<And>,
-                     std::unique_ptr<Assign>, std::unique_ptr<ClassDefinition>,
-                     std::unique_ptr<ClassForwardDeclaration>, std::unique_ptr<ConstantDeclaration>,
-                     std::unique_ptr<Div>, std::unique_ptr<ElseBranch>, std::unique_ptr<Eq>,
-                     std::unique_ptr<ExpressionGroup>, std::unique_ptr<FunctionDefinition>,
-                     std::unique_ptr<FunctionForwardDeclaration>, std::unique_ptr<Gt>,
-                     std::unique_ptr<Gte>, std::unique_ptr<IfExpression>, std::unique_ptr<Lt>,
-                     std::unique_ptr<Lte>, std::unique_ptr<Mod>, std::unique_ptr<Mul>,
-                     std::unique_ptr<NamespaceDeclaration>, std::unique_ptr<Neg>,
-                     std::unique_ptr<Neq>, std::unique_ptr<Not>, std::unique_ptr<Or>,
-                     std::unique_ptr<PublicScope>, std::unique_ptr<Root>, std::unique_ptr<Sub>,
-                     std::unique_ptr<UseDeclaration>, std::unique_ptr<VariableDeclaration>,
-                     std::unique_ptr<WhileLoop>>;
+    using Node = std::variant<
+        Literal, Name, TypeNotationNode, std::unique_ptr<Add>, std::unique_ptr<And>,
+        std::unique_ptr<Assign>, std::unique_ptr<ClassDefinition>,
+        std::unique_ptr<ClassForwardDeclaration>, std::unique_ptr<ConstantDeclaration>,
+        std::unique_ptr<Div>, std::unique_ptr<ElseBranch>, std::unique_ptr<Eq>,
+        std::unique_ptr<ExpressionGroup>, std::unique_ptr<FunctionDefinition>,
+        std::unique_ptr<FunctionForwardDeclaration>, std::unique_ptr<InterfaceDefinition>,
+        std::unique_ptr<Gt>, std::unique_ptr<Gte>, std::unique_ptr<IfExpression>,
+        std::unique_ptr<Lt>, std::unique_ptr<Lte>, std::unique_ptr<Mod>, std::unique_ptr<Mul>,
+        std::unique_ptr<NamespaceDeclaration>, std::unique_ptr<Neg>, std::unique_ptr<Neq>,
+        std::unique_ptr<Not>, std::unique_ptr<Or>, std::unique_ptr<PublicScope>,
+        std::unique_ptr<Root>, std::unique_ptr<Sub>, std::unique_ptr<UseDeclaration>,
+        std::unique_ptr<VariableDeclaration>, std::unique_ptr<WhileLoop>>;
 
     struct Add {
         Node lhs;
@@ -185,6 +185,12 @@ namespace fla::compiler
         Node cond;
         std::vector<Node> body;
         std::optional<Node> else_statement;
+        Metadata meta;
+    };
+
+    struct InterfaceDefinition {
+        Name name;
+        std::vector<Node> body;
         Metadata meta;
     };
 

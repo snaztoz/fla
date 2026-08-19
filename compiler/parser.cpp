@@ -23,6 +23,7 @@ namespace fla::compiler
     ParseResult parse_function_definition(ParserContext &ctx);
     ParseResult parse_forward_declaration(ParserContext &ctx);
     ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
+    ParseResult parse_interface_definition(ParserContext &ctx);
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
     ParseResult parse_variable_declaration(ParserContext &ctx);
     ParseResult parse_while_statement(ParserContext &ctx);
@@ -48,13 +49,15 @@ namespace fla::compiler
         const auto first { get_node_metadata(body->at(0)) };
         const auto last { get_node_metadata(body->at(body->size() - 1)) };
 
-        return std::make_unique<Root>(Root { std::move(*body),
-                                             {
-                                                 first.pos,
-                                                 last.pos - first.pos + last.len,
-                                                 first.line,
-                                                 first.col,
-                                             } });
+        return std::make_unique<Root>(Root {
+            std::move(*body),
+            {
+                first.pos,
+                last.pos - first.pos + last.len,
+                first.line,
+                first.col,
+            },
+        });
     }
 
     ParseResult parse_namespace_statement(ParserContext &ctx)
@@ -69,14 +72,15 @@ namespace fla::compiler
         const auto last { segments->at(segments->size() - 1) };
         const auto last_meta { get_node_metadata(last) };
 
-        return std::make_unique<NamespaceDeclaration>(
-            NamespaceDeclaration { std::move(*segments),
-                                   {
-                                       kw.pos,
-                                       last_meta.pos - kw.pos + last_meta.len,
-                                       kw.line,
-                                       kw.col,
-                                   } });
+        return std::make_unique<NamespaceDeclaration>(NamespaceDeclaration {
+            std::move(*segments),
+            {
+                kw.pos,
+                last_meta.pos - kw.pos + last_meta.len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_use_statement(ParserContext &ctx)
@@ -90,13 +94,15 @@ namespace fla::compiler
 
         const auto last { get_node_metadata(segments->at(segments->size() - 1)) };
 
-        return std::make_unique<UseDeclaration>(UseDeclaration { std::move(*segments),
-                                                                 {
-                                                                     kw.pos,
-                                                                     last.pos - kw.pos + last.len,
-                                                                     kw.line,
-                                                                     kw.col,
-                                                                 } });
+        return std::make_unique<UseDeclaration>(UseDeclaration {
+            std::move(*segments),
+            {
+                kw.pos,
+                last.pos - kw.pos + last.len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_public_scope(ParserContext &ctx)
@@ -117,13 +123,15 @@ namespace fla::compiler
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<PublicScope>(PublicScope { std::move(*body),
-                                                           {
-                                                               kw.pos,
-                                                               end->pos - kw.pos + end->len,
-                                                               kw.line,
-                                                               kw.col,
-                                                           } });
+        return std::make_unique<PublicScope>(PublicScope {
+            std::move(*body),
+            {
+                kw.pos,
+                end->pos - kw.pos + end->len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_class_definition(ParserContext &ctx)
@@ -149,14 +157,16 @@ namespace fla::compiler
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<ClassDefinition>(ClassDefinition { std::move(*name),
-                                                                   std::move(*body),
-                                                                   {
-                                                                       kw.pos,
-                                                                       end->pos - kw.pos + end->len,
-                                                                       kw.line,
-                                                                       kw.col,
-                                                                   } });
+        return std::make_unique<ClassDefinition>(ClassDefinition {
+            std::move(*name),
+            std::move(*body),
+            {
+                kw.pos,
+                end->pos - kw.pos + end->len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_function_definition(ParserContext &ctx)
@@ -227,14 +237,15 @@ namespace fla::compiler
 
         const auto name_metadata { get_node_metadata(*name) };
 
-        return std::make_unique<ClassForwardDeclaration>(
-            ClassForwardDeclaration { std::move(*name),
-                                      {
-                                          declare_t.pos,
-                                          name_metadata.pos - declare_t.pos + name_metadata.len,
-                                          declare_t.line,
-                                          declare_t.col,
-                                      } });
+        return std::make_unique<ClassForwardDeclaration>(ClassForwardDeclaration {
+            std::move(*name),
+            {
+                declare_t.pos,
+                name_metadata.pos - declare_t.pos + name_metadata.len,
+                declare_t.line,
+                declare_t.col,
+            },
+        });
     }
 
     ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &declare_t)
@@ -268,7 +279,8 @@ namespace fla::compiler
                 return_tn_metadata.pos - declare_t.pos + return_tn_metadata.len,
                 declare_t.line,
                 declare_t.col,
-            } });
+            },
+        });
     }
 
     ParseResult parse_forward_declaration(ParserContext &ctx)
@@ -335,6 +347,41 @@ namespace fla::compiler
         return parameters;
     }
 
+    ParseResult parse_interface_definition(ParserContext &ctx)
+    {
+        const auto kw { ctx.lexer.next() };
+
+        const auto name { parse_name(ctx) };
+        if (!name) {
+            return std::unexpected(name.error());
+        }
+
+        if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        const auto end { expect(ctx, TokenType::KwEnd) };
+        if (!end) {
+            return std::unexpected(end.error());
+        }
+
+        return std::make_unique<InterfaceDefinition>(InterfaceDefinition {
+            std::move(*name),
+            std::move(*body),
+            {
+                kw.pos,
+                end->pos - kw.pos + end->len,
+                kw.line,
+                kw.col,
+            },
+        });
+    }
+
     ParseNestedNamesResult parse_nested_names(ParserContext &ctx)
     {
         std::vector<Name> body;
@@ -382,6 +429,8 @@ namespace fla::compiler
                 { TokenType::KwDeclare }, [&ctx] { return parse_forward_declaration(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwFun }, [&ctx] { return parse_function_definition(ctx); }),
+            std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
+                { TokenType::KwInterface }, [&ctx] { return parse_interface_definition(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwNamespace }, [&ctx] { return parse_namespace_statement(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
@@ -514,14 +563,16 @@ namespace fla::compiler
             return std::unexpected(kw_end.error());
         }
 
-        return std::make_unique<WhileLoop>(WhileLoop { std::move(*cond_expression),
-                                                       std::move(*body),
-                                                       {
-                                                           kw.pos,
-                                                           kw_end->pos - kw.pos + kw_end->len,
-                                                           kw.line,
-                                                           kw.col,
-                                                       } });
+        return std::make_unique<WhileLoop>(WhileLoop {
+            std::move(*cond_expression),
+            std::move(*body),
+            {
+                kw.pos,
+                kw_end->pos - kw.pos + kw_end->len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_expression_statement(ParserContext &ctx)

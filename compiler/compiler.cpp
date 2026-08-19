@@ -178,6 +178,17 @@ namespace fla::compiler
                         print_node(*n->else_statement, level + 1);
                     }
                 },
+                [level](const std::unique_ptr<InterfaceDefinition> &n) {
+                    print_node(n->name, level + 1);
+
+                    const std::string child_indentation((level + 1) * 2, ' ');
+                    if (!n->body.empty()) {
+                        std::println("{}{{body}}", child_indentation);
+                        for (const auto &statement : n->body) {
+                            print_node(statement, level + 2);
+                        }
+                    }
+                },
                 [level](const std::unique_ptr<Lt> &n) {
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);

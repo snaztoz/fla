@@ -56,6 +56,9 @@ namespace fla::compiler
                 [](const std::unique_ptr<IfExpression> &) -> std::string {
                     return "if expression";
                 },
+                [](const std::unique_ptr<InterfaceDefinition> &) -> std::string {
+                    return "interface definition";
+                },
                 [](const std::unique_ptr<Lt> &) -> std::string { return "less-than comparison"; },
                 [](const std::unique_ptr<Lte> &) -> std::string {
                     return "less-than or equal comparison";
