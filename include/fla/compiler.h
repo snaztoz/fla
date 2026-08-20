@@ -15,7 +15,7 @@ struct FlaCompilerError {
     char *msg;
 };
 
-int fla_compile(const char *src, struct FlaCompilerError *err);
+int fla_compile(const char *entrypoint, struct FlaCompilerError *err);
 int fla_free_compiler_error(struct FlaCompilerError *err);
 
 #ifdef __cplusplus

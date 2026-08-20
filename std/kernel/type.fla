@@ -1,0 +1,21 @@
+namespace std.kernel.type
+
+public do
+  interface void do
+  end
+
+  interface bool do
+  end
+
+  interface byte do
+  end
+
+  interface int do
+  end
+
+  interface float do
+  end
+
+  interface string do
+  end
+end

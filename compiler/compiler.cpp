@@ -1,21 +1,25 @@
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <memory>
 #include <print>
 #include <string>
-#include <string_view>
+#include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "ast.hpp"
 #include "compiler.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
 #include "parser.hpp"
+#include "util.hpp"
 
 extern "C" {
-int fla_compile(const char *src, struct FlaCompilerError *err)
+int fla_compile(const char *entrypoint, struct FlaCompilerError *err)
 {
     try {
-        const auto result { fla::compiler::compile(src) };
+        const auto result { fla::compiler::compile(entrypoint) };
         if (!result) {
             throw result.error();
         }
@@ -62,6 +66,58 @@ int fla_free_compiler_error(struct FlaCompilerError *err)
 
 namespace fla::compiler
 {
+    const std::filesystem::path STD_DIR { "std" };
+    const auto KERNEL_DIR { "kernel" };
+    const auto KERNEL_IO_FILE { "io.fla" };
+    const auto KERNEL_TYPE_FILE { "type.fla" };
+
+    enum EntityVariant {
+        Class,
+        Interface,
+    };
+
+    struct Entity {
+        std::string name;
+        EntityVariant variant;
+    };
+
+    struct Namespace {
+        std::string name;
+        std::unordered_map<std::string, Entity> public_entities;
+    };
+
+    struct CompilerContext {
+        std::unordered_map<std::string, Namespace> namespaces;
+    };
+
+    void print_node(const Node &node, const int level);
+
+    std::expected<void, Error> compile(const std::filesystem::path entrypoint)
+    {
+        CompilerContext ctx {};
+
+        std::vector<std::filesystem::path> files {
+            STD_DIR / KERNEL_DIR / KERNEL_TYPE_FILE,
+            STD_DIR / KERNEL_DIR / KERNEL_IO_FILE,
+            entrypoint,
+        };
+
+        for (const auto &file : files) {
+            const auto content { util::read_file(file) };
+
+            const auto root { parse(*content) };
+            if (!root) {
+                return std::unexpected(root.error());
+            }
+
+            std::println("#[{}]\n", file.string());
+            print_node(*root, 0);
+            std::println();
+        }
+
+        return {};
+    }
+
     void print_node(const Node &node, const int level)
     {
         const std::string indentation(level * 2, ' ');
@@ -153,9 +209,10 @@ namespace fla::compiler
 
                     const std::string child_indentation((level + 1) * 2, ' ');
 
-                    for (const auto &param_tn : n->parameter_tns) {
+                    for (const auto &param : n->parameters) {
                         std::println("{}{{parameter}}", child_indentation);
-                        print_node(param_tn, level + 2);
+                        print_node(param.first, level + 2);
+                        print_node(param.second, level + 2);
                     }
 
                     std::println("{}{{return}}", child_indentation);
@@ -256,17 +313,5 @@ namespace fla::compiler
                 },
             },
             node);
-    }
-
-    std::expected<void, Error> compile(const std::string_view src)
-    {
-        auto root { parse(src) };
-        if (!root) {
-            return std::unexpected(root.error());
-        }
-
-        print_node(*root, 0);
-
-        return {};
     }
 } // namespace fla::compiler

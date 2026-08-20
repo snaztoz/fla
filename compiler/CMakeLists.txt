@@ -12,6 +12,8 @@ add_library(flac
     parser.cpp
     parser.hpp
     token.hpp
+    util.cpp
+    util.hpp
 )
 
 if(MSVC)

@@ -164,7 +164,7 @@ namespace fla::compiler
 
     struct FunctionForwardDeclaration {
         Name name;
-        std::vector<Node> parameter_tns;
+        std::vector<std::pair<Name, Node>> parameters;
         Node return_tn;
         Metadata meta;
     };
