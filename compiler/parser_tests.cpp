@@ -66,7 +66,7 @@ TEST_CASE("parse-forward-declaration", "[parser]")
         REQUIRE(is_parseable(R"(
             public do
                 declare class Person
-                declare fun greet() string
+                declare fun greet(name string) string
             end
         )"));
     }
@@ -338,6 +338,23 @@ TEST_CASE("parse-variable", "[parser]")
                 var abc int = 100
                 const def int = 100
             end
+        )"));
+    }
+}
+
+TEST_CASE("parse-type-notation", "[parser]")
+{
+    SECTION("array-type")
+    {
+        REQUIRE(is_parseable(R"(
+            fun foo(x []int) do end
+        )"));
+    }
+
+    SECTION("function-type")
+    {
+        REQUIRE(is_parseable(R"(
+            fun foo(x fun(int) void) do end
         )"));
     }
 }
