@@ -259,6 +259,11 @@ namespace fla::compiler
             return std::unexpected(t.error());
         }
 
+        auto parameters { parse_function_parameters(ctx) };
+        if (!parameters) {
+            return std::unexpected(parameters.error());
+        }
+
         if (const auto t { expect(ctx, TokenType::SymRParen) }; !t) {
             return std::unexpected(t.error());
         }
@@ -272,7 +277,7 @@ namespace fla::compiler
 
         return std::make_unique<FunctionForwardDeclaration>(FunctionForwardDeclaration {
             std::move(*name),
-            {},
+            std::move(*parameters),
             std::move(*return_tn),
             {
                 declare_t.pos,
