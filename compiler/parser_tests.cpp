@@ -1,13 +1,6 @@
-#include <string_view>
-
 #include "Catch2/catch_amalgamated.hpp"
 
-#include "parser.hpp"
-
-bool is_parseable(std::string_view src)
-{
-    return !!fla::compiler::parse(src);
-}
+#include "parser_tests.hpp"
 
 TEST_CASE("parse-public", "[parser]")
 {
@@ -100,45 +93,6 @@ TEST_CASE("parse-class", "[parser]")
             end
         )"));
     }
-}
-
-TEST_CASE("parse-expression", "[parser]")
-{
-    SECTION("simple")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                5
-            end
-        )"));
-    };
-
-    SECTION("identifier")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                foo
-            end
-        )"));
-    };
-
-    SECTION("grouped")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                (((bar)))
-            end
-        )"));
-    };
-
-    SECTION("complex")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                foo = 3 + 10 * (abc - 7 / -2) * 5 >= 0 == true != not not false or false and 1 > 5
-            end
-        )"));
-    };
 }
 
 TEST_CASE("parse-function", "[parser]")
@@ -338,23 +292,6 @@ TEST_CASE("parse-variable", "[parser]")
                 var abc int = 100
                 const def int = 100
             end
-        )"));
-    }
-}
-
-TEST_CASE("parse-type-notation", "[parser]")
-{
-    SECTION("array-type")
-    {
-        REQUIRE(is_parseable(R"(
-            fun foo(x []int) do end
-        )"));
-    }
-
-    SECTION("function-type")
-    {
-        REQUIRE(is_parseable(R"(
-            fun foo(x fun(int) void) do end
         )"));
     }
 }
