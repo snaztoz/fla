@@ -12,8 +12,8 @@
 
 namespace fla::compiler
 {
-    using ParseNestedNamesResult = std::expected<std::vector<Name>, Error>;
-    using ParseFunctionParametersResult = std::expected<std::vector<std::pair<Name, Node>>, Error>;
+    using NestedNamesParseResult = std::expected<std::vector<Name>, Error>;
+    using FunctionParametersParseResult = std::expected<std::vector<std::pair<Name, Node>>, Error>;
 
     ParseResult parse_root(ParserContext &ctx);
     ParseResult parse_namespace_statement(ParserContext &ctx);
@@ -22,9 +22,9 @@ namespace fla::compiler
     ParseResult parse_class_definition(ParserContext &ctx);
     ParseResult parse_function_definition(ParserContext &ctx);
     ParseResult parse_forward_declaration(ParserContext &ctx);
-    ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx);
+    FunctionParametersParseResult parse_function_parameters(ParserContext &ctx);
     ParseResult parse_interface_definition(ParserContext &ctx);
-    ParseNestedNamesResult parse_nested_names(ParserContext &ctx);
+    NestedNamesParseResult parse_nested_names(ParserContext &ctx);
     ParseResult parse_variable_declaration(ParserContext &ctx);
     ParseResult parse_while_statement(ParserContext &ctx);
     ParseResult parse_expression_statement(ParserContext &ctx);
@@ -215,17 +215,18 @@ namespace fla::compiler
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<FunctionDefinition>(
-            FunctionDefinition { std::move(*name),
-                                 std::move(*parameters),
-                                 std::move(return_tn),
-                                 std::move(*body),
-                                 {
-                                     kw.pos,
-                                     end->pos - kw.pos + end->len,
-                                     kw.line,
-                                     kw.col,
-                                 } });
+        return std::make_unique<FunctionDefinition>(FunctionDefinition {
+            std::move(*name),
+            std::move(*parameters),
+            std::move(return_tn),
+            std::move(*body),
+            {
+                kw.pos,
+                end->pos - kw.pos + end->len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
     ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &declare_t)
@@ -311,12 +312,12 @@ namespace fla::compiler
         }
     }
 
-    ParseFunctionParametersResult parse_function_parameters(ParserContext &ctx)
+    FunctionParametersParseResult parse_function_parameters(ParserContext &ctx)
     {
         std::vector<std::pair<Name, Node>> parameters;
 
         while (ctx.lexer.peek().type != TokenType::SymRParen) {
-            auto name { parse_name(ctx) };
+            const auto name { parse_name(ctx) };
             if (!name) {
                 return std::unexpected(name.error());
             }
@@ -376,7 +377,7 @@ namespace fla::compiler
         }
 
         return std::make_unique<InterfaceDefinition>(InterfaceDefinition {
-            std::move(*name),
+            *name,
             std::move(*body),
             {
                 kw.pos,
@@ -387,7 +388,7 @@ namespace fla::compiler
         });
     }
 
-    ParseNestedNamesResult parse_nested_names(ParserContext &ctx)
+    NestedNamesParseResult parse_nested_names(ParserContext &ctx)
     {
         std::vector<Name> body;
 
@@ -420,7 +421,7 @@ namespace fla::compiler
     using BodyStatementRuleTokenPrefixes = std::set<TokenType>;
     using BodyStatementRuleParser = std::function<ParseResult(void)>;
 
-    ParseBodyResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters)
+    BodyParseResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters)
     {
         std::vector<Node> body;
 
@@ -535,7 +536,7 @@ namespace fla::compiler
         const auto line { kw.line };
         const auto col { kw.col };
 
-        Metadata meta { pos, len, line, col };
+        const Metadata meta { pos, len, line, col };
 
         return std::make_unique<VariableDeclaration>(VariableDeclaration {
             std::move(*name),
@@ -585,7 +586,7 @@ namespace fla::compiler
         return parse_expression(ctx);
     }
 
-    ParseNameResult parse_name(ParserContext &ctx)
+    NameParseResult parse_name(ParserContext &ctx)
     {
         const auto name_token { expect(ctx, TokenType::Name) };
         if (!name_token) {

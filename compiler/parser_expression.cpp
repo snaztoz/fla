@@ -11,18 +11,6 @@
 
 namespace fla::compiler
 {
-    const std::set<TokenType> logical_and_or_ops = { TokenType::KwAnd, TokenType::KwOr };
-    const std::set<TokenType> equality_ops = { TokenType::OpEq, TokenType::OpNeq };
-    const std::set<TokenType> comparison_ops = {
-        TokenType::OpGt,
-        TokenType::OpGte,
-        TokenType::OpLt,
-        TokenType::OpLte,
-    };
-    const std::set<TokenType> additive_ops = { TokenType::OpAdd, TokenType::OpSub };
-    const std::set<TokenType> multiplicative_ops = { TokenType::OpMul, TokenType::OpDiv,
-                                                     TokenType::OpMod };
-
     Metadata make_binary_op_metadata(const Node &lhs, const Node &rhs)
     {
         const auto lhs_meta { get_node_metadata(lhs) };
@@ -76,6 +64,11 @@ namespace fla::compiler
 
     ParseResult parse_logical_and_or_expression(ParserContext &ctx)
     {
+        static const std::set<TokenType> logical_and_or_ops = {
+            TokenType::KwAnd,
+            TokenType::KwOr,
+        };
+
         auto expr { parse_equality_expression(ctx) };
         if (!expr) {
             return expr;
@@ -112,6 +105,11 @@ namespace fla::compiler
 
     ParseResult parse_equality_expression(ParserContext &ctx)
     {
+        static const std::set<TokenType> equality_ops = {
+            TokenType::OpEq,
+            TokenType::OpNeq,
+        };
+
         auto expr { parse_comparison_expression(ctx) };
         if (!expr) {
             return expr;
@@ -148,6 +146,13 @@ namespace fla::compiler
 
     ParseResult parse_comparison_expression(ParserContext &ctx)
     {
+        static const std::set<TokenType> comparison_ops = {
+            TokenType::OpGt,
+            TokenType::OpGte,
+            TokenType::OpLt,
+            TokenType::OpLte,
+        };
+
         auto expr { parse_additive_expression(ctx) };
         if (!expr) {
             return expr;
@@ -190,6 +195,11 @@ namespace fla::compiler
 
     ParseResult parse_additive_expression(ParserContext &ctx)
     {
+        static const std::set<TokenType> additive_ops = {
+            TokenType::OpAdd,
+            TokenType::OpSub,
+        };
+
         auto expr { parse_multiplicative_expression(ctx) };
         if (!expr) {
             return expr;
@@ -226,6 +236,12 @@ namespace fla::compiler
 
     ParseResult parse_multiplicative_expression(ParserContext &ctx)
     {
+        static const std::set<TokenType> multiplicative_ops = {
+            TokenType::OpMul,
+            TokenType::OpDiv,
+            TokenType::OpMod,
+        };
+
         auto expr { parse_unary_expression(ctx) };
         if (!expr) {
             return expr;

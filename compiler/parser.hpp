@@ -12,10 +12,10 @@
 
 namespace fla::compiler
 {
-    using ParseBodyResult = std::expected<std::vector<Node>, Error>;
-    using ParseNameResult = std::expected<Name, Error>;
+    using BodyParseResult = std::expected<std::vector<Node>, Error>;
+    using NameParseResult = std::expected<Name, Error>;
     using ParseResult = std::expected<Node, Error>;
-    using ParseTypeNotationResult = std::expected<TypeNotationNode, Error>;
+    using TypeNotationNodeParseResult = std::expected<TypeNotationNode, Error>;
 
     struct ParserContext {
         Lexer lexer;
@@ -27,10 +27,10 @@ namespace fla::compiler
     };
 
     ParseResult parse(std::string_view src);
-    ParseBodyResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
-    ParseTypeNotationResult parse_type_notation_node(ParserContext &ctx);
+    BodyParseResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
+    TypeNotationNodeParseResult parse_type_notation_node(ParserContext &ctx);
     ParseResult parse_expression(ParserContext &ctx);
-    ParseNameResult parse_name(ParserContext &ctx);
+    NameParseResult parse_name(ParserContext &ctx);
     std::expected<Token, Error> expect(ParserContext &ctx, const TokenType &expected_tt);
 } // namespace fla::compiler
 

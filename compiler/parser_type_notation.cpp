@@ -9,13 +9,15 @@
 
 namespace fla::compiler
 {
-    std::expected<TypeNotation, Error> parse_type_notation(ParserContext &ctx);
-    std::expected<TypeNotation, Error> parse_array_type_notation(ParserContext &ctx);
-    std::expected<TypeNotation, Error> parse_function_type_notation(ParserContext &ctx);
-    std::expected<std::vector<TypeNotation>, Error>
-    parse_function_type_notation_parameters(ParserContext &ctx);
+    using TypeNotationParseResult = std::expected<TypeNotation, Error>;
+    using TypeNotationListParseResult = std::expected<std::vector<TypeNotation>, Error>;
 
-    ParseTypeNotationResult parse_type_notation_node(ParserContext &ctx)
+    TypeNotationParseResult parse_type_notation(ParserContext &ctx);
+    TypeNotationParseResult parse_array_type_notation(ParserContext &ctx);
+    TypeNotationParseResult parse_function_type_notation(ParserContext &ctx);
+    TypeNotationListParseResult parse_function_type_notation_parameters(ParserContext &ctx);
+
+    TypeNotationNodeParseResult parse_type_notation_node(ParserContext &ctx)
     {
         auto tn { parse_type_notation(ctx) };
         if (!tn) {
@@ -27,7 +29,7 @@ namespace fla::compiler
         return TypeNotationNode { std::move(*tn), meta };
     }
 
-    std::expected<TypeNotation, Error> parse_type_notation(ParserContext &ctx)
+    TypeNotationParseResult parse_type_notation(ParserContext &ctx)
     {
         const auto t { ctx.lexer.peek() };
 
@@ -51,7 +53,7 @@ namespace fla::compiler
         }
     }
 
-    std::expected<TypeNotation, Error> parse_array_type_notation(ParserContext &ctx)
+    TypeNotationParseResult parse_array_type_notation(ParserContext &ctx)
     {
         const auto t { ctx.lexer.next() };
 
@@ -66,17 +68,18 @@ namespace fla::compiler
 
         const auto meta { get_type_notation_metadata(*inner) };
 
-        return std::make_unique<ArrayTypeNotation>(
-            ArrayTypeNotation { std::move(*inner),
-                                {
-                                    t.pos,
-                                    meta.pos - t.pos + meta.len,
-                                    t.line,
-                                    t.col,
-                                } });
+        return std::make_unique<ArrayTypeNotation>(ArrayTypeNotation {
+            std::move(*inner),
+            {
+                t.pos,
+                meta.pos - t.pos + meta.len,
+                t.line,
+                t.col,
+            },
+        });
     }
 
-    std::expected<TypeNotation, Error> parse_function_type_notation(ParserContext &ctx)
+    TypeNotationParseResult parse_function_type_notation(ParserContext &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -100,19 +103,19 @@ namespace fla::compiler
 
         const auto return_tn_meta { get_type_notation_metadata(*return_tn) };
 
-        return std::make_unique<FunctionTypeNotation>(
-            FunctionTypeNotation { std::move(*parameters_tns),
-                                   std::move(*return_tn),
-                                   {
-                                       kw.pos,
-                                       return_tn_meta.pos - kw.pos + return_tn_meta.len,
-                                       kw.line,
-                                       kw.col,
-                                   } });
+        return std::make_unique<FunctionTypeNotation>(FunctionTypeNotation {
+            std::move(*parameters_tns),
+            std::move(*return_tn),
+            {
+                kw.pos,
+                return_tn_meta.pos - kw.pos + return_tn_meta.len,
+                kw.line,
+                kw.col,
+            },
+        });
     }
 
-    std::expected<std::vector<TypeNotation>, Error>
-    parse_function_type_notation_parameters(ParserContext &ctx)
+    TypeNotationListParseResult parse_function_type_notation_parameters(ParserContext &ctx)
     {
         std::vector<TypeNotation> parameters_tns;
 
