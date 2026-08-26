@@ -178,17 +178,21 @@ namespace fla::compiler
             return std::unexpected(name.error());
         }
 
-        if (const auto t { expect(ctx, TokenType::SymLParen) }; !t) {
-            return std::unexpected(t.error());
-        }
+        std::vector<std::pair<Name, Node>> parameters;
 
-        auto parameters { parse_function_parameters(ctx) };
-        if (!parameters) {
-            return std::unexpected(parameters.error());
-        }
+        if (ctx.lexer.peek().type == TokenType::SymLParen) {
+            ctx.lexer.next();
 
-        if (const auto t { expect(ctx, TokenType::SymRParen) }; !t) {
-            return std::unexpected(t.error());
+            auto parsed_parameters { parse_function_parameters(ctx) };
+            if (!parsed_parameters) {
+                return std::unexpected(parsed_parameters.error());
+            }
+
+            if (const auto t { expect(ctx, TokenType::SymRParen) }; !t) {
+                return std::unexpected(t.error());
+            }
+
+            parameters = std::move(*parsed_parameters);
         }
 
         // Return type is optional
@@ -217,7 +221,7 @@ namespace fla::compiler
 
         return std::make_unique<FunctionDefinition>(FunctionDefinition {
             std::move(*name),
-            std::move(*parameters),
+            std::move(parameters),
             std::move(return_tn),
             std::move(*body),
             {
@@ -256,17 +260,21 @@ namespace fla::compiler
             return name;
         }
 
-        if (const auto t { expect(ctx, TokenType::SymLParen) }; !t) {
-            return std::unexpected(t.error());
-        }
+        std::vector<std::pair<Name, Node>> parameters;
 
-        auto parameters { parse_function_parameters(ctx) };
-        if (!parameters) {
-            return std::unexpected(parameters.error());
-        }
+        if (ctx.lexer.peek().type == TokenType::SymLParen) {
+            ctx.lexer.next();
 
-        if (const auto t { expect(ctx, TokenType::SymRParen) }; !t) {
-            return std::unexpected(t.error());
+            auto parsed_parameters { parse_function_parameters(ctx) };
+            if (!parsed_parameters) {
+                return std::unexpected(parsed_parameters.error());
+            }
+
+            if (const auto t { expect(ctx, TokenType::SymRParen) }; !t) {
+                return std::unexpected(t.error());
+            }
+
+            parameters = std::move(*parsed_parameters);
         }
 
         auto return_tn { parse_type_notation_node(ctx) };
@@ -278,7 +286,7 @@ namespace fla::compiler
 
         return std::make_unique<FunctionForwardDeclaration>(FunctionForwardDeclaration {
             std::move(*name),
-            std::move(*parameters),
+            std::move(parameters),
             std::move(*return_tn),
             {
                 declare_t.pos,

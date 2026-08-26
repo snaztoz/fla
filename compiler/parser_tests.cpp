@@ -54,6 +54,13 @@ TEST_CASE("parse-forward-declaration", "[parser]")
         )"));
     }
 
+    SECTION("function-with-skipped-parameters")
+    {
+        REQUIRE(is_parseable(R"(
+            declare fun greet string
+        )"));
+    }
+
     SECTION("nested-inside-scope")
     {
         REQUIRE(is_parseable(R"(
@@ -101,6 +108,13 @@ TEST_CASE("parse-function", "[parser]")
     {
         REQUIRE(is_parseable(R"(
             fun main() do end
+        )"));
+    }
+
+    SECTION("skip-parentheses-on-empty-parameter")
+    {
+        REQUIRE(is_parseable(R"(
+            fun main do end
         )"));
     }
 
