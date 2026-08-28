@@ -112,7 +112,7 @@ namespace fla::compiler
 
             std::println("#[{}]\n", file.string());
             print_node(*root, 0);
-            std::println();
+            std::println("");
         }
 
         return {};
