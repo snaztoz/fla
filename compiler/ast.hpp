@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <variant>
@@ -53,18 +54,19 @@ namespace fla::compiler
     struct Add;
     struct And;
     struct Assign;
+    struct ClassDeclaration;
     struct ClassDefinition;
-    struct ClassForwardDeclaration;
     struct ConstantDeclaration;
     struct Div;
     struct ElseBranch;
     struct Eq;
     struct ExpressionGroup;
+    struct FunctionDeclaration;
     struct FunctionDefinition;
-    struct FunctionForwardDeclaration;
     struct Gt;
     struct Gte;
     struct IfExpression;
+    struct InterfaceDefinition;
     struct Lt;
     struct Lte;
     struct Mod;
@@ -83,18 +85,18 @@ namespace fla::compiler
 
     using Node =
         std::variant<Literal, Name, TypeNotationNode, std::unique_ptr<Add>, std::unique_ptr<And>,
-                     std::unique_ptr<Assign>, std::unique_ptr<ClassDefinition>,
-                     std::unique_ptr<ClassForwardDeclaration>, std::unique_ptr<ConstantDeclaration>,
+                     std::unique_ptr<Assign>, std::unique_ptr<ClassDeclaration>,
+                     std::unique_ptr<ClassDefinition>, std::unique_ptr<ConstantDeclaration>,
                      std::unique_ptr<Div>, std::unique_ptr<ElseBranch>, std::unique_ptr<Eq>,
-                     std::unique_ptr<ExpressionGroup>, std::unique_ptr<FunctionDefinition>,
-                     std::unique_ptr<FunctionForwardDeclaration>, std::unique_ptr<Gt>,
-                     std::unique_ptr<Gte>, std::unique_ptr<IfExpression>, std::unique_ptr<Lt>,
-                     std::unique_ptr<Lte>, std::unique_ptr<Mod>, std::unique_ptr<Mul>,
-                     std::unique_ptr<NamespaceDeclaration>, std::unique_ptr<Neg>,
-                     std::unique_ptr<Neq>, std::unique_ptr<Not>, std::unique_ptr<Or>,
-                     std::unique_ptr<PublicScope>, std::unique_ptr<Root>, std::unique_ptr<Sub>,
-                     std::unique_ptr<UseDeclaration>, std::unique_ptr<VariableDeclaration>,
-                     std::unique_ptr<WhileLoop>>;
+                     std::unique_ptr<ExpressionGroup>, std::unique_ptr<FunctionDeclaration>,
+                     std::unique_ptr<FunctionDefinition>, std::unique_ptr<InterfaceDefinition>,
+                     std::unique_ptr<Gt>, std::unique_ptr<Gte>, std::unique_ptr<IfExpression>,
+                     std::unique_ptr<Lt>, std::unique_ptr<Lte>, std::unique_ptr<Mod>,
+                     std::unique_ptr<Mul>, std::unique_ptr<NamespaceDeclaration>,
+                     std::unique_ptr<Neg>, std::unique_ptr<Neq>, std::unique_ptr<Not>,
+                     std::unique_ptr<Or>, std::unique_ptr<PublicScope>, std::unique_ptr<Root>,
+                     std::unique_ptr<Sub>, std::unique_ptr<UseDeclaration>,
+                     std::unique_ptr<VariableDeclaration>, std::unique_ptr<WhileLoop>>;
 
     struct Add {
         Node lhs;
@@ -114,14 +116,14 @@ namespace fla::compiler
         Metadata meta;
     };
 
-    struct ClassDefinition {
+    struct ClassDeclaration {
         Name name;
-        std::vector<Node> body;
         Metadata meta;
     };
 
-    struct ClassForwardDeclaration {
+    struct ClassDefinition {
         Name name;
+        std::vector<Node> body;
         Metadata meta;
     };
 
@@ -154,18 +156,18 @@ namespace fla::compiler
         Metadata meta;
     };
 
+    struct FunctionDeclaration {
+        Name name;
+        std::vector<std::pair<Name, Node>> parameters;
+        Node return_tn;
+        Metadata meta;
+    };
+
     struct FunctionDefinition {
         Name name;
         std::vector<std::pair<Name, Node>> parameters;
         std::optional<Node> return_type_notation;
         std::vector<Node> body;
-        Metadata meta;
-    };
-
-    struct FunctionForwardDeclaration {
-        Name name;
-        std::vector<Node> parameter_tns;
-        Node return_tn;
         Metadata meta;
     };
 
@@ -185,6 +187,12 @@ namespace fla::compiler
         Node cond;
         std::vector<Node> body;
         std::optional<Node> else_statement;
+        Metadata meta;
+    };
+
+    struct InterfaceDefinition {
+        Name name;
+        std::vector<Node> body;
         Metadata meta;
     };
 
@@ -215,6 +223,20 @@ namespace fla::compiler
     struct NamespaceDeclaration {
         std::vector<Name> name_segments;
         Metadata meta;
+
+        const std::string string()
+        {
+            std::ostringstream s;
+
+            for (std::size_t i = 0; i < name_segments.size(); i++) {
+                s << name_segments.at(i).name;
+                if (i < name_segments.size() - 1) {
+                    s << ".";
+                }
+            }
+
+            return s.str();
+        }
     };
 
     struct Neg {

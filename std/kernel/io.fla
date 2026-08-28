@@ -1,0 +1,9 @@
+namespace std.kernel.io
+
+use std.kernel.type.byte
+use std.kernel.type.void
+
+public do
+  defer fun print(s []byte) void
+  defer fun eprint(s []byte) void
+end

@@ -18,12 +18,13 @@ namespace fla::compiler
         KwAnd,
         KwClass,
         KwConst,
-        KwDeclare,
+        KwDefer,
         KwDo,
         KwElse,
         KwEnd,
         KwFun,
         KwIf,
+        KwInterface,
         KwNamespace,
         KwNot,
         KwOr,
@@ -76,8 +77,8 @@ namespace fla::compiler
             return "`class` keyword";
         case TokenType::KwConst:
             return "`const` keyword";
-        case TokenType::KwDeclare:
-            return "`declare` keyword";
+        case TokenType::KwDefer:
+            return "`defer` keyword";
         case TokenType::KwDo:
             return "`do` keyword";
         case TokenType::KwElse:
@@ -88,6 +89,8 @@ namespace fla::compiler
             return "`fun` keyword";
         case TokenType::KwIf:
             return "`if` keyword";
+        case TokenType::KwInterface:
+            return "`interface` keyword";
         case TokenType::KwNamespace:
             return "`namespace` keyword";
         case TokenType::KwNot:

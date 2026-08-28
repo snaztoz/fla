@@ -1,13 +1,10 @@
-#include <string_view>
-
 #include "Catch2/catch_amalgamated.hpp"
 
 #include "parser.hpp"
 
 bool is_parseable(std::string_view src)
 {
-    fla::compiler::ParserContext parser_ctx { fla::compiler::Lexer { src }, src };
-    return !!fla::compiler::parse(parser_ctx);
+    return !!fla::compiler::parse(src);
 }
 
 TEST_CASE("parse-public", "[parser]")
@@ -46,19 +43,26 @@ TEST_CASE("parse-public", "[parser]")
     }
 }
 
-TEST_CASE("parse-forward-declaration", "[parser]")
+TEST_CASE("parse-declaration", "[parser]")
 {
     SECTION("class")
     {
         REQUIRE(is_parseable(R"(
-            declare class Person
+            defer class Person
         )"));
     }
 
     SECTION("function")
     {
         REQUIRE(is_parseable(R"(
-            declare fun greet() string
+            defer fun greet() string
+        )"));
+    }
+
+    SECTION("function-with-skipped-parameters")
+    {
+        REQUIRE(is_parseable(R"(
+            defer fun greet string
         )"));
     }
 
@@ -66,8 +70,8 @@ TEST_CASE("parse-forward-declaration", "[parser]")
     {
         REQUIRE(is_parseable(R"(
             public do
-                declare class Person
-                declare fun greet() string
+                defer class Person
+                defer fun greet(name string) string
             end
         )"));
     }
@@ -103,51 +107,19 @@ TEST_CASE("parse-class", "[parser]")
     }
 }
 
-TEST_CASE("parse-expression", "[parser]")
-{
-    SECTION("simple")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                5
-            end
-        )"));
-    };
-
-    SECTION("identifier")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                foo
-            end
-        )"));
-    };
-
-    SECTION("grouped")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                (((bar)))
-            end
-        )"));
-    };
-
-    SECTION("complex")
-    {
-        REQUIRE(is_parseable(R"(
-            fun main() do
-                foo = 3 + 10 * (abc - 7 / -2) * 5 >= 0 == true != not not false or false and 1 > 5
-            end
-        )"));
-    };
-}
-
 TEST_CASE("parse-function", "[parser]")
 {
     SECTION("empty")
     {
         REQUIRE(is_parseable(R"(
             fun main() do end
+        )"));
+    }
+
+    SECTION("skip-parentheses-on-empty-parameter")
+    {
+        REQUIRE(is_parseable(R"(
+            fun main do end
         )"));
     }
 
@@ -238,6 +210,26 @@ TEST_CASE("parse-if-else", "[parser]")
     }
 }
 
+TEST_CASE("parse-interface", "[parser]")
+{
+    SECTION("simple")
+    {
+        REQUIRE(is_parseable(R"(
+            interface Person do
+            end
+        )"));
+    }
+
+    SECTION("method-member")
+    {
+        REQUIRE(is_parseable(R"(
+            class Person do
+                defer fun greet() string
+            end
+        )"));
+    }
+}
+
 TEST_CASE("parse-while-loop", "[parser]")
 {
     SECTION("basic")
@@ -319,6 +311,62 @@ TEST_CASE("parse-variable", "[parser]")
                 var abc int = 100
                 const def int = 100
             end
+        )"));
+    }
+}
+
+TEST_CASE("parse-expression", "[parser]")
+{
+    SECTION("simple")
+    {
+        REQUIRE(is_parseable(R"(
+            fun main() do
+                5
+            end
+        )"));
+    };
+
+    SECTION("identifier")
+    {
+        REQUIRE(is_parseable(R"(
+            fun main() do
+                foo
+            end
+        )"));
+    };
+
+    SECTION("grouped")
+    {
+        REQUIRE(is_parseable(R"(
+            fun main() do
+                (((bar)))
+            end
+        )"));
+    };
+
+    SECTION("complex")
+    {
+        REQUIRE(is_parseable(R"(
+            fun main() do
+                foo = 3 + 10 * (abc - 7 / -2) * 5 >= 0 == true != not not false or false and 1 > 5
+            end
+        )"));
+    };
+}
+
+TEST_CASE("parse-type-notation", "[parser]")
+{
+    SECTION("array-type")
+    {
+        REQUIRE(is_parseable(R"(
+            fun foo(x []int) do end
+        )"));
+    }
+
+    SECTION("function-type")
+    {
+        REQUIRE(is_parseable(R"(
+            fun foo(x fun(int) void) do end
         )"));
     }
 }

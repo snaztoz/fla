@@ -2,13 +2,13 @@
 #define FLA_COMPILER_COMPILER_H
 
 #include <expected>
-#include <string_view>
+#include <filesystem>
 
 #include "error.hpp"
 
 namespace fla::compiler
 {
-    std::expected<void, Error> compile(const std::string_view src);
+    std::expected<void, Error> compile(const std::filesystem::path entrypoint);
 }
 
 #endif

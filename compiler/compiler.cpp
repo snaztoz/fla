@@ -1,21 +1,25 @@
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <memory>
 #include <print>
 #include <string>
-#include <string_view>
+#include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "ast.hpp"
 #include "compiler.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
 #include "parser.hpp"
+#include "util.hpp"
 
 extern "C" {
-int fla_compile(const char *src, struct FlaCompilerError *err)
+int fla_compile(const char *entrypoint, struct FlaCompilerError *err)
 {
     try {
-        const auto result { fla::compiler::compile(src) };
+        const auto result { fla::compiler::compile(entrypoint) };
         if (!result) {
             throw result.error();
         }
@@ -62,23 +66,56 @@ int fla_free_compiler_error(struct FlaCompilerError *err)
 
 namespace fla::compiler
 {
-    void print_type_notation(const TypeNotation &tn, const int level)
+    const std::filesystem::path STD_DIR { "std" };
+    const auto KERNEL_DIR { "kernel" };
+    const auto KERNEL_IO_FILE { "io.fla" };
+    const auto KERNEL_TYPE_FILE { "type.fla" };
+
+    enum EntityVariant {
+        Class,
+        Interface,
+    };
+
+    struct Entity {
+        std::string name;
+        EntityVariant variant;
+    };
+
+    struct Namespace {
+        std::string name;
+        std::unordered_map<std::string, Entity> public_entities;
+    };
+
+    struct CompilerContext {
+        std::unordered_map<std::string, Namespace> namespaces;
+    };
+
+    void print_node(const Node &node, const int level);
+
+    std::expected<void, Error> compile(const std::filesystem::path entrypoint)
     {
-        const std::string indentation(level * 2, ' ');
+        CompilerContext ctx {};
 
-        std::print("{}{}", indentation, get_type_notation_repr(tn));
+        std::vector<std::filesystem::path> files {
+            STD_DIR / KERNEL_DIR / KERNEL_TYPE_FILE,
+            STD_DIR / KERNEL_DIR / KERNEL_IO_FILE,
+            entrypoint,
+        };
 
-        const Metadata meta { get_type_notation_metadata(tn) };
-        std::print(" ({}:{}:{})\n", meta.line, meta.col, meta.len);
+        for (const auto &file : files) {
+            const auto content { util::read_file(file) };
 
-        std::visit(overloaded {
-                       [](const Name &) {},
-                       [level](const std::unique_ptr<ArrayTypeNotation> &t) {
-                           print_type_notation(t->element_tn, level + 1);
-                       },
-                       [](const std::unique_ptr<FunctionTypeNotation> &) { std::print("TODO"); },
-                   },
-                   tn);
+            const auto root { parse(*content) };
+            if (!root) {
+                return std::unexpected(root.error());
+            }
+
+            std::println("#[{}]\n", file.string());
+            print_node(*root, 0);
+            std::println("");
+        }
+
+        return {};
     }
 
     void print_node(const Node &node, const int level)
@@ -107,6 +144,9 @@ namespace fla::compiler
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);
                 },
+                [level](const std::unique_ptr<ClassDeclaration> &n) {
+                    print_node(n->name, level + 1);
+                },
                 [level](const std::unique_ptr<ClassDefinition> &n) {
                     print_node(n->name, level + 1);
 
@@ -117,9 +157,6 @@ namespace fla::compiler
                             print_node(statement, level + 2);
                         }
                     }
-                },
-                [level](const std::unique_ptr<ClassForwardDeclaration> &n) {
-                    print_node(n->name, level + 1);
                 },
                 [level](const std::unique_ptr<ConstantDeclaration> &n) {
                     print_node(n->name, level + 1);
@@ -144,6 +181,20 @@ namespace fla::compiler
                 [level](const std::unique_ptr<ExpressionGroup> &n) {
                     print_node(n->expression, level + 1);
                 },
+                [level](const std::unique_ptr<FunctionDeclaration> &n) {
+                    print_node(n->name, level + 1);
+
+                    const std::string child_indentation((level + 1) * 2, ' ');
+
+                    for (const auto &param : n->parameters) {
+                        std::println("{}{{parameter}}", child_indentation);
+                        print_node(param.first, level + 2);
+                        print_node(param.second, level + 2);
+                    }
+
+                    std::println("{}{{return}}", child_indentation);
+                    print_node(n->return_tn, level + 2);
+                },
                 [level](const std::unique_ptr<FunctionDefinition> &n) {
                     print_node(n->name, level + 1);
 
@@ -167,19 +218,6 @@ namespace fla::compiler
                         }
                     }
                 },
-                [level](const std::unique_ptr<FunctionForwardDeclaration> &n) {
-                    print_node(n->name, level + 1);
-
-                    const std::string child_indentation((level + 1) * 2, ' ');
-
-                    for (const auto &param_tn : n->parameter_tns) {
-                        std::println("{}{{parameter}}", child_indentation);
-                        print_node(param_tn, level + 2);
-                    }
-
-                    std::println("{}{{return}}", child_indentation);
-                    print_node(n->return_tn, level + 2);
-                },
                 [level](const std::unique_ptr<Gt> &n) {
                     print_node(n->lhs, level + 1);
                     print_node(n->rhs, level + 1);
@@ -195,6 +233,17 @@ namespace fla::compiler
                     }
                     if (n->else_statement) {
                         print_node(*n->else_statement, level + 1);
+                    }
+                },
+                [level](const std::unique_ptr<InterfaceDefinition> &n) {
+                    print_node(n->name, level + 1);
+
+                    const std::string child_indentation((level + 1) * 2, ' ');
+                    if (!n->body.empty()) {
+                        std::println("{}{{body}}", child_indentation);
+                        for (const auto &statement : n->body) {
+                            print_node(statement, level + 2);
+                        }
                     }
                 },
                 [level](const std::unique_ptr<Lt> &n) {
@@ -264,19 +313,5 @@ namespace fla::compiler
                 },
             },
             node);
-    }
-
-    std::expected<void, Error> compile(const std::string_view src)
-    {
-        ParserContext parser_ctx { Lexer { src }, src };
-
-        auto root { parse(parser_ctx) };
-        if (!root) {
-            return std::unexpected(root.error());
-        }
-
-        print_node(*root, 0);
-
-        return {};
     }
 } // namespace fla::compiler

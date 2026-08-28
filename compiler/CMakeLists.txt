@@ -7,11 +7,11 @@ add_library(flac
     error.hpp
     lexer.cpp
     lexer.hpp
-    parser_expression.cpp
-    parser_type_notation.cpp
     parser.cpp
     parser.hpp
     token.hpp
+    util.cpp
+    util.hpp
 )
 
 if(MSVC)
@@ -28,7 +28,8 @@ target_include_directories(flac PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(flac-tests
     ${CMAKE_SOURCE_DIR}/vendor/Catch2/catch_amalgamated.cpp
-    parser_tests.cpp)
+    parser_tests.cpp
+)
 
 target_compile_definitions(flac-tests PRIVATE BUILD_TYPE="$<CONFIG>")
 

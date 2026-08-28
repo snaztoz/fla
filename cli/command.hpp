@@ -29,7 +29,7 @@ namespace fla::cli
         int run() const override;
 
     private:
-        std::string src_path;
+        std::string entrypoint;
     };
 
     class VersionCommand : public Command
