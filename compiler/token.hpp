@@ -18,7 +18,7 @@ namespace fla::compiler
         KwAnd,
         KwClass,
         KwConst,
-        KwDeclare,
+        KwDefer,
         KwDo,
         KwElse,
         KwEnd,
@@ -77,8 +77,8 @@ namespace fla::compiler
             return "`class` keyword";
         case TokenType::KwConst:
             return "`const` keyword";
-        case TokenType::KwDeclare:
-            return "`declare` keyword";
+        case TokenType::KwDefer:
+            return "`defer` keyword";
         case TokenType::KwDo:
             return "`do` keyword";
         case TokenType::KwElse:

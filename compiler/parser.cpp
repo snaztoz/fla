@@ -22,10 +22,10 @@ namespace fla::compiler
         FunctionParametersParseResult parse_parameters(ParserContext &ctx);
     }; // namespace function_parser
 
-    namespace forward_declaration_parser
+    namespace declaration_parser
     {
         ParseResult parse(ParserContext &ctx);
-    }; // namespace forward_declaration_parser
+    }; // namespace declaration_parser
 
     namespace expression_parser
     {
@@ -277,8 +277,7 @@ namespace fla::compiler
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwDeclare },
-                [&ctx] { return forward_declaration_parser::parse(ctx); }),
+                { TokenType::KwDefer }, [&ctx] { return declaration_parser::parse(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwFun }, [&ctx] { return function_parser::parse(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
@@ -465,10 +464,10 @@ namespace fla::compiler
     }
 } // namespace fla::compiler
 
-namespace fla::compiler::forward_declaration_parser
+namespace fla::compiler::declaration_parser
 {
-    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &declare_t);
-    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &declare_t);
+    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &defer_token);
+    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &defer_token);
 
     ParseResult parse(ParserContext &ctx)
     {
@@ -493,7 +492,7 @@ namespace fla::compiler::forward_declaration_parser
         }
     }
 
-    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &declare_t)
+    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &defer_token)
     {
         auto name { parse_name(ctx) };
         if (!name) {
@@ -502,18 +501,18 @@ namespace fla::compiler::forward_declaration_parser
 
         const auto name_metadata { get_node_metadata(*name) };
 
-        return std::make_unique<ClassForwardDeclaration>(ClassForwardDeclaration {
+        return std::make_unique<ClassDeclaration>(ClassDeclaration {
             std::move(*name),
             {
-                declare_t.pos,
-                name_metadata.pos - declare_t.pos + name_metadata.len,
-                declare_t.line,
-                declare_t.col,
+                defer_token.pos,
+                name_metadata.pos - defer_token.pos + name_metadata.len,
+                defer_token.line,
+                defer_token.col,
             },
         });
     }
 
-    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &declare_t)
+    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &defer_token)
     {
         auto name { parse_name(ctx) };
         if (!name) {
@@ -544,19 +543,19 @@ namespace fla::compiler::forward_declaration_parser
 
         const auto return_tn_metadata { get_type_notation_metadata(return_tn->tn) };
 
-        return std::make_unique<FunctionForwardDeclaration>(FunctionForwardDeclaration {
+        return std::make_unique<FunctionDeclaration>(FunctionDeclaration {
             std::move(*name),
             std::move(parameters),
             std::move(*return_tn),
             {
-                declare_t.pos,
-                return_tn_metadata.pos - declare_t.pos + return_tn_metadata.len,
-                declare_t.line,
-                declare_t.col,
+                defer_token.pos,
+                return_tn_metadata.pos - defer_token.pos + return_tn_metadata.len,
+                defer_token.line,
+                defer_token.col,
             },
         });
     }
-}; // namespace fla::compiler::forward_declaration_parser
+}; // namespace fla::compiler::declaration_parser
 
 namespace fla::compiler::function_parser
 {

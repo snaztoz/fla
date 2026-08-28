@@ -43,26 +43,26 @@ TEST_CASE("parse-public", "[parser]")
     }
 }
 
-TEST_CASE("parse-forward-declaration", "[parser]")
+TEST_CASE("parse-declaration", "[parser]")
 {
     SECTION("class")
     {
         REQUIRE(is_parseable(R"(
-            declare class Person
+            defer class Person
         )"));
     }
 
     SECTION("function")
     {
         REQUIRE(is_parseable(R"(
-            declare fun greet() string
+            defer fun greet() string
         )"));
     }
 
     SECTION("function-with-skipped-parameters")
     {
         REQUIRE(is_parseable(R"(
-            declare fun greet string
+            defer fun greet string
         )"));
     }
 
@@ -70,8 +70,8 @@ TEST_CASE("parse-forward-declaration", "[parser]")
     {
         REQUIRE(is_parseable(R"(
             public do
-                declare class Person
-                declare fun greet(name string) string
+                defer class Person
+                defer fun greet(name string) string
             end
         )"));
     }
@@ -224,7 +224,7 @@ TEST_CASE("parse-interface", "[parser]")
     {
         REQUIRE(is_parseable(R"(
             class Person do
-                declare fun greet() string
+                defer fun greet() string
             end
         )"));
     }

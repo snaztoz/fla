@@ -26,11 +26,11 @@ namespace fla::compiler
                 [](const std::unique_ptr<Add> &) -> std::string { return "addition"; },
                 [](const std::unique_ptr<And> &) -> std::string { return "logical and"; },
                 [](const std::unique_ptr<Assign> &) -> std::string { return "assignment"; },
+                [](const std::unique_ptr<ClassDeclaration> &) -> std::string {
+                    return "class declaration";
+                },
                 [](const std::unique_ptr<ClassDefinition> &) -> std::string {
                     return "class definition";
-                },
-                [](const std::unique_ptr<ClassForwardDeclaration> &) -> std::string {
-                    return "class forward declaration";
                 },
                 [](const std::unique_ptr<ConstantDeclaration> &) -> std::string {
                     return "constant declaration";
@@ -41,11 +41,11 @@ namespace fla::compiler
                 [](const std::unique_ptr<ExpressionGroup> &) -> std::string {
                     return "expression group";
                 },
+                [](const std::unique_ptr<FunctionDeclaration> &) -> std::string {
+                    return "function declaration";
+                },
                 [](const std::unique_ptr<FunctionDefinition> &) -> std::string {
                     return "function definition";
-                },
-                [](const std::unique_ptr<FunctionForwardDeclaration> &) -> std::string {
-                    return "function forward declaration";
                 },
                 [](const std::unique_ptr<Gt> &) -> std::string {
                     return "greater-than comparison";

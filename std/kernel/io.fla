@@ -4,6 +4,6 @@ use std.kernel.type.byte
 use std.kernel.type.void
 
 public do
-  declare fun print(s []byte) void
-  declare fun eprint(s []byte) void
+  defer fun print(s []byte) void
+  defer fun eprint(s []byte) void
 end

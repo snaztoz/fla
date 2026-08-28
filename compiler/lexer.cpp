@@ -13,7 +13,7 @@ namespace fla::compiler
         { "and", TokenType::KwAnd },
         { "class", TokenType::KwClass },
         { "const", TokenType::KwConst },
-        { "declare", TokenType::KwDeclare },
+        { "defer", TokenType::KwDefer },
         { "do", TokenType::KwDo },
         { "else", TokenType::KwElse },
         { "end", TokenType::KwEnd },
