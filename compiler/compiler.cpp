@@ -4,15 +4,16 @@
 #include <memory>
 #include <print>
 #include <string>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
 #include "ast.hpp"
 #include "compiler.hpp"
+#include "context.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
 #include "parser.hpp"
+#include "type_check.hpp"
 #include "util.hpp"
 
 extern "C" {
@@ -71,25 +72,6 @@ namespace fla::compiler
     const auto KERNEL_IO_FILE { "io.fla" };
     const auto KERNEL_TYPE_FILE { "type.fla" };
 
-    enum EntityVariant {
-        Class,
-        Interface,
-    };
-
-    struct Entity {
-        std::string name;
-        EntityVariant variant;
-    };
-
-    struct Namespace {
-        std::string name;
-        std::unordered_map<std::string, Entity> public_entities;
-    };
-
-    struct CompilerContext {
-        std::unordered_map<std::string, Namespace> namespaces;
-    };
-
     void print_node(const Node &node, const int level);
 
     std::expected<void, Error> compile(const std::filesystem::path entrypoint)
@@ -110,9 +92,21 @@ namespace fla::compiler
                 return std::unexpected(root.error());
             }
 
+            const auto ns { type_check::read_declarations(*root) };
+            if (!ns) {
+                return std::unexpected(ns.error());
+            }
+
+            const auto ns_name { ns->name };
+            ctx.namespaces.insert({ ns_name, std::move(*ns) });
+
             std::println("#[{}]\n", file.string());
             print_node(*root, 0);
             std::println("");
+        }
+
+        for (const auto &[ns_name, _] : ctx.namespaces) {
+            std::println("{}", ns_name);
         }
 
         return {};
