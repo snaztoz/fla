@@ -68,7 +68,7 @@ namespace fla::compiler
     {
     }
 
-    Token Lexer::next()
+    const Token Lexer::next()
     {
         skip_whitespaces();
 
@@ -87,7 +87,7 @@ namespace fla::compiler
         };
     }
 
-    Token Lexer::peek()
+    const Token Lexer::peek()
     {
         skip_whitespaces();
 
@@ -127,8 +127,8 @@ namespace fla::compiler
         }
     }
 
-    std::optional<Token> Lexer::try_match_sym(const std::string_view text,
-                                              const TokenType type_if_matches)
+    const std::optional<Token> Lexer::try_match_sym(const std::string_view text,
+                                                    const TokenType type_if_matches)
     {
         if (cursor + text.length() > src.length()) {
             return std::nullopt;
@@ -152,7 +152,7 @@ namespace fla::compiler
         return t;
     }
 
-    std::optional<Token> Lexer::try_match()
+    const std::optional<Token> Lexer::try_match()
     {
         if (!is_current_valid_name_start()) {
             return std::nullopt;
@@ -167,7 +167,7 @@ namespace fla::compiler
             cursor += 1;
         }
 
-        auto it = keywords.find(src.substr(pos, len));
+        const auto it { keywords.find(src.substr(pos, len)) };
         const auto tt { (it != keywords.end()) ? it->second : TokenType::Name };
 
         const Token t {
@@ -183,7 +183,7 @@ namespace fla::compiler
         return t;
     }
 
-    std::optional<Token> Lexer::try_match_number()
+    const std::optional<Token> Lexer::try_match_number()
     {
         if (cursor >= src.length() || !std::isdigit(current())) {
             return std::nullopt;
@@ -211,7 +211,7 @@ namespace fla::compiler
         return t;
     }
 
-    std::optional<Token> Lexer::try_match_eof() const
+    const std::optional<Token> Lexer::try_match_eof() const
     {
         if (cursor < src.length()) {
             return std::nullopt;
@@ -231,12 +231,12 @@ namespace fla::compiler
         return src[cursor];
     }
 
-    bool Lexer::is_current_valid_name_start() const
+    constexpr bool Lexer::is_current_valid_name_start() const
     {
         return cursor < src.length() && (std::isalpha(current()) || current() == '_');
     }
 
-    bool Lexer::is_current_valid_name_tail() const
+    constexpr bool Lexer::is_current_valid_name_tail() const
     {
         return cursor < src.length() && (std::isalnum(current()) || current() == '_');
     }

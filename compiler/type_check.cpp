@@ -1,5 +1,4 @@
 #include <expected>
-#include <memory>
 #include <utility>
 #include <variant>
 
@@ -10,41 +9,40 @@
 
 namespace fla::compiler::type_check
 {
-    bool is_missing_namespace(std::vector<Node> &body);
-    std::string read_namespace_string(const Node &ns_node);
-    std::unordered_map<std::string, Entity> read_public_entities(const Node &root);
+    bool is_missing_namespace(const ast::Arena &, const std::vector<ast::NodeIndex> &);
+    const std::string read_namespace_string(const ast::Arena &, const ast::NodeIndex node_ni);
 
-    Result read_declarations(const Node &root)
+    const Result read_declarations(const ast::Arena &arena, const ast::NodeIndex root_ni)
     {
         Namespace ns;
 
-        const auto *r { std::get_if<std::unique_ptr<Root>>(&root) };
+        const auto *r { std::get_if<ast::Root>(&arena.get(root_ni)) };
         if (!r) {
             return std::unexpected(Error { 0, 0, 0, 0, "failed to match root" });
         }
 
-        if (is_missing_namespace(r->get()->body)) {
+        if (is_missing_namespace(arena, r->body)) {
             return std::unexpected(Error { 0, 0, 0, 0, "missing namespace declaration" });
         }
 
-        ns.name = read_namespace_string(r->get()->body.at(0));
+        ns.name = read_namespace_string(arena, r->body.at(0));
 
         return ns;
     }
 
-    bool is_missing_namespace(std::vector<Node> &body)
+    bool is_missing_namespace(const ast::Arena &arena, const std::vector<ast::NodeIndex> &body)
     {
         return body.size() == 0 ||
-               !std::holds_alternative<std::unique_ptr<NamespaceDeclaration>>(body.at(0));
+               !std::holds_alternative<ast::NamespaceDeclaration>(arena.get(body.at(0)));
     }
 
-    std::string read_namespace_string(const Node &ns_node)
+    const std::string read_namespace_string(const ast::Arena &arena, const ast::NodeIndex ns_node)
     {
-        const auto *ns { std::get_if<std::unique_ptr<NamespaceDeclaration>>(&ns_node) };
+        const auto *ns { std::get_if<ast::NamespaceDeclaration>(&arena.get(ns_node)) };
         if (!ns) {
             std::unreachable();
         }
 
-        return ns->get()->string();
+        return ns->string(arena);
     }
 }; // namespace fla::compiler::type_check

@@ -8,20 +8,21 @@
 #include "error.hpp"
 #include "lexer.hpp"
 
-namespace fla::compiler
+namespace fla::compiler::parser
 {
-    using ParseResult = std::expected<Node, Error>;
+    using Result = std::expected<ast::NodeIndex, Error>;
 
-    struct ParserContext {
+    struct Context {
         Lexer lexer;
+        ast::Arena arena;
         const std::string_view src;
 
-        ParserContext(const std::string_view s) : lexer(s), src(s)
+        Context(const std::string_view s) : lexer(s), arena(), src(s)
         {
         }
     };
 
-    ParseResult parse(std::string_view src);
-} // namespace fla::compiler
+    const Result parse(Context &ctx);
+} // namespace fla::compiler::parser
 
 #endif

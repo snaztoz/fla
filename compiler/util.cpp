@@ -6,7 +6,7 @@
 
 namespace fla::compiler::util
 {
-    std::expected<std::string, std::string> read_file(std::filesystem::path path)
+    const std::expected<std::string, std::string> read_file(const std::filesystem::path path)
     {
         std::ifstream file(path);
 
@@ -14,8 +14,8 @@ namespace fla::compiler::util
             return std::unexpected("unable to open file");
         }
 
-        std::string content((std::istreambuf_iterator<char>(file)),
-                            std::istreambuf_iterator<char>());
+        const std::string content((std::istreambuf_iterator<char>(file)),
+                                  std::istreambuf_iterator<char>());
 
         return content;
     }

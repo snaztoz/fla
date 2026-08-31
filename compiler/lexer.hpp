@@ -17,8 +17,8 @@ namespace fla::compiler
     {
     public:
         explicit Lexer(const std::string_view src);
-        Token next();
-        Token peek();
+        const Token next();
+        const Token peek();
 
     private:
         const std::string_view src;
@@ -27,15 +27,15 @@ namespace fla::compiler
         std::size_t curr_col;
         const LexerRules rules;
 
-        std::optional<Token> try_match();
-        std::optional<Token> try_match_number();
-        std::optional<Token> try_match_sym(const std::string_view text,
-                                           const TokenType type_if_matches);
-        std::optional<Token> try_match_eof() const;
+        const std::optional<Token> try_match();
+        const std::optional<Token> try_match_number();
+        const std::optional<Token> try_match_sym(const std::string_view text,
+                                                 const TokenType type_if_matches);
+        const std::optional<Token> try_match_eof() const;
         void skip_whitespaces();
         constexpr char current() const;
-        bool is_current_valid_name_start() const;
-        bool is_current_valid_name_tail() const;
+        constexpr bool is_current_valid_name_start() const;
+        constexpr bool is_current_valid_name_tail() const;
     };
 } // namespace fla::compiler
 

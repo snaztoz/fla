@@ -2,9 +2,10 @@
 
 #include "parser.hpp"
 
-bool is_parseable(std::string_view src)
+bool is_parseable(const std::string_view src)
 {
-    return !!fla::compiler::parse(src);
+    fla::compiler::parser::Context ctx { src };
+    return !!fla::compiler::parser::parse(ctx);
 }
 
 TEST_CASE("parse-public", "[parser]")

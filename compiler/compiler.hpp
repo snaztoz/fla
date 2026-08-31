@@ -8,7 +8,7 @@
 
 namespace fla::compiler
 {
-    std::expected<void, Error> compile(const std::filesystem::path entrypoint);
+    const std::expected<void, Error> compile(const std::filesystem::path entrypoint);
 }
 
 #endif

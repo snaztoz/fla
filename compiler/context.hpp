@@ -13,8 +13,8 @@ namespace fla::compiler
     };
 
     struct Entity {
-        std::string name;
-        EntityVariant variant;
+        const std::string name;
+        const EntityVariant variant;
     };
 
     struct Namespace {

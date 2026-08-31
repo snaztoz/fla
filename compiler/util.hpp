@@ -6,7 +6,11 @@
 
 namespace fla::compiler::util
 {
-    std::expected<std::string, std::string> read_file(std::filesystem::path path);
-}
+    template <class... Ts> struct overloaded : Ts... {
+        using Ts::operator()...;
+    };
+
+    const std::expected<std::string, std::string> read_file(const std::filesystem::path path);
+} // namespace fla::compiler::util
 
 #endif
