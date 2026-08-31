@@ -240,4 +240,4 @@ namespace fla::compiler::lexer
     {
         return cursor < src.length() && (std::isalnum(current()) || current() == '_');
     }
-}; // namespace fla::compiler
+}; // namespace fla::compiler::lexer

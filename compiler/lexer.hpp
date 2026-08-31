@@ -37,6 +37,6 @@ namespace fla::compiler::lexer
         constexpr bool is_current_valid_name_start() const;
         constexpr bool is_current_valid_name_tail() const;
     };
-} // namespace fla::compiler
+} // namespace fla::compiler::lexer
 
 #endif

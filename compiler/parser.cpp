@@ -1,4 +1,5 @@
 #include <charconv>
+#include <chrono>
 #include <expected>
 #include <format>
 #include <optional>
@@ -60,7 +61,11 @@ namespace fla::compiler::parser
 
     const Result parse(Context &ctx)
     {
-        return parse_root(ctx);
+        ctx.start = std::chrono::steady_clock::now();
+        const auto res { parse_root(ctx) };
+        ctx.end = std::chrono::steady_clock::now();
+
+        return res;
     }
 
     const Result parse_root(Context &ctx)

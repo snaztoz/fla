@@ -1,6 +1,7 @@
 #ifndef FLA_COMPILER_PARSER_H
 #define FLA_COMPILER_PARSER_H
 
+#include <chrono>
 #include <expected>
 #include <string_view>
 
@@ -16,6 +17,9 @@ namespace fla::compiler::parser
         lexer::Lexer lexer;
         ast::Arena arena;
         const std::string_view src;
+
+        std::chrono::time_point<std::chrono::steady_clock> start;
+        std::chrono::time_point<std::chrono::steady_clock> end;
 
         Context(const std::string_view s) : lexer(s), arena(), src(s)
         {
