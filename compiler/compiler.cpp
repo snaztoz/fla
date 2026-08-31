@@ -1,18 +1,19 @@
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#include <memory>
 #include <print>
 #include <string>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
 #include "ast.hpp"
 #include "compiler.hpp"
+#include "context.hpp"
 #include "error.hpp"
 #include "fla/compiler.h"
 #include "parser.hpp"
+#include "type_check.hpp"
 #include "util.hpp"
 
 extern "C" {
@@ -71,28 +72,9 @@ namespace fla::compiler
     const auto KERNEL_IO_FILE { "io.fla" };
     const auto KERNEL_TYPE_FILE { "type.fla" };
 
-    enum EntityVariant {
-        Class,
-        Interface,
-    };
+    void print_node(const ast::Arena &arena, const ast::NodeIndex node, const int level);
 
-    struct Entity {
-        std::string name;
-        EntityVariant variant;
-    };
-
-    struct Namespace {
-        std::string name;
-        std::unordered_map<std::string, Entity> public_entities;
-    };
-
-    struct CompilerContext {
-        std::unordered_map<std::string, Namespace> namespaces;
-    };
-
-    void print_node(const Node &node, const int level);
-
-    std::expected<void, Error> compile(const std::filesystem::path entrypoint)
+    const std::expected<void, Error> compile(const std::filesystem::path entrypoint)
     {
         CompilerContext ctx {};
 
@@ -104,214 +86,232 @@ namespace fla::compiler
 
         for (const auto &file : files) {
             const auto content { util::read_file(file) };
+            parser::Context parser_ctx { *content };
 
-            const auto root { parse(*content) };
+            const auto root { parse(parser_ctx) };
             if (!root) {
                 return std::unexpected(root.error());
             }
 
-            std::println("#[{}]\n", file.string());
-            print_node(*root, 0);
+            const auto parsing_duration { std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                              parser_ctx.end - parser_ctx.start)
+                                              .count() };
+
+            const auto ns { type_check::read_declarations(parser_ctx.arena, *root) };
+            if (!ns) {
+                return std::unexpected(ns.error());
+            }
+
+            const auto ns_name { ns->name };
+            ctx.namespaces.insert({ ns_name, std::move(*ns) });
+
+            std::println("#[{}: {} ns]\n", file.string(), parsing_duration);
+            print_node(parser_ctx.arena, *root, 0);
+
             std::println("");
+        }
+
+        for (const auto &[ns_name, _] : ctx.namespaces) {
+            std::println("{}", ns_name);
         }
 
         return {};
     }
 
-    void print_node(const Node &node, const int level)
+    void print_node(const ast::Arena &arena, const ast::NodeIndex ni, const int level)
     {
         const std::string indentation(level * 2, ' ');
 
-        std::print("{}{}", indentation, get_node_repr(node));
+        std::print("{}{}", indentation, arena.get_node_repr(ni));
 
-        const Metadata meta { get_node_metadata(node) };
+        const auto meta { arena.get_node_metadata(ni) };
         std::print(" ({}:{}:{})\n", meta.line, meta.col, meta.len);
 
         std::visit(
-            overloaded {
-                [](const Literal &) {},
-                [](const Name &) {},
-                [](const TypeNotationNode &) {},
-                [level](const std::unique_ptr<Add> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+            util::overloaded {
+                [](const ast::Literal &) {},
+                [](const ast::Name &) {},
+                [](const ast::TypeNotation &) {},
+                [arena, level](const ast::Add &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<And> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::And &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Assign> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Assign &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<ClassDeclaration> &n) {
-                    print_node(n->name, level + 1);
+                [arena, level](const ast::ClassDeclaration &n) {
+                    print_node(arena, n.name, level + 1);
                 },
-                [level](const std::unique_ptr<ClassDefinition> &n) {
-                    print_node(n->name, level + 1);
+                [arena, level](const ast::ClassDefinition &n) {
+                    print_node(arena, n.name, level + 1);
 
                     const std::string child_indentation((level + 1) * 2, ' ');
-                    if (!n->body.empty()) {
+                    if (!n.body.empty()) {
                         std::println("{}{{body}}", child_indentation);
-                        for (const auto &statement : n->body) {
-                            print_node(statement, level + 2);
+                        for (const auto &statement : n.body) {
+                            print_node(arena, statement, level + 2);
                         }
                     }
                 },
-                [level](const std::unique_ptr<ConstantDeclaration> &n) {
-                    print_node(n->name, level + 1);
-                    if (n->type_notation) {
-                        print_node(*n->type_notation, level + 1);
+                [arena, level](const ast::ConstantDeclaration &n) {
+                    print_node(arena, n.name, level + 1);
+                    if (n.type_notation) {
+                        print_node(arena, *n.type_notation, level + 1);
                     }
-                    print_node(n->expression, level + 1);
+                    print_node(arena, n.expression, level + 1);
                 },
-                [level](const std::unique_ptr<Div> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Div &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Eq> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Eq &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<ElseBranch> &n) {
-                    for (const auto &statement : n->body) {
-                        print_node(statement, level + 1);
+                [arena, level](const ast::ElseBranch &n) {
+                    for (const auto &statement : n.body) {
+                        print_node(arena, statement, level + 1);
                     }
                 },
-                [level](const std::unique_ptr<ExpressionGroup> &n) {
-                    print_node(n->expression, level + 1);
+                [arena, level](const ast::ExpressionGroup &n) {
+                    print_node(arena, n.expression, level + 1);
                 },
-                [level](const std::unique_ptr<FunctionDeclaration> &n) {
-                    print_node(n->name, level + 1);
+                [arena, level](const ast::FunctionDeclaration &n) {
+                    print_node(arena, n.name, level + 1);
 
                     const std::string child_indentation((level + 1) * 2, ' ');
 
-                    for (const auto &param : n->parameters) {
+                    for (const auto &param : n.parameters) {
                         std::println("{}{{parameter}}", child_indentation);
-                        print_node(param.first, level + 2);
-                        print_node(param.second, level + 2);
+                        print_node(arena, param.first, level + 2);
+                        print_node(arena, param.second, level + 2);
                     }
 
                     std::println("{}{{return}}", child_indentation);
-                    print_node(n->return_tn, level + 2);
+                    print_node(arena, n.return_tn, level + 2);
                 },
-                [level](const std::unique_ptr<FunctionDefinition> &n) {
-                    print_node(n->name, level + 1);
+                [arena, level](const ast::FunctionDefinition &n) {
+                    print_node(arena, n.name, level + 1);
 
                     const std::string child_indentation((level + 1) * 2, ' ');
 
-                    for (const auto &param : n->parameters) {
+                    for (const auto &param : n.parameters) {
                         std::println("{}{{parameter}}", child_indentation);
-                        print_node(param.first, level + 2);
-                        print_node(param.second, level + 2);
+                        print_node(arena, param.first, level + 2);
+                        print_node(arena, param.second, level + 2);
                     }
 
-                    if (n->return_type_notation) {
+                    if (n.return_type_notation) {
                         std::println("{}{{return}}", child_indentation);
-                        print_node(*n->return_type_notation, level + 2);
+                        print_node(arena, *n.return_type_notation, level + 2);
                     }
 
-                    if (!n->body.empty()) {
+                    if (!n.body.empty()) {
                         std::println("{}{{body}}", child_indentation);
-                        for (const auto &statement : n->body) {
-                            print_node(statement, level + 2);
+                        for (const auto &statement : n.body) {
+                            print_node(arena, statement, level + 2);
                         }
                     }
                 },
-                [level](const std::unique_ptr<Gt> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Gt &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Gte> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Gte &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<IfExpression> &n) {
-                    print_node(n->cond, level + 1);
-                    for (const auto &statement : n->body) {
-                        print_node(statement, level + 1);
+                [arena, level](const ast::IfExpression &n) {
+                    print_node(arena, n.cond, level + 1);
+                    for (const auto &statement : n.body) {
+                        print_node(arena, statement, level + 1);
                     }
-                    if (n->else_statement) {
-                        print_node(*n->else_statement, level + 1);
+                    if (n.else_statement) {
+                        print_node(arena, *n.else_statement, level + 1);
                     }
                 },
-                [level](const std::unique_ptr<InterfaceDefinition> &n) {
-                    print_node(n->name, level + 1);
+                [arena, level](const ast::InterfaceDefinition &n) {
+                    print_node(arena, n.name, level + 1);
 
                     const std::string child_indentation((level + 1) * 2, ' ');
-                    if (!n->body.empty()) {
+                    if (!n.body.empty()) {
                         std::println("{}{{body}}", child_indentation);
-                        for (const auto &statement : n->body) {
-                            print_node(statement, level + 2);
+                        for (const auto &statement : n.body) {
+                            print_node(arena, statement, level + 2);
                         }
                     }
                 },
-                [level](const std::unique_ptr<Lt> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Lt &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Lte> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Lte &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Mod> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Mod &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Mul> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Mul &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<NamespaceDeclaration> &n) {
-                    for (const auto &segment : n->name_segments) {
-                        print_node(segment, level + 1);
+                [arena, level](const ast::NamespaceDeclaration &n) {
+                    for (const auto &segment : n.name_segments) {
+                        print_node(arena, segment, level + 1);
                     }
                 },
-                [level](const std::unique_ptr<Neg> &n) { print_node(n->expression, level + 1); },
-                [level](const std::unique_ptr<Neq> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Neg &n) { print_node(arena, n.expression, level + 1); },
+                [arena, level](const ast::Neq &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<Not> &n) { print_node(n->expression, level + 1); },
-                [level](const std::unique_ptr<Or> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Not &n) { print_node(arena, n.expression, level + 1); },
+                [arena, level](const ast::Or &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<PublicScope> &n) {
-                    for (const auto &statement : n->body) {
-                        print_node(statement, level + 1);
+                [arena, level](const ast::PublicScope &n) {
+                    for (const auto &statement : n.body) {
+                        print_node(arena, statement, level + 1);
                     }
                 },
-                [level](const std::unique_ptr<Root> &n) {
-                    for (const auto &statement : n->body) {
-                        print_node(statement, level + 1);
+                [arena, level](const ast::Root &n) {
+                    for (const auto &statement : n.body) {
+                        print_node(arena, statement, level + 1);
                     }
                 },
-                [level](const std::unique_ptr<Sub> &n) {
-                    print_node(n->lhs, level + 1);
-                    print_node(n->rhs, level + 1);
+                [arena, level](const ast::Sub &n) {
+                    print_node(arena, n.lhs, level + 1);
+                    print_node(arena, n.rhs, level + 1);
                 },
-                [level](const std::unique_ptr<UseDeclaration> &n) {
-                    for (const auto &segment : n->name_segments) {
-                        print_node(segment, level + 1);
+                [arena, level](const ast::UseDeclaration &n) {
+                    for (const auto &segment : n.name_segments) {
+                        print_node(arena, segment, level + 1);
                     }
                 },
-                [level](const std::unique_ptr<VariableDeclaration> &n) {
-                    print_node(n->name, level + 1);
-                    if (n->type_notation) {
-                        print_node(*n->type_notation, level + 1);
+                [arena, level](const ast::VariableDeclaration &n) {
+                    print_node(arena, n.name, level + 1);
+                    if (n.type_notation) {
+                        print_node(arena, *n.type_notation, level + 1);
                     }
-                    if (n->expression) {
-                        print_node(*n->expression, level + 1);
-                    }
-                },
-                [level](const std::unique_ptr<WhileLoop> &n) {
-                    print_node(n->cond, level + 1);
-                    for (const auto &statement : n->body) {
-                        print_node(statement, level + 1);
+                    if (n.expression) {
+                        print_node(arena, *n.expression, level + 1);
                     }
                 },
-            },
-            node);
+                [arena, level](const ast::WhileLoop &n) {
+                    print_node(arena, n.cond, level + 1);
+                    for (const auto &statement : n.body) {
+                        print_node(arena, statement, level + 1);
+                    }
+                },
+                [](const auto &) { std::unreachable(); } },
+            arena.get(ni));
     }
 } // namespace fla::compiler

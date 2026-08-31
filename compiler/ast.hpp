@@ -2,16 +2,16 @@
 #define FLA_COMPILER_AST_H
 
 #include <cstddef>
-#include <memory>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
 
-namespace fla::compiler
+namespace fla::compiler::ast
 {
+    using NodeIndex = std::size_t;
+
     struct Metadata {
         const std::size_t pos;
         const std::size_t len;
@@ -19,40 +19,9 @@ namespace fla::compiler
         const std::size_t col;
     };
 
-    struct Literal {
-        std::variant<std::nullptr_t, int, bool> value;
-        Metadata meta;
-    };
-
-    struct Name {
-        std::string name;
-        Metadata meta;
-    };
-
-    struct ArrayTypeNotation;
-    struct FunctionTypeNotation;
-
-    using TypeNotation = std::variant<Name, std::unique_ptr<ArrayTypeNotation>,
-                                      std::unique_ptr<FunctionTypeNotation>>;
-
-    struct ArrayTypeNotation {
-        TypeNotation element_tn;
-        Metadata meta;
-    };
-
-    struct FunctionTypeNotation {
-        std::vector<TypeNotation> parameter_tns;
-        std::optional<TypeNotation> return_tn;
-        Metadata meta;
-    };
-
-    struct TypeNotationNode {
-        TypeNotation tn;
-        Metadata meta;
-    };
-
     struct Add;
     struct And;
+    struct ArrayTypeNotation;
     struct Assign;
     struct ClassDeclaration;
     struct ClassDefinition;
@@ -63,14 +32,17 @@ namespace fla::compiler
     struct ExpressionGroup;
     struct FunctionDeclaration;
     struct FunctionDefinition;
+    struct FunctionTypeNotation;
+    struct InterfaceDefinition;
     struct Gt;
     struct Gte;
     struct IfExpression;
-    struct InterfaceDefinition;
+    struct Literal;
     struct Lt;
     struct Lte;
     struct Mod;
     struct Mul;
+    struct Name;
     struct NamespaceDeclaration;
     struct Neg;
     struct Neq;
@@ -79,232 +51,242 @@ namespace fla::compiler
     struct PublicScope;
     struct Root;
     struct Sub;
+    struct TypeNotation;
     struct UseDeclaration;
     struct VariableDeclaration;
     struct WhileLoop;
 
     using Node =
-        std::variant<Literal, Name, TypeNotationNode, std::unique_ptr<Add>, std::unique_ptr<And>,
-                     std::unique_ptr<Assign>, std::unique_ptr<ClassDeclaration>,
-                     std::unique_ptr<ClassDefinition>, std::unique_ptr<ConstantDeclaration>,
-                     std::unique_ptr<Div>, std::unique_ptr<ElseBranch>, std::unique_ptr<Eq>,
-                     std::unique_ptr<ExpressionGroup>, std::unique_ptr<FunctionDeclaration>,
-                     std::unique_ptr<FunctionDefinition>, std::unique_ptr<InterfaceDefinition>,
-                     std::unique_ptr<Gt>, std::unique_ptr<Gte>, std::unique_ptr<IfExpression>,
-                     std::unique_ptr<Lt>, std::unique_ptr<Lte>, std::unique_ptr<Mod>,
-                     std::unique_ptr<Mul>, std::unique_ptr<NamespaceDeclaration>,
-                     std::unique_ptr<Neg>, std::unique_ptr<Neq>, std::unique_ptr<Not>,
-                     std::unique_ptr<Or>, std::unique_ptr<PublicScope>, std::unique_ptr<Root>,
-                     std::unique_ptr<Sub>, std::unique_ptr<UseDeclaration>,
-                     std::unique_ptr<VariableDeclaration>, std::unique_ptr<WhileLoop>>;
+        std::variant<Add, And, ArrayTypeNotation, Assign, ClassDeclaration, ClassDefinition,
+                     ConstantDeclaration, Div, ElseBranch, Eq, ExpressionGroup, FunctionDeclaration,
+                     FunctionDefinition, FunctionTypeNotation, InterfaceDefinition, Gt, Gte,
+                     IfExpression, Literal, Lt, Lte, Mod, Mul, Name, NamespaceDeclaration, Neg, Neq,
+                     Not, Or, PublicScope, Root, Sub, TypeNotation, UseDeclaration,
+                     VariableDeclaration, WhileLoop>;
+
+    class Arena
+    {
+        std::vector<Node> _arena;
+
+    public:
+        explicit Arena();
+        NodeIndex insert(const Node);
+        const Node &get(const NodeIndex) const;
+        const std::string get_node_repr(const NodeIndex) const;
+        const std::string get_type_notation_repr(const NodeIndex) const;
+        const Metadata &get_node_metadata(const NodeIndex) const;
+    };
+
+    struct Literal {
+        const std::variant<std::nullptr_t, int, bool> value;
+        const Metadata meta;
+    };
+
+    struct Name {
+        const std::string name;
+        const Metadata meta;
+    };
+
+    struct TypeNotation {
+        const NodeIndex tn;
+        const Metadata meta;
+    };
+
+    struct ArrayTypeNotation {
+        const NodeIndex element_tn;
+        const Metadata meta;
+    };
+
+    struct FunctionTypeNotation {
+        const std::vector<NodeIndex> parameter_tns;
+        const std::optional<NodeIndex> return_tn;
+        const Metadata meta;
+    };
 
     struct Add {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct And {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Assign {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct ClassDeclaration {
-        Name name;
-        Metadata meta;
+        const NodeIndex name;
+        const Metadata meta;
     };
 
     struct ClassDefinition {
-        Name name;
-        std::vector<Node> body;
-        Metadata meta;
+        const NodeIndex name;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
 
     struct ConstantDeclaration {
-        Name name;
-        std::optional<Node> type_notation;
-        Node expression;
-        Metadata meta;
+        const NodeIndex name;
+        const std::optional<NodeIndex> type_notation;
+        const NodeIndex expression;
+        const Metadata meta;
     };
 
     struct Div {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Eq {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct ElseBranch {
-        std::vector<Node> body;
-        Metadata meta;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
 
     struct ExpressionGroup {
-        Node expression;
-        Metadata meta;
+        const NodeIndex expression;
+        const Metadata meta;
     };
 
     struct FunctionDeclaration {
-        Name name;
-        std::vector<std::pair<Name, Node>> parameters;
-        Node return_tn;
-        Metadata meta;
+        const NodeIndex name;
+        const std::vector<std::pair<NodeIndex, NodeIndex>> parameters;
+        const NodeIndex return_tn;
+        const Metadata meta;
     };
 
     struct FunctionDefinition {
-        Name name;
-        std::vector<std::pair<Name, Node>> parameters;
-        std::optional<Node> return_type_notation;
-        std::vector<Node> body;
-        Metadata meta;
+        const NodeIndex name;
+        const std::vector<std::pair<NodeIndex, NodeIndex>> parameters;
+        const std::optional<NodeIndex> return_type_notation;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
 
     struct Gt {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Gte {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct IfExpression {
-        Node cond;
-        std::vector<Node> body;
-        std::optional<Node> else_statement;
-        Metadata meta;
+        const NodeIndex cond;
+        const std::vector<NodeIndex> body;
+        const std::optional<NodeIndex> else_statement;
+        const Metadata meta;
     };
 
     struct InterfaceDefinition {
-        Name name;
-        std::vector<Node> body;
-        Metadata meta;
+        const NodeIndex name;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
 
     struct Lt {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Lte {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Mod {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Mul {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct NamespaceDeclaration {
-        std::vector<Name> name_segments;
-        Metadata meta;
+        const std::vector<NodeIndex> name_segments;
+        const Metadata meta;
 
-        const std::string string()
-        {
-            std::ostringstream s;
-
-            for (std::size_t i = 0; i < name_segments.size(); i++) {
-                s << name_segments.at(i).name;
-                if (i < name_segments.size() - 1) {
-                    s << ".";
-                }
-            }
-
-            return s.str();
-        }
+        const std::string string(const Arena &) const;
     };
 
     struct Neg {
-        Node expression;
-        Metadata meta;
+        const NodeIndex expression;
+        const Metadata meta;
     };
 
     struct Neq {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct Not {
-        Node expression;
-        Metadata meta;
+        const NodeIndex expression;
+        const Metadata meta;
     };
 
     struct Or {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct PublicScope {
-        std::vector<Node> body;
-        Metadata meta;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
 
     struct Root {
-        std::vector<Node> body;
-        Metadata meta;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
 
     struct Sub {
-        Node lhs;
-        Node rhs;
-        Metadata meta;
+        const NodeIndex lhs;
+        const NodeIndex rhs;
+        const Metadata meta;
     };
 
     struct UseDeclaration {
-        std::vector<Name> name_segments;
-        Metadata meta;
+        const std::vector<NodeIndex> name_segments;
+        const Metadata meta;
     };
 
     struct VariableDeclaration {
-        Name name;
-        std::optional<Node> type_notation;
-        std::optional<Node> expression;
-        Metadata meta;
+        const NodeIndex name;
+        const std::optional<NodeIndex> type_notation;
+        const std::optional<NodeIndex> expression;
+        const Metadata meta;
     };
 
     struct WhileLoop {
-        Node cond;
-        std::vector<Node> body;
-        Metadata meta;
+        const NodeIndex cond;
+        const std::vector<NodeIndex> body;
+        const Metadata meta;
     };
-
-    template <class... Ts> struct overloaded : Ts... {
-        using Ts::operator()...;
-    };
-
-    std::string get_node_repr(const Node &node);
-    const Metadata &get_node_metadata(const Node &node);
-
-    std::string get_type_notation_node_repr(const TypeNotationNode &tn);
-    std::string get_type_notation_repr(const TypeNotation &tn);
-    const Metadata &get_type_notation_metadata(const TypeNotation &tn);
-} // namespace fla::compiler
+} // namespace fla::compiler::ast
 
 #endif

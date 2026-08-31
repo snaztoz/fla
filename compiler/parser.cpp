@@ -1,7 +1,7 @@
 #include <charconv>
+#include <chrono>
 #include <expected>
 #include <format>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string_view>
@@ -12,60 +12,63 @@
 #include "parser.hpp"
 #include "token.hpp"
 
-namespace fla::compiler
+namespace fla::compiler::parser
 {
-    namespace function_parser
+    namespace function
     {
-        using FunctionParameters = std::vector<std::pair<Name, Node>>;
+        using FunctionParameters = std::vector<std::pair<ast::NodeIndex, ast::NodeIndex>>;
         using FunctionParametersParseResult = std::expected<FunctionParameters, Error>;
 
-        ParseResult parse(ParserContext &ctx);
-        FunctionParametersParseResult parse_parameters(ParserContext &ctx);
-    }; // namespace function_parser
+        const Result parse(Context &ctx);
+        const FunctionParametersParseResult parse_parameters(Context &ctx);
+    }; // namespace function
 
-    namespace declaration_parser
+    namespace declaration
     {
-        ParseResult parse(ParserContext &ctx);
-    }; // namespace declaration_parser
+        const Result parse(Context &ctx);
+    }; // namespace declaration
 
-    namespace expression_parser
+    namespace expression
     {
-        ParseResult parse(ParserContext &ctx);
-    }; // namespace expression_parser
+        const Result parse(Context &ctx);
+    }; // namespace expression
 
-    namespace type_notation_parser
+    namespace type_notation
     {
-        using TypeNotationNodeParseResult = std::expected<TypeNotationNode, Error>;
+        using TypeNotationNodeParseResult = std::expected<ast::NodeIndex, Error>;
 
-        TypeNotationNodeParseResult parse(ParserContext &ctx);
-    }; // namespace type_notation_parser
+        const TypeNotationNodeParseResult parse(Context &ctx);
+    }; // namespace type_notation
 
-    using BodyParseResult = std::expected<std::vector<Node>, Error>;
-    using NameParseResult = std::expected<Name, Error>;
-    using NestedNamesParseResult = std::expected<std::vector<Name>, Error>;
+    using BodyResult = std::expected<std::vector<ast::NodeIndex>, Error>;
+    using NameResult = std::expected<ast::NodeIndex, Error>;
+    using NestedNamesResult = std::expected<std::vector<ast::NodeIndex>, Error>;
 
-    ParseResult parse_root(ParserContext &ctx);
-    ParseResult parse_namespace_statement(ParserContext &ctx);
-    ParseResult parse_use_statement(ParserContext &ctx);
-    ParseResult parse_public_scope(ParserContext &ctx);
-    ParseResult parse_class_definition(ParserContext &ctx);
-    ParseResult parse_interface_definition(ParserContext &ctx);
-    NestedNamesParseResult parse_nested_names(ParserContext &ctx);
-    ParseResult parse_variable_declaration(ParserContext &ctx);
-    ParseResult parse_while_statement(ParserContext &ctx);
-    ParseResult parse_expression_statement(ParserContext &ctx);
-    BodyParseResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters);
-    NameParseResult parse_name(ParserContext &ctx);
+    const Result parse_root(Context &ctx);
+    const Result parse_namespace_statement(Context &ctx);
+    const Result parse_use_statement(Context &ctx);
+    const Result parse_public_scope(Context &ctx);
+    const Result parse_class_definition(Context &ctx);
+    const Result parse_interface_definition(Context &ctx);
+    const NestedNamesResult parse_nested_names(Context &ctx);
+    const Result parse_variable_declaration(Context &ctx);
+    const Result parse_while_statement(Context &ctx);
+    const Result parse_expression_statement(Context &ctx);
+    const BodyResult parse_body(Context &ctx, std::set<TokenType> end_delimiters);
+    const NameResult parse_name(Context &ctx);
 
-    std::expected<Token, Error> expect(ParserContext &ctx, const TokenType &expected_tt);
+    const std::expected<Token, Error> expect(Context &ctx, const TokenType &expected_tt);
 
-    ParseResult parse(const std::string_view src)
+    const Result parse(Context &ctx)
     {
-        ParserContext parser_ctx { src };
-        return parse_root(parser_ctx);
+        ctx.start = std::chrono::steady_clock::now();
+        const auto res { parse_root(ctx) };
+        ctx.end = std::chrono::steady_clock::now();
+
+        return res;
     }
 
-    ParseResult parse_root(ParserContext &ctx)
+    const Result parse_root(Context &ctx)
     {
         auto body { parse_body(ctx, { TokenType::Eof }) };
         if (!body) {
@@ -73,13 +76,16 @@ namespace fla::compiler
         }
 
         if (body->size() == 0) {
-            return std::make_unique<Root>(Root { std::move(*body), { 0, 0, 0, 0 } });
+            return ctx.arena.insert(ast::Root {
+                std::move(*body),
+                { 0, 0, 0, 0 },
+            });
         }
 
-        const auto first { get_node_metadata(body->at(0)) };
-        const auto last { get_node_metadata(body->at(body->size() - 1)) };
+        const auto first { ctx.arena.get_node_metadata(body->at(0)) };
+        const auto last { ctx.arena.get_node_metadata(body->at(body->size() - 1)) };
 
-        return std::make_unique<Root>(Root {
+        return ctx.arena.insert(ast::Root {
             std::move(*body),
             {
                 first.pos,
@@ -90,7 +96,7 @@ namespace fla::compiler
         });
     }
 
-    ParseResult parse_namespace_statement(ParserContext &ctx)
+    const Result parse_namespace_statement(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -100,9 +106,9 @@ namespace fla::compiler
         }
 
         const auto last { segments->at(segments->size() - 1) };
-        const auto last_meta { get_node_metadata(last) };
+        const auto last_meta { ctx.arena.get_node_metadata(last) };
 
-        return std::make_unique<NamespaceDeclaration>(NamespaceDeclaration {
+        return ctx.arena.insert(ast::NamespaceDeclaration {
             std::move(*segments),
             {
                 kw.pos,
@@ -113,7 +119,7 @@ namespace fla::compiler
         });
     }
 
-    ParseResult parse_use_statement(ParserContext &ctx)
+    const Result parse_use_statement(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -122,9 +128,9 @@ namespace fla::compiler
             return std::unexpected(segments.error());
         }
 
-        const auto last { get_node_metadata(segments->at(segments->size() - 1)) };
+        const auto last { ctx.arena.get_node_metadata(segments->at(segments->size() - 1)) };
 
-        return std::make_unique<UseDeclaration>(UseDeclaration {
+        return ctx.arena.insert(ast::UseDeclaration {
             std::move(*segments),
             {
                 kw.pos,
@@ -135,7 +141,7 @@ namespace fla::compiler
         });
     }
 
-    ParseResult parse_public_scope(ParserContext &ctx)
+    const Result parse_public_scope(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -153,7 +159,7 @@ namespace fla::compiler
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<PublicScope>(PublicScope {
+        return ctx.arena.insert(ast::PublicScope {
             std::move(*body),
             {
                 kw.pos,
@@ -164,7 +170,7 @@ namespace fla::compiler
         });
     }
 
-    ParseResult parse_class_definition(ParserContext &ctx)
+    const Result parse_class_definition(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -187,42 +193,7 @@ namespace fla::compiler
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<ClassDefinition>(ClassDefinition {
-            std::move(*name),
-            std::move(*body),
-            {
-                kw.pos,
-                end->pos - kw.pos + end->len,
-                kw.line,
-                kw.col,
-            },
-        });
-    }
-
-    ParseResult parse_interface_definition(ParserContext &ctx)
-    {
-        const auto kw { ctx.lexer.next() };
-
-        const auto name { parse_name(ctx) };
-        if (!name) {
-            return std::unexpected(name.error());
-        }
-
-        if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
-            return std::unexpected(t.error());
-        }
-
-        auto body { parse_body(ctx, { TokenType::KwEnd }) };
-        if (!body) {
-            return std::unexpected(body.error());
-        }
-
-        const auto end { expect(ctx, TokenType::KwEnd) };
-        if (!end) {
-            return std::unexpected(end.error());
-        }
-
-        return std::make_unique<InterfaceDefinition>(InterfaceDefinition {
+        return ctx.arena.insert(ast::ClassDefinition {
             *name,
             std::move(*body),
             {
@@ -234,16 +205,51 @@ namespace fla::compiler
         });
     }
 
-    NestedNamesParseResult parse_nested_names(ParserContext &ctx)
+    const Result parse_interface_definition(Context &ctx)
     {
-        std::vector<Name> body;
+        const auto kw { ctx.lexer.next() };
+
+        const auto name { parse_name(ctx) };
+        if (!name) {
+            return std::unexpected(name.error());
+        }
+
+        if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
+            return std::unexpected(t.error());
+        }
+
+        auto body { parse_body(ctx, { TokenType::KwEnd }) };
+        if (!body) {
+            return std::unexpected(body.error());
+        }
+
+        const auto end { expect(ctx, TokenType::KwEnd) };
+        if (!end) {
+            return std::unexpected(end.error());
+        }
+
+        return ctx.arena.insert(ast::InterfaceDefinition {
+            *name,
+            std::move(*body),
+            {
+                kw.pos,
+                end->pos - kw.pos + end->len,
+                kw.line,
+                kw.col,
+            },
+        });
+    }
+
+    const NestedNamesResult parse_nested_names(Context &ctx)
+    {
+        std::vector<ast::NodeIndex> body;
 
         const auto first_segment { parse_name(ctx) };
         if (!first_segment) {
             return std::unexpected(first_segment.error());
         }
 
-        body.push_back(std::move(*first_segment));
+        body.push_back(*first_segment);
 
         while (true) {
             const auto t { ctx.lexer.peek() };
@@ -258,18 +264,18 @@ namespace fla::compiler
                 return std::unexpected(next_segment.error());
             }
 
-            body.push_back(std::move(*next_segment));
+            body.push_back(*next_segment);
         }
 
         return body;
     }
 
     using BodyStatementRuleTokenPrefixes = std::set<TokenType>;
-    using BodyStatementRuleParser = std::function<ParseResult(void)>;
+    using BodyStatementRuleParser = std::function<Result(void)>;
 
-    BodyParseResult parse_body(ParserContext &ctx, std::set<TokenType> end_delimiters)
+    const BodyResult parse_body(Context &ctx, std::set<TokenType> end_delimiters)
     {
-        std::vector<Node> body;
+        std::vector<ast::NodeIndex> body;
 
         const auto rules = {
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
@@ -278,9 +284,9 @@ namespace fla::compiler
                 { TokenType::KwConst, TokenType::KwVar },
                 [&ctx] { return parse_variable_declaration(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwDefer }, [&ctx] { return declaration_parser::parse(ctx); }),
+                { TokenType::KwDefer }, [&ctx] { return parser::declaration::parse(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
-                { TokenType::KwFun }, [&ctx] { return function_parser::parse(ctx); }),
+                { TokenType::KwFun }, [&ctx] { return parser::function::parse(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
                 { TokenType::KwInterface }, [&ctx] { return parse_interface_definition(ctx); }),
             std::make_pair<BodyStatementRuleTokenPrefixes, BodyStatementRuleParser>(
@@ -306,12 +312,12 @@ namespace fla::compiler
                     continue;
                 }
 
-                auto statement { parse_rule() };
+                const auto statement { parse_rule() };
                 if (!statement) {
                     return std::unexpected(statement.error());
                 }
 
-                body.push_back(std::move(*statement));
+                body.push_back(*statement);
                 found = true;
 
                 break;
@@ -321,18 +327,18 @@ namespace fla::compiler
                 continue;
             }
 
-            auto statement { parse_expression_statement(ctx) };
+            const auto statement { parse_expression_statement(ctx) };
             if (!statement) {
                 return std::unexpected(statement.error());
             }
 
-            body.push_back(std::move(*statement));
+            body.push_back(*statement);
         }
 
         return body;
     }
 
-    ParseResult parse_variable_declaration(ParserContext &ctx)
+    const Result parse_variable_declaration(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -341,29 +347,29 @@ namespace fla::compiler
             return std::unexpected(name.error());
         }
 
-        std::optional<TypeNotationNode> tn;
+        std::optional<ast::NodeIndex> tn;
         if (ctx.lexer.peek().type != TokenType::OpAssign) {
-            auto tnn { type_notation_parser::parse(ctx) };
+            const auto tnn { parser::type_notation::parse(ctx) };
             if (!tnn) {
                 return std::unexpected(tnn.error());
             }
-            tn.emplace(std::move(*tnn));
+            tn = *tnn;
         }
 
-        std::optional<Node> expression;
+        std::optional<ast::NodeIndex> expression;
         if (ctx.lexer.peek().type == TokenType::OpAssign) {
             ctx.lexer.next();
 
-            auto expr { expression_parser::parse(ctx) };
+            const auto expr { parser::expression::parse(ctx) };
             if (!expr) {
                 return expr;
             }
 
-            expression.emplace(std::move(*expr));
+            expression = *expr;
         }
 
         if (!tn && !expression) {
-            const auto name_metadata { get_node_metadata(*name) };
+            const auto name_metadata { ctx.arena.get_node_metadata(*name) };
 
             return std::unexpected(Error {
                 kw.pos,
@@ -374,29 +380,27 @@ namespace fla::compiler
             });
         }
 
-        const auto tail_meta { expression.has_value() ? get_node_metadata(*expression)
-                                                      : get_type_notation_metadata(tn->tn) };
+        const auto tail_meta { expression.has_value() ? ctx.arena.get_node_metadata(*expression)
+                                                      : ctx.arena.get_node_metadata(*tn) };
 
         const auto pos { kw.pos };
         const auto len { tail_meta.pos - kw.pos + tail_meta.len };
         const auto line { kw.line };
         const auto col { kw.col };
 
-        const Metadata meta { pos, len, line, col };
-
-        return std::make_unique<VariableDeclaration>(VariableDeclaration {
-            std::move(*name),
-            std::move(tn),
-            std::move(expression),
-            meta,
+        return ctx.arena.insert(ast::VariableDeclaration {
+            *name,
+            tn,
+            expression,
+            { pos, len, line, col },
         });
     }
 
-    ParseResult parse_while_statement(ParserContext &ctx)
+    const Result parse_while_statement(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
-        auto cond_expression { expression_parser::parse(ctx) };
+        const auto cond_expression { parser::expression::parse(ctx) };
         if (!cond_expression) {
             return cond_expression;
         }
@@ -415,8 +419,8 @@ namespace fla::compiler
             return std::unexpected(kw_end.error());
         }
 
-        return std::make_unique<WhileLoop>(WhileLoop {
-            std::move(*cond_expression),
+        return ctx.arena.insert(ast::WhileLoop {
+            *cond_expression,
             std::move(*body),
             {
                 kw.pos,
@@ -427,12 +431,12 @@ namespace fla::compiler
         });
     }
 
-    ParseResult parse_expression_statement(ParserContext &ctx)
+    const Result parse_expression_statement(Context &ctx)
     {
-        return expression_parser::parse(ctx);
+        return parser::expression::parse(ctx);
     }
 
-    NameParseResult parse_name(ParserContext &ctx)
+    const NameResult parse_name(Context &ctx)
     {
         const auto name_token { expect(ctx, TokenType::Name) };
         if (!name_token) {
@@ -440,15 +444,19 @@ namespace fla::compiler
         }
 
         const std::string name_text { ctx.src.substr(name_token->pos, name_token->len) };
-        const Name name {
-            name_text,
-            { name_token->pos, name_token->len, name_token->line, name_token->col },
-        };
 
-        return name;
+        return ctx.arena.insert(ast::Name {
+            name_text,
+            {
+                name_token->pos,
+                name_token->len,
+                name_token->line,
+                name_token->col,
+            },
+        });
     }
 
-    std::expected<Token, Error> expect(ParserContext &ctx, const TokenType &expected_tt)
+    const std::expected<Token, Error> expect(Context &ctx, const TokenType &expected_tt)
     {
         const auto t { ctx.lexer.next() };
         if (t.type != expected_tt) {
@@ -463,14 +471,14 @@ namespace fla::compiler
         }
         return t;
     }
-} // namespace fla::compiler
+} // namespace fla::compiler::parser
 
-namespace fla::compiler::declaration_parser
+namespace fla::compiler::parser::declaration
 {
-    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &defer_token);
-    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &defer_token);
+    const Result parse_class_declaration(Context &ctx, const Token &defer_token);
+    const Result parse_function_declaration(Context &ctx, const Token &defer_token);
 
-    ParseResult parse(ParserContext &ctx)
+    const Result parse(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -487,23 +495,23 @@ namespace fla::compiler::declaration_parser
         }
 
         if (entity.type == TokenType::KwClass) {
-            return parse_class_forward_declaration(ctx, kw);
+            return parse_class_declaration(ctx, kw);
         } else {
-            return parse_function_forward_declaration(ctx, kw);
+            return parse_function_declaration(ctx, kw);
         }
     }
 
-    ParseResult parse_class_forward_declaration(ParserContext &ctx, const Token &defer_token)
+    const Result parse_class_declaration(Context &ctx, const Token &defer_token)
     {
-        auto name { parse_name(ctx) };
+        const auto name { parse_name(ctx) };
         if (!name) {
             return name;
         }
 
-        const auto name_metadata { get_node_metadata(*name) };
+        const auto name_metadata { ctx.arena.get_node_metadata(*name) };
 
-        return std::make_unique<ClassDeclaration>(ClassDeclaration {
-            std::move(*name),
+        return ctx.arena.insert(ast::ClassDeclaration {
+            *name,
             {
                 defer_token.pos,
                 name_metadata.pos - defer_token.pos + name_metadata.len,
@@ -513,19 +521,19 @@ namespace fla::compiler::declaration_parser
         });
     }
 
-    ParseResult parse_function_forward_declaration(ParserContext &ctx, const Token &defer_token)
+    const Result parse_function_declaration(Context &ctx, const Token &defer_token)
     {
-        auto name { parse_name(ctx) };
+        const auto name { parse_name(ctx) };
         if (!name) {
             return name;
         }
 
-        function_parser::FunctionParameters parameters;
+        parser::function::FunctionParameters parameters;
 
         if (ctx.lexer.peek().type == TokenType::SymLParen) {
             ctx.lexer.next();
 
-            auto parsed_parameters { function_parser::parse_parameters(ctx) };
+            auto parsed_parameters { parser::function::parse_parameters(ctx) };
             if (!parsed_parameters) {
                 return std::unexpected(parsed_parameters.error());
             }
@@ -537,17 +545,17 @@ namespace fla::compiler::declaration_parser
             parameters = std::move(*parsed_parameters);
         }
 
-        auto return_tn { type_notation_parser::parse(ctx) };
+        const auto return_tn { parser::type_notation::parse(ctx) };
         if (!return_tn) {
             return return_tn;
         }
 
-        const auto return_tn_metadata { get_type_notation_metadata(return_tn->tn) };
+        const auto return_tn_metadata { ctx.arena.get_node_metadata(*return_tn) };
 
-        return std::make_unique<FunctionDeclaration>(FunctionDeclaration {
-            std::move(*name),
+        return ctx.arena.insert(ast::FunctionDeclaration {
+            *name,
             std::move(parameters),
-            std::move(*return_tn),
+            *return_tn,
             {
                 defer_token.pos,
                 return_tn_metadata.pos - defer_token.pos + return_tn_metadata.len,
@@ -556,11 +564,11 @@ namespace fla::compiler::declaration_parser
             },
         });
     }
-}; // namespace fla::compiler::declaration_parser
+}; // namespace fla::compiler::parser::declaration
 
-namespace fla::compiler::function_parser
+namespace fla::compiler::parser::function
 {
-    ParseResult parse(ParserContext &ctx)
+    const Result parse(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -587,13 +595,13 @@ namespace fla::compiler::function_parser
         }
 
         // Return type is optional
-        std::optional<TypeNotationNode> return_tn;
+        std::optional<ast::NodeIndex> return_tn;
         if (ctx.lexer.peek().type != TokenType::KwDo) {
-            auto tn { type_notation_parser::parse(ctx) };
+            auto tn { parser::type_notation::parse(ctx) };
             if (!tn) {
                 return std::unexpected(tn.error());
             }
-            return_tn.emplace(std::move(*tn));
+            return_tn = *tn;
         }
 
         if (const auto t { expect(ctx, TokenType::KwDo) }; !t) {
@@ -610,10 +618,10 @@ namespace fla::compiler::function_parser
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<FunctionDefinition>(FunctionDefinition {
-            std::move(*name),
+        return ctx.arena.insert(ast::FunctionDefinition {
+            *name,
             std::move(parameters),
-            std::move(return_tn),
+            return_tn,
             std::move(*body),
             {
                 kw.pos,
@@ -624,7 +632,7 @@ namespace fla::compiler::function_parser
         });
     }
 
-    FunctionParametersParseResult parse_parameters(ParserContext &ctx)
+    const FunctionParametersParseResult parse_parameters(Context &ctx)
     {
         FunctionParameters parameters;
 
@@ -634,12 +642,12 @@ namespace fla::compiler::function_parser
                 return std::unexpected(name.error());
             }
 
-            auto tn { type_notation_parser::parse(ctx) };
+            const auto tn { parser::type_notation::parse(ctx) };
             if (!tn) {
                 return std::unexpected(tn.error());
             }
 
-            parameters.push_back(std::make_pair(*name, std::move(*tn)));
+            parameters.push_back(std::make_pair(*name, *tn));
 
             const auto next { ctx.lexer.peek() };
 
@@ -664,14 +672,15 @@ namespace fla::compiler::function_parser
 
         return parameters;
     }
-}; // namespace fla::compiler::function_parser
+}; // namespace fla::compiler::parser::function
 
-namespace fla::compiler::expression_parser
+namespace fla::compiler::parser::expression
 {
-    Metadata make_binary_op_metadata(const Node &lhs, const Node &rhs)
+    const ast::Metadata make_binary_op_metadata(Context &ctx, const ast::NodeIndex lhs,
+                                                const ast::NodeIndex rhs)
     {
-        const auto lhs_meta { get_node_metadata(lhs) };
-        const auto rhs_meta { get_node_metadata(rhs) };
+        const auto lhs_meta { ctx.arena.get_node_metadata(lhs) };
+        const auto rhs_meta { ctx.arena.get_node_metadata(rhs) };
 
         const auto pos { lhs_meta.pos };
         const auto len { rhs_meta.pos - lhs_meta.pos + rhs_meta.len };
@@ -681,25 +690,25 @@ namespace fla::compiler::expression_parser
         return { pos, len, line, col };
     }
 
-    ParseResult parse_assignment(ParserContext &ctx);
-    ParseResult parse_logical_and_or_expression(ParserContext &ctx);
-    ParseResult parse_equality_expression(ParserContext &ctx);
-    ParseResult parse_comparison_expression(ParserContext &ctx);
-    ParseResult parse_additive_expression(ParserContext &ctx);
-    ParseResult parse_multiplicative_expression(ParserContext &ctx);
-    ParseResult parse_unary_expression(ParserContext &ctx);
-    ParseResult parse_primary_expression(ParserContext &ctx);
-    ParseResult parse_if_expression(ParserContext &ctx);
-    ParseResult parse_else_branch(ParserContext &ctx);
+    const Result parse_assignment(Context &ctx);
+    const Result parse_logical_and_or_expression(Context &ctx);
+    const Result parse_equality_expression(Context &ctx);
+    const Result parse_comparison_expression(Context &ctx);
+    const Result parse_additive_expression(Context &ctx);
+    const Result parse_multiplicative_expression(Context &ctx);
+    const Result parse_unary_expression(Context &ctx);
+    const Result parse_primary_expression(Context &ctx);
+    const Result parse_if_expression(Context &ctx);
+    const Result parse_else_branch(Context &ctx);
 
-    ParseResult parse(ParserContext &ctx)
+    const Result parse(Context &ctx)
     {
         return parse_assignment(ctx);
     }
 
-    ParseResult parse_assignment(ParserContext &ctx)
+    const Result parse_assignment(Context &ctx)
     {
-        auto lhs { parse_logical_and_or_expression(ctx) };
+        const auto lhs { parse_logical_and_or_expression(ctx) };
         if (!lhs) {
             return lhs;
         }
@@ -709,29 +718,27 @@ namespace fla::compiler::expression_parser
         }
         ctx.lexer.next();
 
-        auto rhs { parse_logical_and_or_expression(ctx) };
+        const auto rhs { parse_logical_and_or_expression(ctx) };
         if (!rhs) {
             return rhs;
         }
 
-        const auto meta { make_binary_op_metadata(*lhs, *rhs) };
+        const auto meta { make_binary_op_metadata(ctx, *lhs, *rhs) };
 
-        return std::make_unique<Assign>(std::move(*lhs), std::move(*rhs), meta);
+        return ctx.arena.insert(ast::Assign { *lhs, *rhs, meta });
     }
 
-    ParseResult parse_logical_and_or_expression(ParserContext &ctx)
+    const Result parse_logical_and_or_expression(Context &ctx)
     {
         static const std::set<TokenType> logical_and_or_ops = {
             TokenType::KwAnd,
             TokenType::KwOr,
         };
 
-        auto expr { parse_equality_expression(ctx) };
-        if (!expr) {
-            return expr;
+        auto lhs { parse_equality_expression(ctx) };
+        if (!lhs) {
+            return lhs;
         }
-
-        Node lhs { std::move(*expr) };
 
         while (true) {
             const auto op { ctx.lexer.peek() };
@@ -741,38 +748,34 @@ namespace fla::compiler::expression_parser
 
             ctx.lexer.next();
 
-            auto rhs { parse_equality_expression(ctx) };
+            const auto rhs { parse_equality_expression(ctx) };
             if (!rhs) {
                 return std::unexpected(rhs.error());
             }
 
-            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+            const auto meta { make_binary_op_metadata(ctx, *lhs, *rhs) };
 
             if (op.type == TokenType::KwAnd) {
-                lhs.emplace<std::unique_ptr<And>>(
-                    std::make_unique<And>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::And { *lhs, *rhs, meta });
             } else {
-                lhs.emplace<std::unique_ptr<Or>>(
-                    std::make_unique<Or>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Or { *lhs, *rhs, meta });
             }
         }
 
         return lhs;
     }
 
-    ParseResult parse_equality_expression(ParserContext &ctx)
+    const Result parse_equality_expression(Context &ctx)
     {
         static const std::set<TokenType> equality_ops = {
             TokenType::OpEq,
             TokenType::OpNeq,
         };
 
-        auto expr { parse_comparison_expression(ctx) };
-        if (!expr) {
-            return expr;
+        auto lhs { parse_comparison_expression(ctx) };
+        if (!lhs) {
+            return lhs;
         }
-
-        Node lhs { std::move(*expr) };
 
         while (true) {
             const auto op { ctx.lexer.peek() };
@@ -782,26 +785,24 @@ namespace fla::compiler::expression_parser
 
             ctx.lexer.next();
 
-            auto rhs { parse_comparison_expression(ctx) };
+            const auto rhs { parse_comparison_expression(ctx) };
             if (!rhs) {
                 return std::unexpected(rhs.error());
             }
 
-            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+            const auto meta { make_binary_op_metadata(ctx, *lhs, *rhs) };
 
             if (op.type == TokenType::OpEq) {
-                lhs.emplace<std::unique_ptr<Eq>>(
-                    std::make_unique<Eq>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Eq { *lhs, *rhs, meta });
             } else {
-                lhs.emplace<std::unique_ptr<Neq>>(
-                    std::make_unique<Neq>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Neq { *lhs, *rhs, meta });
             }
         }
 
         return lhs;
     }
 
-    ParseResult parse_comparison_expression(ParserContext &ctx)
+    const Result parse_comparison_expression(Context &ctx)
     {
         static const std::set<TokenType> comparison_ops = {
             TokenType::OpGt,
@@ -810,12 +811,10 @@ namespace fla::compiler::expression_parser
             TokenType::OpLte,
         };
 
-        auto expr { parse_additive_expression(ctx) };
-        if (!expr) {
-            return expr;
+        auto lhs { parse_additive_expression(ctx) };
+        if (!lhs) {
+            return lhs;
         }
-
-        Node lhs { std::move(*expr) };
 
         while (true) {
             const auto op { ctx.lexer.peek() };
@@ -825,44 +824,38 @@ namespace fla::compiler::expression_parser
 
             ctx.lexer.next();
 
-            auto rhs { parse_additive_expression(ctx) };
+            const auto rhs { parse_additive_expression(ctx) };
             if (!rhs) {
                 return std::unexpected(rhs.error());
             }
 
-            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+            const auto meta { make_binary_op_metadata(ctx, *lhs, *rhs) };
 
             if (op.type == TokenType::OpGt) {
-                lhs.emplace<std::unique_ptr<Gt>>(
-                    std::make_unique<Gt>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Gt { *lhs, *rhs, meta });
             } else if (op.type == TokenType::OpGte) {
-                lhs.emplace<std::unique_ptr<Gte>>(
-                    std::make_unique<Gte>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Gte { *lhs, *rhs, meta });
             } else if (op.type == TokenType::OpLt) {
-                lhs.emplace<std::unique_ptr<Lt>>(
-                    std::make_unique<Lt>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Lt { *lhs, *rhs, meta });
             } else {
-                lhs.emplace<std::unique_ptr<Lte>>(
-                    std::make_unique<Lte>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Lte { *lhs, *rhs, meta });
             }
         }
 
         return lhs;
     }
 
-    ParseResult parse_additive_expression(ParserContext &ctx)
+    const Result parse_additive_expression(Context &ctx)
     {
         static const std::set<TokenType> additive_ops = {
             TokenType::OpAdd,
             TokenType::OpSub,
         };
 
-        auto expr { parse_multiplicative_expression(ctx) };
-        if (!expr) {
-            return expr;
+        auto lhs { parse_multiplicative_expression(ctx) };
+        if (!lhs) {
+            return lhs;
         }
-
-        Node lhs { std::move(*expr) };
 
         while (true) {
             const auto op { ctx.lexer.peek() };
@@ -872,26 +865,24 @@ namespace fla::compiler::expression_parser
 
             ctx.lexer.next();
 
-            auto rhs { parse_multiplicative_expression(ctx) };
+            const auto rhs { parse_multiplicative_expression(ctx) };
             if (!rhs) {
                 return std::unexpected(rhs.error());
             }
 
-            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+            const auto meta { make_binary_op_metadata(ctx, *lhs, *rhs) };
 
             if (op.type == TokenType::OpAdd) {
-                lhs.emplace<std::unique_ptr<Add>>(
-                    std::make_unique<Add>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Add { *lhs, *rhs, meta });
             } else {
-                lhs.emplace<std::unique_ptr<Sub>>(
-                    std::make_unique<Sub>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Sub { *lhs, *rhs, meta });
             }
         }
 
         return lhs;
     }
 
-    ParseResult parse_multiplicative_expression(ParserContext &ctx)
+    const Result parse_multiplicative_expression(Context &ctx)
     {
         static const std::set<TokenType> multiplicative_ops = {
             TokenType::OpMul,
@@ -899,12 +890,10 @@ namespace fla::compiler::expression_parser
             TokenType::OpMod,
         };
 
-        auto expr { parse_unary_expression(ctx) };
-        if (!expr) {
-            return expr;
+        auto lhs { parse_unary_expression(ctx) };
+        if (!lhs) {
+            return lhs;
         }
-
-        Node lhs { std::move(*expr) };
 
         while (true) {
             const auto op { ctx.lexer.peek() };
@@ -914,29 +903,26 @@ namespace fla::compiler::expression_parser
 
             ctx.lexer.next();
 
-            auto rhs { parse_unary_expression(ctx) };
+            const auto rhs { parse_unary_expression(ctx) };
             if (!rhs) {
                 return std::unexpected(rhs.error());
             }
 
-            const auto meta { make_binary_op_metadata(lhs, *rhs) };
+            const auto meta { make_binary_op_metadata(ctx, *lhs, *rhs) };
 
             if (op.type == TokenType::OpMul) {
-                lhs.emplace<std::unique_ptr<Mul>>(
-                    std::make_unique<Mul>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Mul { *lhs, *rhs, meta });
             } else if (op.type == TokenType::OpDiv) {
-                lhs.emplace<std::unique_ptr<Div>>(
-                    std::make_unique<Div>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Div { *lhs, *rhs, meta });
             } else {
-                lhs.emplace<std::unique_ptr<Mod>>(
-                    std::make_unique<Mod>(std::move(lhs), std::move(*rhs), meta));
+                lhs = ctx.arena.insert(ast::Mod { *lhs, *rhs, meta });
             }
         }
 
         return lhs;
     }
 
-    ParseResult parse_unary_expression(ParserContext &ctx)
+    const Result parse_unary_expression(Context &ctx)
     {
         const auto t { ctx.lexer.peek() };
 
@@ -946,23 +932,23 @@ namespace fla::compiler::expression_parser
 
         ctx.lexer.next();
 
-        auto sub_expression { parse_unary_expression(ctx) };
+        const auto sub_expression { parse_unary_expression(ctx) };
         if (!sub_expression) {
             return std::unexpected(sub_expression.error());
         }
 
-        const auto sub_expression_meta { get_node_metadata(*sub_expression) };
+        const auto sub_expression_meta { ctx.arena.get_node_metadata(*sub_expression) };
         const auto len { sub_expression_meta.pos - t.pos + sub_expression_meta.len };
-        const Metadata meta { t.pos, len, t.line, t.col };
+        const ast::Metadata meta { t.pos, len, t.line, t.col };
 
         if (t.type == TokenType::OpSub) {
-            return std::make_unique<Neg>(Neg { std::move(*sub_expression), meta });
+            return ctx.arena.insert(ast::Neg { *sub_expression, meta });
         } else {
-            return std::make_unique<Not>(Not { std::move(*sub_expression), meta });
+            return ctx.arena.insert(ast::Not { *sub_expression, meta });
         }
     }
 
-    ParseResult parse_primary_expression(ParserContext &ctx)
+    const Result parse_primary_expression(Context &ctx)
     {
         const auto t { ctx.lexer.peek() };
 
@@ -970,7 +956,7 @@ namespace fla::compiler::expression_parser
         case TokenType::SymLParen: {
             ctx.lexer.next();
 
-            auto sub_expr { parse(ctx) };
+            const auto sub_expr { parser::expression::parse(ctx) };
             if (!sub_expr) {
                 return std::unexpected(sub_expr.error());
             }
@@ -980,9 +966,9 @@ namespace fla::compiler::expression_parser
                 return std::unexpected(closing_paren.error());
             }
 
-            return std::make_unique<ExpressionGroup>(ExpressionGroup {
-                std::move(*sub_expr),
-                Metadata {
+            return ctx.arena.insert(ast::ExpressionGroup {
+                *sub_expr,
+                {
                     t.pos,
                     closing_paren->pos - t.pos + closing_paren->len,
                     t.line,
@@ -997,35 +983,36 @@ namespace fla::compiler::expression_parser
 
         case TokenType::True: {
             ctx.lexer.next();
-
-            return Literal { true, Metadata { t.pos, t.len, t.line, t.col } };
+            return ctx.arena.insert(ast::Literal {
+                true,
+                { t.pos, t.len, t.line, t.col },
+            });
         }
 
         case TokenType::False: {
             ctx.lexer.next();
-
-            return Literal {
+            return ctx.arena.insert(ast::Literal {
                 false,
-                Metadata { t.pos, t.len, t.line, t.col },
-            };
+                { t.pos, t.len, t.line, t.col },
+            });
         }
 
         case TokenType::Null: {
             ctx.lexer.next();
 
-            return Literal {
+            return ctx.arena.insert(ast::Literal {
                 nullptr,
-                Metadata { t.pos, t.len, t.line, t.col },
-            };
+                { t.pos, t.len, t.line, t.col },
+            });
         }
 
         case TokenType::Name: {
             ctx.lexer.next();
 
-            return Name {
+            return ctx.arena.insert(ast::Name {
                 std::string { ctx.src.substr(t.pos, t.len) },
-                Metadata { t.pos, t.len, t.line, t.col },
-            };
+                { t.pos, t.len, t.line, t.col },
+            });
         }
 
         case TokenType::Number: {
@@ -1035,10 +1022,10 @@ namespace fla::compiler::expression_parser
             int num = 0;
             std::from_chars(num_str.data(), num_str.data() + num_str.size(), num);
 
-            return Literal {
+            return ctx.arena.insert(ast::Literal {
                 num,
-                Metadata { t.pos, t.len, t.line, t.col },
-            };
+                { t.pos, t.len, t.line, t.col },
+            });
         }
 
         default:
@@ -1052,11 +1039,11 @@ namespace fla::compiler::expression_parser
         }
     }
 
-    ParseResult parse_if_expression(ParserContext &ctx)
+    const Result parse_if_expression(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
-        auto cond_expression { parse(ctx) };
+        const auto cond_expression { parser::expression::parse(ctx) };
         if (!cond_expression) {
             return cond_expression;
         }
@@ -1065,7 +1052,8 @@ namespace fla::compiler::expression_parser
             return std::unexpected(kw_do.error());
         }
 
-        auto body { fla::compiler::parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
+        auto body { fla::compiler::parser::parse_body(ctx,
+                                                      { TokenType::KwEnd, TokenType::KwElse }) };
         if (!body) {
             return std::unexpected(body.error());
         }
@@ -1076,8 +1064,8 @@ namespace fla::compiler::expression_parser
                 return std::unexpected(end.error());
             }
 
-            return std::make_unique<IfExpression>(IfExpression {
-                std::move(*cond_expression),
+            return ctx.arena.insert(ast::IfExpression {
+                *cond_expression,
                 std::move(*body),
                 std::nullopt,
                 {
@@ -1089,17 +1077,17 @@ namespace fla::compiler::expression_parser
             });
         }
 
-        auto else_branch { parse_else_branch(ctx) };
+        const auto else_branch { parse_else_branch(ctx) };
         if (!else_branch) {
             return std::unexpected(else_branch.error());
         }
 
-        const auto else_branch_metadata { get_node_metadata(*else_branch) };
+        const auto else_branch_metadata { ctx.arena.get_node_metadata(*else_branch) };
 
-        return std::make_unique<IfExpression>(IfExpression {
-            std::move(*cond_expression),
+        return ctx.arena.insert(ast::IfExpression {
+            *cond_expression,
             std::move(*body),
-            std::move(*else_branch),
+            *else_branch,
             {
                 kw.pos,
                 else_branch_metadata.pos - kw.pos + else_branch_metadata.len,
@@ -1109,7 +1097,7 @@ namespace fla::compiler::expression_parser
         });
     }
 
-    ParseResult parse_else_branch(ParserContext &ctx)
+    const Result parse_else_branch(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -1121,7 +1109,8 @@ namespace fla::compiler::expression_parser
             return std::unexpected(kw_do.error());
         }
 
-        auto body { fla::compiler::parse_body(ctx, { TokenType::KwEnd, TokenType::KwElse }) };
+        auto body { fla::compiler::parser::parse_body(ctx,
+                                                      { TokenType::KwEnd, TokenType::KwElse }) };
         if (!body) {
             return std::unexpected(body.error());
         }
@@ -1131,7 +1120,7 @@ namespace fla::compiler::expression_parser
             return std::unexpected(end.error());
         }
 
-        return std::make_unique<ElseBranch>(ElseBranch {
+        return ctx.arena.insert(ast::ElseBranch {
             std::move(*body),
             {
                 kw.pos,
@@ -1141,31 +1130,31 @@ namespace fla::compiler::expression_parser
             },
         });
     }
-}; // namespace fla::compiler::expression_parser
+}; // namespace fla::compiler::parser::expression
 
-namespace fla::compiler::type_notation_parser
+namespace fla::compiler::parser::type_notation
 {
-    using TypeNotationParseResult = std::expected<TypeNotation, Error>;
-    using TypeNotationListParseResult = std::expected<std::vector<TypeNotation>, Error>;
+    using TypeNotationResult = std::expected<ast::NodeIndex, Error>;
+    using TypeNotationListResult = std::expected<std::vector<ast::NodeIndex>, Error>;
 
-    TypeNotationParseResult parse_type_notation(ParserContext &ctx);
-    TypeNotationParseResult parse_array_type_notation(ParserContext &ctx);
-    TypeNotationParseResult parse_function_type_notation(ParserContext &ctx);
-    TypeNotationListParseResult parse_function_type_notation_parameters(ParserContext &ctx);
+    const TypeNotationResult parse_type_notation(Context &ctx);
+    const TypeNotationResult parse_array_type_notation(Context &ctx);
+    const TypeNotationResult parse_function_type_notation(Context &ctx);
+    const TypeNotationListResult parse_function_type_notation_parameters(Context &ctx);
 
-    TypeNotationNodeParseResult parse(ParserContext &ctx)
+    const TypeNotationNodeParseResult parse(Context &ctx)
     {
-        auto tn { parse_type_notation(ctx) };
+        const auto tn { parse_type_notation(ctx) };
         if (!tn) {
             return std::unexpected(tn.error());
         }
 
-        const auto meta { get_type_notation_metadata(*tn) };
+        const auto meta { ctx.arena.get_node_metadata(*tn) };
 
-        return TypeNotationNode { std::move(*tn), meta };
+        return ctx.arena.insert(ast::TypeNotation { *tn, meta });
     }
 
-    TypeNotationParseResult parse_type_notation(ParserContext &ctx)
+    const TypeNotationResult parse_type_notation(Context &ctx)
     {
         const auto t { ctx.lexer.peek() };
 
@@ -1189,7 +1178,7 @@ namespace fla::compiler::type_notation_parser
         }
     }
 
-    TypeNotationParseResult parse_array_type_notation(ParserContext &ctx)
+    const TypeNotationResult parse_array_type_notation(Context &ctx)
     {
         const auto t { ctx.lexer.next() };
 
@@ -1197,15 +1186,15 @@ namespace fla::compiler::type_notation_parser
             return std::unexpected(closing.error());
         }
 
-        auto inner { parse_type_notation(ctx) };
+        const auto inner { parse_type_notation(ctx) };
         if (!inner) {
             return std::unexpected(inner.error());
         }
 
-        const auto meta { get_type_notation_metadata(*inner) };
+        const auto meta { ctx.arena.get_node_metadata(*inner) };
 
-        return std::make_unique<ArrayTypeNotation>(ArrayTypeNotation {
-            std::move(*inner),
+        return ctx.arena.insert(ast::ArrayTypeNotation {
+            *inner,
             {
                 t.pos,
                 meta.pos - t.pos + meta.len,
@@ -1215,7 +1204,7 @@ namespace fla::compiler::type_notation_parser
         });
     }
 
-    TypeNotationParseResult parse_function_type_notation(ParserContext &ctx)
+    const TypeNotationResult parse_function_type_notation(Context &ctx)
     {
         const auto kw { ctx.lexer.next() };
 
@@ -1232,16 +1221,16 @@ namespace fla::compiler::type_notation_parser
             return std::unexpected(t.error());
         }
 
-        auto return_tn { parse_type_notation(ctx) };
+        const auto return_tn { parse_type_notation(ctx) };
         if (!return_tn) {
             return return_tn;
         }
 
-        const auto return_tn_meta { get_type_notation_metadata(*return_tn) };
+        const auto return_tn_meta { ctx.arena.get_node_metadata(*return_tn) };
 
-        return std::make_unique<FunctionTypeNotation>(FunctionTypeNotation {
+        return ctx.arena.insert(ast::FunctionTypeNotation {
             std::move(*parameters_tns),
-            std::move(*return_tn),
+            *return_tn,
             {
                 kw.pos,
                 return_tn_meta.pos - kw.pos + return_tn_meta.len,
@@ -1251,9 +1240,9 @@ namespace fla::compiler::type_notation_parser
         });
     }
 
-    TypeNotationListParseResult parse_function_type_notation_parameters(ParserContext &ctx)
+    const TypeNotationListResult parse_function_type_notation_parameters(Context &ctx)
     {
-        std::vector<TypeNotation> parameters_tns;
+        std::vector<ast::NodeIndex> parameters_tns;
 
         while (ctx.lexer.peek().type != TokenType::SymRParen) {
             auto tn { parse_type_notation(ctx) };
@@ -1261,7 +1250,7 @@ namespace fla::compiler::type_notation_parser
                 return std::unexpected(tn.error());
             }
 
-            parameters_tns.push_back(std::move(*tn));
+            parameters_tns.push_back(*tn);
 
             const auto next { ctx.lexer.peek() };
 
@@ -1286,4 +1275,4 @@ namespace fla::compiler::type_notation_parser
 
         return parameters_tns;
     }
-} // namespace fla::compiler::type_notation_parser
+} // namespace fla::compiler::parser::type_notation
