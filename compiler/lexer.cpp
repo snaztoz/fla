@@ -7,7 +7,7 @@
 #include "lexer.hpp"
 #include "token.hpp"
 
-namespace fla::compiler
+namespace fla::compiler::lexer
 {
     const std::map<std::string_view, TokenType> keywords {
         { "and", TokenType::KwAnd },

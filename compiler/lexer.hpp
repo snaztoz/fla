@@ -9,9 +9,9 @@
 
 #include "token.hpp"
 
-namespace fla::compiler
+namespace fla::compiler::lexer
 {
-    using LexerRules = std::vector<std::function<std::optional<Token>(void)>>;
+    using Rules = std::vector<std::function<std::optional<Token>(void)>>;
 
     class Lexer
     {
@@ -25,7 +25,7 @@ namespace fla::compiler
         std::size_t cursor;
         std::size_t curr_line;
         std::size_t curr_col;
-        const LexerRules rules;
+        const Rules rules;
 
         const std::optional<Token> try_match();
         const std::optional<Token> try_match_number();

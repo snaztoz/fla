@@ -13,7 +13,7 @@ namespace fla::compiler::parser
     using Result = std::expected<ast::NodeIndex, Error>;
 
     struct Context {
-        Lexer lexer;
+        lexer::Lexer lexer;
         ast::Arena arena;
         const std::string_view src;
 
