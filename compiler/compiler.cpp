@@ -1,4 +1,3 @@
-#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -93,10 +92,6 @@ namespace fla::compiler
                 return std::unexpected(root.error());
             }
 
-            const auto parsing_duration { std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                              parser_ctx.end - parser_ctx.start)
-                                              .count() };
-
             const auto ns { type_check::read_declarations(parser_ctx.arena, *root) };
             if (!ns) {
                 return std::unexpected(ns.error());
@@ -105,14 +100,24 @@ namespace fla::compiler
             const auto ns_name { ns->name };
             ctx.namespaces.insert({ ns_name, std::move(*ns) });
 
-            std::println("#[{}: {} ns]\n", file.string(), parsing_duration);
-            print_node(parser_ctx.arena, *root, 0);
+            // std::println("#[{}: {} ns]\n", file.string(), parsing_duration);
+            // print_node(parser_ctx.arena, *root, 0);
 
-            std::println("");
+            // std::println("");
         }
 
-        for (const auto &[ns_name, _] : ctx.namespaces) {
-            std::println("{}", ns_name);
+        for (const auto &[_, ns] : ctx.namespaces) {
+            std::println("#[{}]", ns.name);
+
+            for (const auto &[t_name, t] : ns.types) {
+                std::print("    {} {}, at {}", t_name, string(t.variant), t.ni);
+                if (t.is_public) {
+                    std::print(" (public)");
+                }
+                std::println("");
+            }
+
+            std::println("");
         }
 
         return {};

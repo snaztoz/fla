@@ -2,25 +2,47 @@
 #define FLA_COMPILER_CONTEXT_H
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
+#include "ast.hpp"
+
 namespace fla::compiler
 {
-    enum EntityVariant {
+    enum class TypeVariant {
         Class,
+        ClassDeclaration,
         Interface,
     };
 
-    struct Entity {
+    inline std::string_view string(const TypeVariant &tv)
+    {
+        switch (tv) {
+        case TypeVariant::Class:
+            return "class";
+        case TypeVariant::ClassDeclaration:
+            return "class declaration";
+        case TypeVariant::Interface:
+            return "interface";
+        default:
+            std::unreachable();
+        }
+    }
+
+    struct Type {
         const std::string name;
-        const EntityVariant variant;
+        const TypeVariant variant;
+        const ast::NodeIndex ni;
+        bool is_public;
     };
+
+    using TypeMapping = std::unordered_map<std::string, Type>;
 
     struct Namespace {
         std::string name;
-        std::unordered_map<std::string, Entity> public_entities;
-        std::unordered_map<std::string, Entity> private_entities;
+        TypeMapping types;
+        TypeMapping deferred_types;
         std::vector<std::string> namespace_dependencies;
     };
 

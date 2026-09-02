@@ -32,6 +32,7 @@ target_include_directories(flac PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(flac-tests
     ${CMAKE_SOURCE_DIR}/vendor/Catch2/catch_amalgamated.cpp
     parser_tests.cpp
+    type_check_tests.cpp
 )
 
 target_compile_definitions(flac-tests PRIVATE BUILD_TYPE="$<CONFIG>")
