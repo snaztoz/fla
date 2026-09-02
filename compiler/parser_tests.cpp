@@ -1,3 +1,5 @@
+#include <string_view>
+
 #include "Catch2/catch_amalgamated.hpp"
 
 #include "parser.hpp"
