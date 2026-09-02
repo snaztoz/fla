@@ -104,4 +104,28 @@ TEST_CASE("check-declarations", "[type-check]")
             end
         )"));
     }
+
+    SECTION("declare-name-multiple-times")
+    {
+        REQUIRE(!is_passing_type_check(R"(
+            namespace std.kernel.type
+
+            defer class Person
+
+            defer class Person
+        )"));
+    }
+
+    SECTION("define-name-multiple-times")
+    {
+        REQUIRE(!is_passing_type_check(R"(
+            namespace std.kernel.type
+
+            interface Person do
+            end
+
+            class Person do
+            end
+        )"));
+    }
 }

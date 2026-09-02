@@ -1,4 +1,5 @@
 #include <expected>
+#include <format>
 #include <utility>
 #include <variant>
 
@@ -12,14 +13,16 @@ namespace fla::compiler::type_check
     bool is_missing_namespace(const ast::Arena &, const std::vector<ast::NodeIndex> &);
     const std::string read_namespace_string(const ast::Arena &, const ast::Root &);
 
-    TypeMapping read_public_deferred_types(const ast::Arena &,
-                                           const std::vector<ast::NodeIndex> &body);
-    TypeMapping read_deferred_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body,
-                                    const bool is_public);
+    std::expected<TypeMapping, Error>
+    read_public_deferred_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body);
+    std::expected<TypeMapping, Error> read_deferred_types(const ast::Arena &,
+                                                          const std::vector<ast::NodeIndex> &body,
+                                                          const bool is_public);
 
-    TypeMapping read_public_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body);
-    TypeMapping read_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body,
-                           const bool is_public);
+    std::expected<TypeMapping, Error> read_public_types(const ast::Arena &,
+                                                        const std::vector<ast::NodeIndex> &body);
+    std::expected<TypeMapping, Error>
+    read_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body, const bool is_public);
 
     const std::expected<void, Error> resolve_deferred_types(Namespace &, const ast::Arena &);
     constexpr bool should_promote_visibility(const Type &concrete_type, const Type &deferred_type);
@@ -38,10 +41,30 @@ namespace fla::compiler::type_check
         }
 
         ns.name = read_namespace_string(arena, *r);
-        ns.deferred_types.merge(read_deferred_types(arena, r->body, false));
-        ns.deferred_types.merge(read_public_deferred_types(arena, r->body));
-        ns.types.merge(read_types(arena, r->body, false));
-        ns.types.merge(read_public_types(arena, r->body));
+
+        auto dt { read_deferred_types(arena, r->body, false) };
+        if (!dt) {
+            return std::unexpected(dt.error());
+        }
+        ns.deferred_types.merge(*dt);
+
+        auto pdt { read_public_deferred_types(arena, r->body) };
+        if (!pdt) {
+            return std::unexpected(pdt.error());
+        }
+        ns.deferred_types.merge(*pdt);
+
+        auto t { read_types(arena, r->body, false) };
+        if (!t) {
+            return std::unexpected(t.error());
+        }
+        ns.types.merge(*t);
+
+        auto pt { read_public_types(arena, r->body) };
+        if (!pt) {
+            return std::unexpected(pt.error());
+        }
+        ns.types.merge(*pt);
 
         if (const auto ok { resolve_deferred_types(ns, arena) }; !ok) {
             return std::unexpected(ok.error());
@@ -66,8 +89,8 @@ namespace fla::compiler::type_check
         return ns->string(arena);
     }
 
-    TypeMapping read_public_deferred_types(const ast::Arena &arena,
-                                           const std::vector<ast::NodeIndex> &body)
+    std::expected<TypeMapping, Error>
+    read_public_deferred_types(const ast::Arena &arena, const std::vector<ast::NodeIndex> &body)
     {
         TypeMapping types;
 
@@ -78,25 +101,42 @@ namespace fla::compiler::type_check
             }
 
             auto scope_types { read_deferred_types(arena, public_node->body, true) };
+            if (!scope_types) {
+                return std::unexpected(scope_types.error());
+            }
 
-            types.merge(scope_types);
+            types.merge(*scope_types);
         }
 
         return types;
     }
 
-    TypeMapping read_deferred_types(const ast::Arena &arena,
-                                    const std::vector<ast::NodeIndex> &body, const bool is_public)
+    std::expected<TypeMapping, Error> read_deferred_types(const ast::Arena &arena,
+                                                          const std::vector<ast::NodeIndex> &body,
+                                                          const bool is_public)
     {
         TypeMapping types;
 
         for (const auto &n : body) {
             if (const auto *t { std::get_if<ast::ClassDeclaration>(&arena.get(n)) }) {
                 const auto *name { std::get_if<ast::Name>(&arena.get(t->name)) };
+
+                if (types.contains(name->name)) {
+                    const std::string msg { std::format("`{}` type is already exist", name->name) };
+                    return std::unexpected(Error {
+                        name->meta.pos,
+                        name->meta.line,
+                        name->meta.line,
+                        name->meta.col,
+                        msg,
+                    });
+                }
+
                 types.insert({
                     name->name,
                     { name->name, TypeVariant::ClassDeclaration, n, is_public },
                 });
+
                 continue;
             }
         }
@@ -104,7 +144,8 @@ namespace fla::compiler::type_check
         return types;
     }
 
-    TypeMapping read_public_types(const ast::Arena &arena, const std::vector<ast::NodeIndex> &body)
+    std::expected<TypeMapping, Error> read_public_types(const ast::Arena &arena,
+                                                        const std::vector<ast::NodeIndex> &body)
     {
         TypeMapping types;
 
@@ -115,34 +156,64 @@ namespace fla::compiler::type_check
             }
 
             auto scope_types { read_types(arena, public_node->body, true) };
+            if (!scope_types) {
+                return std::unexpected(scope_types.error());
+            }
 
-            types.merge(scope_types);
+            types.merge(*scope_types);
         }
 
         return types;
     }
 
-    TypeMapping read_types(const ast::Arena &arena, const std::vector<ast::NodeIndex> &body,
-                           const bool is_public)
+    std::expected<TypeMapping, Error> read_types(const ast::Arena &arena,
+                                                 const std::vector<ast::NodeIndex> &body,
+                                                 const bool is_public)
     {
         TypeMapping types;
 
         for (const auto &n : body) {
             if (const auto *t { std::get_if<ast::ClassDefinition>(&arena.get(n)) }) {
                 const auto *name { std::get_if<ast::Name>(&arena.get(t->name)) };
+
+                if (types.contains(name->name)) {
+                    const std::string msg { std::format("`{}` type is already exist", name->name) };
+                    return std::unexpected(Error {
+                        name->meta.pos,
+                        name->meta.line,
+                        name->meta.line,
+                        name->meta.col,
+                        msg,
+                    });
+                }
+
                 types.insert({
                     name->name,
                     { name->name, TypeVariant::Class, n, is_public },
                 });
+
                 continue;
             }
 
             if (const auto *t { std::get_if<ast::InterfaceDefinition>(&arena.get(n)) }) {
                 const auto *name { std::get_if<ast::Name>(&arena.get(t->name)) };
+
+                if (types.contains(name->name)) {
+                    const std::string msg { std::format("`{}` type is already exist", name->name) };
+                    return std::unexpected(Error {
+                        name->meta.pos,
+                        name->meta.line,
+                        name->meta.line,
+                        name->meta.col,
+                        msg,
+                    });
+                }
+
                 types.insert({
                     name->name,
                     { name->name, TypeVariant::Interface, n, is_public },
                 });
+
                 continue;
             }
         }
