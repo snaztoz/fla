@@ -4,27 +4,28 @@
 #include <variant>
 
 #include "ast.hpp"
+#include "common.hpp"
 #include "context.hpp"
 #include "error.hpp"
 #include "type_check.hpp"
 
 namespace fla::compiler::type_check
 {
-    bool is_missing_namespace(const ast::Arena &, const std::vector<ast::NodeIndex> &);
+    using namespace fla::compiler::common;
+
+    using TypeMappingResult = std::expected<TypeMapping, Error>;
+
+    bool is_missing_namespace(const ast::Arena &, const ast::NodeList &);
     const std::string read_namespace_string(const ast::Arena &, const ast::Root &);
 
-    std::expected<TypeMapping, Error>
-    read_public_deferred_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body);
-    std::expected<TypeMapping, Error> read_deferred_types(const ast::Arena &,
-                                                          const std::vector<ast::NodeIndex> &body,
-                                                          const bool is_public);
+    TypeMappingResult read_public_deferred_types(const ast::Arena &, const ast::NodeList &);
+    TypeMappingResult read_deferred_types(const ast::Arena &, const ast::NodeList &,
+                                          const bool is_public);
 
-    std::expected<TypeMapping, Error> read_public_types(const ast::Arena &,
-                                                        const std::vector<ast::NodeIndex> &body);
-    std::expected<TypeMapping, Error>
-    read_types(const ast::Arena &, const std::vector<ast::NodeIndex> &body, const bool is_public);
+    TypeMappingResult read_public_types(const ast::Arena &, const ast::NodeList &);
+    TypeMappingResult read_types(const ast::Arena &, const ast::NodeList &, const bool is_public);
 
-    const std::expected<void, Error> resolve_deferred_types(Namespace &, const ast::Arena &);
+    const VoidResult resolve_deferred_types(Namespace &, const ast::Arena &);
     constexpr bool should_promote_visibility(const Type &concrete_type, const Type &deferred_type);
 
     const Result read_declarations(const ast::Arena &arena, const ast::NodeIndex root_ni)
@@ -73,7 +74,7 @@ namespace fla::compiler::type_check
         return ns;
     }
 
-    bool is_missing_namespace(const ast::Arena &arena, const std::vector<ast::NodeIndex> &body)
+    bool is_missing_namespace(const ast::Arena &arena, const ast::NodeList &body)
     {
         return body.size() == 0 ||
                !std::holds_alternative<ast::NamespaceDeclaration>(arena.get(body.at(0)));
@@ -89,8 +90,7 @@ namespace fla::compiler::type_check
         return ns->string(arena);
     }
 
-    std::expected<TypeMapping, Error>
-    read_public_deferred_types(const ast::Arena &arena, const std::vector<ast::NodeIndex> &body)
+    TypeMappingResult read_public_deferred_types(const ast::Arena &arena, const ast::NodeList &body)
     {
         TypeMapping types;
 
@@ -111,9 +111,8 @@ namespace fla::compiler::type_check
         return types;
     }
 
-    std::expected<TypeMapping, Error> read_deferred_types(const ast::Arena &arena,
-                                                          const std::vector<ast::NodeIndex> &body,
-                                                          const bool is_public)
+    TypeMappingResult read_deferred_types(const ast::Arena &arena, const ast::NodeList &body,
+                                          const bool is_public)
     {
         TypeMapping types;
 
@@ -144,8 +143,7 @@ namespace fla::compiler::type_check
         return types;
     }
 
-    std::expected<TypeMapping, Error> read_public_types(const ast::Arena &arena,
-                                                        const std::vector<ast::NodeIndex> &body)
+    TypeMappingResult read_public_types(const ast::Arena &arena, const ast::NodeList &body)
     {
         TypeMapping types;
 
@@ -166,9 +164,8 @@ namespace fla::compiler::type_check
         return types;
     }
 
-    std::expected<TypeMapping, Error> read_types(const ast::Arena &arena,
-                                                 const std::vector<ast::NodeIndex> &body,
-                                                 const bool is_public)
+    TypeMappingResult read_types(const ast::Arena &arena, const ast::NodeList &body,
+                                 const bool is_public)
     {
         TypeMapping types;
 
@@ -221,12 +218,12 @@ namespace fla::compiler::type_check
         return types;
     }
 
-    const std::expected<void, Error> resolve_deferred_types(Namespace &ns, const ast::Arena &arena)
+    const VoidResult resolve_deferred_types(Namespace &ns, const ast::Arena &arena)
     {
         for (const auto &[name, t] : ns.deferred_types) {
             if (!ns.types.contains(name)) {
                 const auto ni { ns.deferred_types.at(name).ni };
-                const auto meta { arena.get_node_metadata(ni) };
+                const auto meta { arena.node_metadata(ni) };
 
                 return std::unexpected(Error {
                     meta.pos,

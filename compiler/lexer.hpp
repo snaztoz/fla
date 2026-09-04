@@ -11,14 +11,15 @@
 
 namespace fla::compiler::lexer
 {
-    using Rules = std::vector<std::function<std::optional<Token>(void)>>;
+    using MaybeToken = std::optional<token::Token>;
+    using Rules = std::vector<std::function<MaybeToken(void)>>;
 
     class Lexer
     {
     public:
         explicit Lexer(const std::string_view src);
-        const Token next();
-        const Token peek();
+        const token::Token next();
+        const token::Token peek();
 
     private:
         const std::string_view src;
@@ -27,11 +28,10 @@ namespace fla::compiler::lexer
         std::size_t curr_col;
         const Rules rules;
 
-        const std::optional<Token> try_match();
-        const std::optional<Token> try_match_number();
-        const std::optional<Token> try_match_sym(const std::string_view text,
-                                                 const TokenType type_if_matches);
-        const std::optional<Token> try_match_eof() const;
+        const MaybeToken try_match();
+        const MaybeToken try_match_number();
+        const MaybeToken try_match_sym(const std::string_view, const token::Variant v_if_matches);
+        const MaybeToken try_match_eof() const;
         void skip_whitespaces();
         constexpr char current() const;
         constexpr bool is_current_valid_name_start() const;

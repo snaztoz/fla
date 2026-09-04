@@ -1,14 +1,15 @@
 #ifndef FLA_COMPILER_COMPILER_H
 #define FLA_COMPILER_COMPILER_H
 
-#include <expected>
 #include <filesystem>
 
-#include "error.hpp"
+#include "common.hpp"
 
 namespace fla::compiler
 {
-    const std::expected<void, Error> compile(const std::filesystem::path entrypoint);
-}
+    using namespace fla::compiler::common;
+
+    const VoidResult compile(const std::filesystem::path entrypoint);
+} // namespace fla::compiler
 
 #endif

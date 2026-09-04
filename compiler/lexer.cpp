@@ -9,28 +9,28 @@
 
 namespace fla::compiler::lexer
 {
-    const std::map<std::string_view, TokenType> keywords {
-        { "and", TokenType::KwAnd },
-        { "class", TokenType::KwClass },
-        { "const", TokenType::KwConst },
-        { "defer", TokenType::KwDefer },
-        { "do", TokenType::KwDo },
-        { "else", TokenType::KwElse },
-        { "end", TokenType::KwEnd },
-        { "fun", TokenType::KwFun },
-        { "if", TokenType::KwIf },
-        { "interface", TokenType::KwInterface },
-        { "namespace", TokenType::KwNamespace },
-        { "not", TokenType::KwNot },
-        { "or", TokenType::KwOr },
-        { "public", TokenType::KwPublic },
-        { "use", TokenType::KwUse },
-        { "var", TokenType::KwVar },
-        { "while", TokenType::KwWhile },
+    const std::map<std::string_view, token::Variant> keywords {
+        { "and", token::Variant::KwAnd },
+        { "class", token::Variant::KwClass },
+        { "const", token::Variant::KwConst },
+        { "defer", token::Variant::KwDefer },
+        { "do", token::Variant::KwDo },
+        { "else", token::Variant::KwElse },
+        { "end", token::Variant::KwEnd },
+        { "fun", token::Variant::KwFun },
+        { "if", token::Variant::KwIf },
+        { "interface", token::Variant::KwInterface },
+        { "namespace", token::Variant::KwNamespace },
+        { "not", token::Variant::KwNot },
+        { "or", token::Variant::KwOr },
+        { "public", token::Variant::KwPublic },
+        { "use", token::Variant::KwUse },
+        { "var", token::Variant::KwVar },
+        { "while", token::Variant::KwWhile },
 
-        { "false", TokenType::False },
-        { "null", TokenType::Null },
-        { "true", TokenType::True },
+        { "false", token::Variant::False },
+        { "null", token::Variant::Null },
+        { "true", token::Variant::True },
     };
 
     Lexer::Lexer(std::string_view s)
@@ -43,32 +43,32 @@ namespace fla::compiler::lexer
               [this] { return try_match_number(); },
 
               // Operators with more characters should have higher priority
-              [this] { return try_match_sym("==", TokenType::OpEq); },
-              [this] { return try_match_sym(">=", TokenType::OpGte); },
-              [this] { return try_match_sym("<=", TokenType::OpLte); },
-              [this] { return try_match_sym("!=", TokenType::OpNeq); },
-              [this] { return try_match_sym("+", TokenType::OpAdd); },
-              [this] { return try_match_sym("=", TokenType::OpAssign); },
-              [this] { return try_match_sym("/", TokenType::OpDiv); },
-              [this] { return try_match_sym(".", TokenType::OpDot); },
-              [this] { return try_match_sym(">", TokenType::OpGt); },
-              [this] { return try_match_sym("<", TokenType::OpLt); },
-              [this] { return try_match_sym("%", TokenType::OpMod); },
-              [this] { return try_match_sym("*", TokenType::OpMul); },
-              [this] { return try_match_sym("-", TokenType::OpSub); },
+              [this] { return try_match_sym("==", token::Variant::OpEq); },
+              [this] { return try_match_sym(">=", token::Variant::OpGte); },
+              [this] { return try_match_sym("<=", token::Variant::OpLte); },
+              [this] { return try_match_sym("!=", token::Variant::OpNeq); },
+              [this] { return try_match_sym("+", token::Variant::OpAdd); },
+              [this] { return try_match_sym("=", token::Variant::OpAssign); },
+              [this] { return try_match_sym("/", token::Variant::OpDiv); },
+              [this] { return try_match_sym(".", token::Variant::OpDot); },
+              [this] { return try_match_sym(">", token::Variant::OpGt); },
+              [this] { return try_match_sym("<", token::Variant::OpLt); },
+              [this] { return try_match_sym("%", token::Variant::OpMod); },
+              [this] { return try_match_sym("*", token::Variant::OpMul); },
+              [this] { return try_match_sym("-", token::Variant::OpSub); },
 
-              [this] { return try_match_sym(",", TokenType::SymComma); },
-              [this] { return try_match_sym("{", TokenType::SymLBrace); },
-              [this] { return try_match_sym("[", TokenType::SymLBrack); },
-              [this] { return try_match_sym("(", TokenType::SymLParen); },
-              [this] { return try_match_sym("}", TokenType::SymRBrace); },
-              [this] { return try_match_sym("]", TokenType::SymRBrack); },
-              [this] { return try_match_sym(")", TokenType::SymRParen); },
+              [this] { return try_match_sym(",", token::Variant::SymComma); },
+              [this] { return try_match_sym("{", token::Variant::SymLBrace); },
+              [this] { return try_match_sym("[", token::Variant::SymLBrack); },
+              [this] { return try_match_sym("(", token::Variant::SymLParen); },
+              [this] { return try_match_sym("}", token::Variant::SymRBrace); },
+              [this] { return try_match_sym("]", token::Variant::SymRBrack); },
+              [this] { return try_match_sym(")", token::Variant::SymRParen); },
           })
     {
     }
 
-    const Token Lexer::next()
+    const token::Token Lexer::next()
     {
         skip_whitespaces();
 
@@ -79,7 +79,7 @@ namespace fla::compiler::lexer
         }
 
         return {
-            .type = TokenType::Unknown,
+            .variant = token::Variant::Unknown,
             .pos = cursor,
             .len = 0,
             .line = curr_line,
@@ -87,7 +87,7 @@ namespace fla::compiler::lexer
         };
     }
 
-    const Token Lexer::peek()
+    const token::Token Lexer::peek()
     {
         skip_whitespaces();
 
@@ -107,7 +107,7 @@ namespace fla::compiler::lexer
         }
 
         return {
-            .type = TokenType::Unknown,
+            .variant = token::Variant::Unknown,
             .pos = cursor,
             .len = 0,
             .line = curr_line,
@@ -127,8 +127,8 @@ namespace fla::compiler::lexer
         }
     }
 
-    const std::optional<Token> Lexer::try_match_sym(const std::string_view text,
-                                                    const TokenType type_if_matches)
+    const MaybeToken Lexer::try_match_sym(const std::string_view text,
+                                          const token::Variant v_if_matches)
     {
         if (cursor + text.length() > src.length()) {
             return std::nullopt;
@@ -138,8 +138,8 @@ namespace fla::compiler::lexer
             return std::nullopt;
         }
 
-        const Token t = {
-            .type = type_if_matches,
+        const token::Token t = {
+            .variant = v_if_matches,
             .pos = cursor,
             .len = text.length(),
             .line = curr_line,
@@ -152,7 +152,7 @@ namespace fla::compiler::lexer
         return t;
     }
 
-    const std::optional<Token> Lexer::try_match()
+    const MaybeToken Lexer::try_match()
     {
         if (!is_current_valid_name_start()) {
             return std::nullopt;
@@ -168,10 +168,10 @@ namespace fla::compiler::lexer
         }
 
         const auto it { keywords.find(src.substr(pos, len)) };
-        const auto tt { (it != keywords.end()) ? it->second : TokenType::Name };
+        const auto variant { (it != keywords.end()) ? it->second : token::Variant::Name };
 
-        const Token t {
-            .type = tt,
+        const token::Token t {
+            .variant = variant,
             .pos = pos,
             .len = len,
             .line = curr_line,
@@ -183,7 +183,7 @@ namespace fla::compiler::lexer
         return t;
     }
 
-    const std::optional<Token> Lexer::try_match_number()
+    const MaybeToken Lexer::try_match_number()
     {
         if (cursor >= src.length() || !std::isdigit(current())) {
             return std::nullopt;
@@ -198,8 +198,8 @@ namespace fla::compiler::lexer
             cursor += 1;
         }
 
-        const Token t {
-            .type = TokenType::Number,
+        const token::Token t {
+            .variant = token::Variant::Number,
             .pos = pos,
             .len = len,
             .line = curr_line,
@@ -211,14 +211,14 @@ namespace fla::compiler::lexer
         return t;
     }
 
-    const std::optional<Token> Lexer::try_match_eof() const
+    const MaybeToken Lexer::try_match_eof() const
     {
         if (cursor < src.length()) {
             return std::nullopt;
         }
 
-        return Token {
-            .type = TokenType::Eof,
+        return token::Token {
+            .variant = token::Variant::Eof,
             .pos = cursor,
             .len = 0,
             .line = curr_line,

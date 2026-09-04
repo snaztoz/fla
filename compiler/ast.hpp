@@ -11,6 +11,7 @@
 namespace fla::compiler::ast
 {
     using NodeIndex = std::size_t;
+    using NodeList = std::vector<NodeIndex>;
 
     struct Metadata {
         const std::size_t pos;
@@ -72,9 +73,8 @@ namespace fla::compiler::ast
         explicit Arena();
         NodeIndex insert(const Node);
         const Node &get(const NodeIndex) const;
-        const std::string get_node_repr(const NodeIndex) const;
-        const std::string get_type_notation_repr(const NodeIndex) const;
-        const Metadata &get_node_metadata(const NodeIndex) const;
+        const std::string node_string(const NodeIndex) const;
+        const Metadata &node_metadata(const NodeIndex) const;
     };
 
     struct Literal {
@@ -98,7 +98,7 @@ namespace fla::compiler::ast
     };
 
     struct FunctionTypeNotation {
-        const std::vector<NodeIndex> parameter_tns;
+        const ast::NodeList parameter_tns;
         const std::optional<NodeIndex> return_tn;
         const Metadata meta;
     };
@@ -128,7 +128,7 @@ namespace fla::compiler::ast
 
     struct ClassDefinition {
         const NodeIndex name;
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 
@@ -152,7 +152,7 @@ namespace fla::compiler::ast
     };
 
     struct ElseBranch {
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 
@@ -172,7 +172,7 @@ namespace fla::compiler::ast
         const NodeIndex name;
         const std::vector<std::pair<NodeIndex, NodeIndex>> parameters;
         const std::optional<NodeIndex> return_type_notation;
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 
@@ -190,14 +190,14 @@ namespace fla::compiler::ast
 
     struct IfExpression {
         const NodeIndex cond;
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const std::optional<NodeIndex> else_statement;
         const Metadata meta;
     };
 
     struct InterfaceDefinition {
         const NodeIndex name;
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 
@@ -226,7 +226,7 @@ namespace fla::compiler::ast
     };
 
     struct NamespaceDeclaration {
-        const std::vector<NodeIndex> name_segments;
+        const ast::NodeList name_segments;
         const Metadata meta;
 
         const std::string string(const Arena &) const;
@@ -255,12 +255,12 @@ namespace fla::compiler::ast
     };
 
     struct PublicScope {
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 
     struct Root {
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 
@@ -271,7 +271,7 @@ namespace fla::compiler::ast
     };
 
     struct UseDeclaration {
-        const std::vector<NodeIndex> name_segments;
+        const ast::NodeList name_segments;
         const Metadata meta;
     };
 
@@ -284,7 +284,7 @@ namespace fla::compiler::ast
 
     struct WhileLoop {
         const NodeIndex cond;
-        const std::vector<NodeIndex> body;
+        const ast::NodeList body;
         const Metadata meta;
     };
 } // namespace fla::compiler::ast

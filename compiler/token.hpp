@@ -5,9 +5,9 @@
 #include <string_view>
 #include <utility>
 
-namespace fla::compiler
+namespace fla::compiler::token
 {
-    enum class TokenType {
+    enum class Variant {
         Unknown,
         Eof,
         False,
@@ -54,96 +54,96 @@ namespace fla::compiler
         SymRParen,
     };
 
-    constexpr std::string_view token_type_string(const TokenType &tt) noexcept
+    constexpr std::string_view type_string(const Variant &tt) noexcept
     {
         switch (tt) {
-        case TokenType::Unknown:
+        case Variant::Unknown:
             return "unknown token";
-        case TokenType::Eof:
+        case Variant::Eof:
             return "EOF";
-        case TokenType::False:
+        case Variant::False:
             return "false";
-        case TokenType::Name:
+        case Variant::Name:
             return "name";
-        case TokenType::Null:
+        case Variant::Null:
             return "null";
-        case TokenType::Number:
+        case Variant::Number:
             return "number";
-        case TokenType::True:
+        case Variant::True:
             return "true";
-        case TokenType::KwAnd:
+        case Variant::KwAnd:
             return "`and` keyword";
-        case TokenType::KwClass:
+        case Variant::KwClass:
             return "`class` keyword";
-        case TokenType::KwConst:
+        case Variant::KwConst:
             return "`const` keyword";
-        case TokenType::KwDefer:
+        case Variant::KwDefer:
             return "`defer` keyword";
-        case TokenType::KwDo:
+        case Variant::KwDo:
             return "`do` keyword";
-        case TokenType::KwElse:
+        case Variant::KwElse:
             return "`else` keyword";
-        case TokenType::KwEnd:
+        case Variant::KwEnd:
             return "`end` keyword";
-        case TokenType::KwFun:
+        case Variant::KwFun:
             return "`fun` keyword";
-        case TokenType::KwIf:
+        case Variant::KwIf:
             return "`if` keyword";
-        case TokenType::KwInterface:
+        case Variant::KwInterface:
             return "`interface` keyword";
-        case TokenType::KwNamespace:
+        case Variant::KwNamespace:
             return "`namespace` keyword";
-        case TokenType::KwNot:
+        case Variant::KwNot:
             return "`not` keyword";
-        case TokenType::KwOr:
+        case Variant::KwOr:
             return "`or` keyword";
-        case TokenType::KwPublic:
+        case Variant::KwPublic:
             return "`public` keyword";
-        case TokenType::KwUse:
+        case Variant::KwUse:
             return "`use` keyword";
-        case TokenType::KwVar:
+        case Variant::KwVar:
             return "`var` keyword";
-        case TokenType::KwWhile:
+        case Variant::KwWhile:
             return "`while` keyword";
-        case TokenType::OpAdd:
+        case Variant::OpAdd:
             return "`+`";
-        case TokenType::OpAssign:
+        case Variant::OpAssign:
             return "`=`";
-        case TokenType::OpDiv:
+        case Variant::OpDiv:
             return "`/`";
-        case TokenType::OpDot:
+        case Variant::OpDot:
             return "`.`";
-        case TokenType::OpEq:
+        case Variant::OpEq:
             return "`==`";
-        case TokenType::OpGt:
+        case Variant::OpGt:
             return "`>`";
-        case TokenType::OpGte:
+        case Variant::OpGte:
             return "`>=`";
-        case TokenType::OpLt:
+        case Variant::OpLt:
             return "`<`";
-        case TokenType::OpLte:
+        case Variant::OpLte:
             return "`<=`";
-        case TokenType::OpMod:
+        case Variant::OpMod:
             return "`%`";
-        case TokenType::OpMul:
+        case Variant::OpMul:
             return "`*`";
-        case TokenType::OpNeq:
+        case Variant::OpNeq:
             return "`!=`";
-        case TokenType::OpSub:
+        case Variant::OpSub:
             return "`-`";
-        case TokenType::SymComma:
+        case Variant::SymComma:
             return "`,` symbol";
-        case TokenType::SymLBrace:
+        case Variant::SymLBrace:
             return "`{` symbol";
-        case TokenType::SymLBrack:
+        case Variant::SymLBrack:
             return "`[` symbol";
-        case TokenType::SymLParen:
+        case Variant::SymLParen:
             return "`(` symbol";
-        case TokenType::SymRBrace:
+        case Variant::SymRBrace:
             return "`}` symbol";
-        case TokenType::SymRBrack:
+        case Variant::SymRBrack:
             return "`]` symbol";
-        case TokenType::SymRParen:
+        case Variant::SymRParen:
             return "`)` symbol";
         default:
             std::unreachable();
@@ -151,7 +151,7 @@ namespace fla::compiler
     }
 
     struct Token {
-        const TokenType type;
+        const Variant variant;
         const std::size_t pos;
         const std::size_t len;
         const std::size_t line;
@@ -159,9 +159,9 @@ namespace fla::compiler
 
         constexpr bool is_eof() const noexcept
         {
-            return type == TokenType::Eof;
+            return variant == Variant::Eof;
         }
     };
-} // namespace fla::compiler
+} // namespace fla::compiler::token
 
 #endif

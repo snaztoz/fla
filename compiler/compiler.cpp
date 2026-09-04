@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ast.hpp"
+#include "common.hpp"
 #include "compiler.hpp"
 #include "context.hpp"
 #include "error.hpp"
@@ -66,6 +67,8 @@ int fla_free_compiler_error(struct FlaCompilerError *err)
 
 namespace fla::compiler
 {
+    using namespace fla::compiler::common;
+
     const std::filesystem::path STD_DIR { "std" };
     const auto KERNEL_DIR { "kernel" };
     const auto KERNEL_IO_FILE { "io.fla" };
@@ -73,7 +76,7 @@ namespace fla::compiler
 
     void print_node(const ast::Arena &arena, const ast::NodeIndex node, const int level);
 
-    const std::expected<void, Error> compile(const std::filesystem::path entrypoint)
+    const VoidResult compile(const std::filesystem::path entrypoint)
     {
         CompilerContext ctx {};
 
@@ -100,10 +103,10 @@ namespace fla::compiler
             const auto ns_name { ns->name };
             ctx.namespaces.insert({ ns_name, std::move(*ns) });
 
-            // std::println("#[{}: {} ns]\n", file.string(), parsing_duration);
-            // print_node(parser_ctx.arena, *root, 0);
+            std::println("#[{}]\n", file.string());
+            print_node(parser_ctx.arena, *root, 0);
 
-            // std::println("");
+            std::println("");
         }
 
         for (const auto &[_, ns] : ctx.namespaces) {
@@ -127,9 +130,9 @@ namespace fla::compiler
     {
         const std::string indentation(level * 2, ' ');
 
-        std::print("{}{}", indentation, arena.get_node_repr(ni));
+        std::print("{}{}", indentation, arena.node_string(ni));
 
-        const auto meta { arena.get_node_metadata(ni) };
+        const auto meta { arena.node_metadata(ni) };
         std::print(" ({}:{}:{})\n", meta.line, meta.col, meta.len);
 
         std::visit(
