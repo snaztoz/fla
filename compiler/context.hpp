@@ -4,7 +4,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
 
 #include "ast.hpp"
 
@@ -37,13 +36,20 @@ namespace fla::compiler
         bool is_public;
     };
 
+    struct ExternalType {
+        const std::string ns;
+        const std::string name;
+        const TypeVariant variant;
+    };
+
     using TypeMapping = std::unordered_map<std::string, Type>;
+    using ExternalTypeMapping = std::unordered_map<std::string, ExternalType>;
 
     struct Namespace {
         std::string name;
         TypeMapping types;
         TypeMapping deferred_types;
-        std::vector<std::string> namespace_dependencies;
+        ExternalTypeMapping external_types;
     };
 
     struct CompilerContext {

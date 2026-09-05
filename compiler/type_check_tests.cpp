@@ -41,6 +41,18 @@ TEST_CASE("check-namespace", "[type-check]")
     }
 }
 
+TEST_CASE("check-use", "[type-check]")
+{
+    SECTION("use-external-type")
+    {
+        REQUIRE(is_passing_type_check(R"(
+            namespace fla.test
+
+            use std.kernel.type.byte
+        )"));
+    }
+}
+
 TEST_CASE("check-declarations", "[type-check]")
 {
     SECTION("normal-declarations")

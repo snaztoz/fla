@@ -103,20 +103,27 @@ namespace fla::compiler
             const auto ns_name { ns->name };
             ctx.namespaces.insert({ ns_name, std::move(*ns) });
 
-            std::println("#[{}]\n", file.string());
-            print_node(parser_ctx.arena, *root, 0);
+            // std::println("#[{}]\n", file.string());
+            // print_node(parser_ctx.arena, *root, 0);
 
-            std::println("");
+            // std::println("");
         }
 
         for (const auto &[_, ns] : ctx.namespaces) {
             std::println("#[{}]", ns.name);
 
+            std::println("  Using:");
+            for (const auto &[ns_name, t] : ns.external_types) {
+                std::println("    {} {}.{}", string(t.variant), ns_name, t.name);
+            }
+
+            std::println("  Types:");
             for (const auto &[t_name, t] : ns.types) {
-                std::print("    {} {}, at {}", t_name, string(t.variant), t.ni);
+                std::print("    ");
                 if (t.is_public) {
-                    std::print(" (public)");
+                    std::print("(public) ");
                 }
+                std::print("{} {}", string(t.variant), t_name);
                 std::println("");
             }
 

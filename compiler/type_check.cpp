@@ -1,5 +1,6 @@
 #include <expected>
 #include <format>
+#include <sstream>
 #include <utility>
 #include <variant>
 
@@ -14,6 +15,7 @@ namespace fla::compiler::type_check
     using namespace fla::compiler::common;
 
     using TypeMappingResult = std::expected<TypeMapping, Error>;
+    using ExternalTypeMappingResult = std::expected<ExternalTypeMapping, Error>;
 
     bool is_missing_namespace(const ast::Arena &, const ast::NodeList &);
     const std::string read_namespace_string(const ast::Arena &, const ast::Root &);
@@ -24,6 +26,8 @@ namespace fla::compiler::type_check
 
     TypeMappingResult read_public_types(const ast::Arena &, const ast::NodeList &);
     TypeMappingResult read_types(const ast::Arena &, const ast::NodeList &, const bool is_public);
+
+    ExternalTypeMappingResult read_external_types(const ast::Arena &, const ast::NodeList &);
 
     const VoidResult resolve_deferred_types(Namespace &, const ast::Arena &);
     constexpr bool should_promote_visibility(const Type &concrete_type, const Type &deferred_type);
@@ -42,6 +46,12 @@ namespace fla::compiler::type_check
         }
 
         ns.name = read_namespace_string(arena, *r);
+
+        auto uses { read_external_types(arena, r->body) };
+        if (!uses) {
+            return std::unexpected(uses.error());
+        }
+        ns.external_types.merge(*uses);
 
         auto dt { read_deferred_types(arena, r->body, false) };
         if (!dt) {
@@ -122,13 +132,7 @@ namespace fla::compiler::type_check
 
                 if (types.contains(name->name)) {
                     const std::string msg { std::format("`{}` type is already exist", name->name) };
-                    return std::unexpected(Error {
-                        name->meta.pos,
-                        name->meta.line,
-                        name->meta.line,
-                        name->meta.col,
-                        msg,
-                    });
+                    return std::unexpected(error::from_metadata(name->meta, msg));
                 }
 
                 types.insert({
@@ -175,13 +179,7 @@ namespace fla::compiler::type_check
 
                 if (types.contains(name->name)) {
                     const std::string msg { std::format("`{}` type is already exist", name->name) };
-                    return std::unexpected(Error {
-                        name->meta.pos,
-                        name->meta.line,
-                        name->meta.line,
-                        name->meta.col,
-                        msg,
-                    });
+                    return std::unexpected(error::from_metadata(name->meta, msg));
                 }
 
                 types.insert({
@@ -197,13 +195,7 @@ namespace fla::compiler::type_check
 
                 if (types.contains(name->name)) {
                     const std::string msg { std::format("`{}` type is already exist", name->name) };
-                    return std::unexpected(Error {
-                        name->meta.pos,
-                        name->meta.line,
-                        name->meta.line,
-                        name->meta.col,
-                        msg,
-                    });
+                    return std::unexpected(error::from_metadata(name->meta, msg));
                 }
 
                 types.insert({
@@ -218,20 +210,60 @@ namespace fla::compiler::type_check
         return types;
     }
 
+    ExternalTypeMappingResult read_external_types(const ast::Arena &arena,
+                                                  const ast::NodeList &body)
+    {
+        ExternalTypeMapping types;
+
+        for (const auto &n : body) {
+            const auto *use { std::get_if<ast::UseDeclaration>(&arena.get(n)) };
+            if (!use) {
+                continue;
+            }
+
+            if (use->name_segments.size() < 2) {
+                const auto meta { arena.node_metadata(n) };
+                return std::unexpected(error::from_metadata(meta, "invalid use segments"));
+            }
+
+            const auto ns_start { 0 };
+            const auto ns_end { use->name_segments.size() - 2 };
+
+            std::ostringstream ns;
+            for (std::size_t i { ns_start }; i <= ns_end; i++) {
+                const auto *segment { std::get_if<ast::Name>(
+                    &arena.get(use->name_segments.at(i))) };
+
+                ns << segment->name;
+                if (i < ns_end) {
+                    ns << ".";
+                }
+            }
+
+            const auto type_i { use->name_segments.size() - 1 };
+            const auto type_node { arena.get(use->name_segments.at(type_i)) };
+            const auto *type_name { std::get_if<ast::Name>(&type_node) };
+
+            types.insert({
+                ns.str(),
+                {
+                    ns.str(),
+                    type_name->name,
+                    TypeVariant::Class,
+                },
+            });
+        }
+
+        return types;
+    }
+
     const VoidResult resolve_deferred_types(Namespace &ns, const ast::Arena &arena)
     {
         for (const auto &[name, t] : ns.deferred_types) {
             if (!ns.types.contains(name)) {
                 const auto ni { ns.deferred_types.at(name).ni };
                 const auto meta { arena.node_metadata(ni) };
-
-                return std::unexpected(Error {
-                    meta.pos,
-                    meta.len,
-                    meta.line,
-                    meta.col,
-                    "missing class definition",
-                });
+                return std::unexpected(error::from_metadata(meta, "missing class definition"));
             }
 
             if (should_promote_visibility(ns.types.at(name), t)) {
