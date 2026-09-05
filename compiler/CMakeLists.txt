@@ -4,10 +4,10 @@ add_library(flac
     ast.hpp
     compiler.cpp
     compiler.hpp
-    context.hpp
     error.hpp
     lexer.cpp
     lexer.hpp
+    namespace.hpp
     parser.cpp
     parser.hpp
     token.hpp

@@ -4,12 +4,12 @@
 #include <expected>
 
 #include "ast.hpp"
-#include "context.hpp"
 #include "error.hpp"
+#include "namespace.hpp"
 
 namespace fla::compiler::type_check
 {
-    using Result = std::expected<Namespace, error::Error>;
+    using Result = std::expected<ns::Namespace, error::Error>;
 
     const Result read_declarations(const ast::Arena &, const ast::NodeIndex);
 } // namespace fla::compiler::type_check

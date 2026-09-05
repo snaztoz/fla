@@ -7,7 +7,7 @@
 
 #include "ast.hpp"
 
-namespace fla::compiler
+namespace fla::compiler::ns
 {
     enum class TypeVariant {
         Class,
@@ -15,7 +15,7 @@ namespace fla::compiler
         Interface,
     };
 
-    inline std::string_view string(const TypeVariant &tv)
+    inline const std::string_view string(const TypeVariant &tv)
     {
         switch (tv) {
         case TypeVariant::Class:
@@ -51,10 +51,6 @@ namespace fla::compiler
         TypeMapping deferred_types;
         ExternalTypeMapping external_types;
     };
-
-    struct CompilerContext {
-        std::unordered_map<std::string, Namespace> namespaces;
-    };
-} // namespace fla::compiler
+} // namespace fla::compiler::ns
 
 #endif

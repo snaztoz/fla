@@ -6,16 +6,16 @@
 
 #include "ast.hpp"
 #include "common.hpp"
-#include "context.hpp"
 #include "error.hpp"
+#include "namespace.hpp"
 #include "type_check.hpp"
 
 namespace fla::compiler::type_check
 {
     using namespace fla::compiler::common;
 
-    using TypeMappingResult = std::expected<TypeMapping, error::Error>;
-    using ExternalTypeMappingResult = std::expected<ExternalTypeMapping, error::Error>;
+    using TypeMappingResult = std::expected<ns::TypeMapping, error::Error>;
+    using ExternalTypeMappingResult = std::expected<ns::ExternalTypeMapping, error::Error>;
 
     bool is_missing_namespace(const ast::Arena &, const ast::NodeList &);
     const std::string read_namespace_string(const ast::Arena &, const ast::Root &);
@@ -29,12 +29,13 @@ namespace fla::compiler::type_check
 
     ExternalTypeMappingResult read_external_types(const ast::Arena &, const ast::NodeList &);
 
-    const VoidResult resolve_deferred_types(Namespace &, const ast::Arena &);
-    constexpr bool should_promote_visibility(const Type &concrete_type, const Type &deferred_type);
+    const VoidResult resolve_deferred_types(ns::Namespace &, const ast::Arena &);
+    constexpr bool should_promote_visibility(const ns::Type &concrete_type,
+                                             const ns::Type &deferred_type);
 
     const Result read_declarations(const ast::Arena &arena, const ast::NodeIndex root_ni)
     {
-        Namespace ns;
+        ns::Namespace ns;
 
         const auto *r { std::get_if<ast::Root>(&arena.get(root_ni)) };
         if (!r) {
@@ -102,7 +103,7 @@ namespace fla::compiler::type_check
 
     TypeMappingResult read_public_deferred_types(const ast::Arena &arena, const ast::NodeList &body)
     {
-        TypeMapping types;
+        ns::TypeMapping types;
 
         for (const auto &n : body) {
             const auto *public_node { std::get_if<ast::PublicScope>(&arena.get(n)) };
@@ -124,7 +125,7 @@ namespace fla::compiler::type_check
     TypeMappingResult read_deferred_types(const ast::Arena &arena, const ast::NodeList &body,
                                           const bool is_public)
     {
-        TypeMapping types;
+        ns::TypeMapping types;
 
         for (const auto &n : body) {
             if (const auto *t { std::get_if<ast::ClassDeclaration>(&arena.get(n)) }) {
@@ -137,7 +138,7 @@ namespace fla::compiler::type_check
 
                 types.insert({
                     name->name,
-                    { name->name, TypeVariant::ClassDeclaration, n, is_public },
+                    { name->name, ns::TypeVariant::ClassDeclaration, n, is_public },
                 });
 
                 continue;
@@ -149,7 +150,7 @@ namespace fla::compiler::type_check
 
     TypeMappingResult read_public_types(const ast::Arena &arena, const ast::NodeList &body)
     {
-        TypeMapping types;
+        ns::TypeMapping types;
 
         for (const auto &n : body) {
             const auto *public_node { std::get_if<ast::PublicScope>(&arena.get(n)) };
@@ -171,7 +172,7 @@ namespace fla::compiler::type_check
     TypeMappingResult read_types(const ast::Arena &arena, const ast::NodeList &body,
                                  const bool is_public)
     {
-        TypeMapping types;
+        ns::TypeMapping types;
 
         for (const auto &n : body) {
             if (const auto *t { std::get_if<ast::ClassDefinition>(&arena.get(n)) }) {
@@ -184,7 +185,7 @@ namespace fla::compiler::type_check
 
                 types.insert({
                     name->name,
-                    { name->name, TypeVariant::Class, n, is_public },
+                    { name->name, ns::TypeVariant::Class, n, is_public },
                 });
 
                 continue;
@@ -200,7 +201,7 @@ namespace fla::compiler::type_check
 
                 types.insert({
                     name->name,
-                    { name->name, TypeVariant::Interface, n, is_public },
+                    { name->name, ns::TypeVariant::Interface, n, is_public },
                 });
 
                 continue;
@@ -213,7 +214,7 @@ namespace fla::compiler::type_check
     ExternalTypeMappingResult read_external_types(const ast::Arena &arena,
                                                   const ast::NodeList &body)
     {
-        ExternalTypeMapping types;
+        ns::ExternalTypeMapping types;
 
         for (const auto &n : body) {
             const auto *use { std::get_if<ast::UseDeclaration>(&arena.get(n)) };
@@ -249,7 +250,7 @@ namespace fla::compiler::type_check
                 {
                     ns.str(),
                     type_name->name,
-                    TypeVariant::Class,
+                    ns::TypeVariant::Class,
                 },
             });
         }
@@ -257,7 +258,7 @@ namespace fla::compiler::type_check
         return types;
     }
 
-    const VoidResult resolve_deferred_types(Namespace &ns, const ast::Arena &arena)
+    const VoidResult resolve_deferred_types(ns::Namespace &ns, const ast::Arena &arena)
     {
         for (const auto &[name, t] : ns.deferred_types) {
             if (!ns.types.contains(name)) {
@@ -274,7 +275,8 @@ namespace fla::compiler::type_check
         return {};
     }
 
-    constexpr bool should_promote_visibility(const Type &concrete_type, const Type &deferred_type)
+    constexpr bool should_promote_visibility(const ns::Type &concrete_type,
+                                             const ns::Type &deferred_type)
     {
         return deferred_type.is_public && !concrete_type.is_public;
     }
