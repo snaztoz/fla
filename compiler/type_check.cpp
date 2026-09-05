@@ -14,8 +14,8 @@ namespace fla::compiler::type_check
 {
     using namespace fla::compiler::common;
 
-    using TypeMappingResult = std::expected<TypeMapping, Error>;
-    using ExternalTypeMappingResult = std::expected<ExternalTypeMapping, Error>;
+    using TypeMappingResult = std::expected<TypeMapping, error::Error>;
+    using ExternalTypeMappingResult = std::expected<ExternalTypeMapping, error::Error>;
 
     bool is_missing_namespace(const ast::Arena &, const ast::NodeList &);
     const std::string read_namespace_string(const ast::Arena &, const ast::Root &);
@@ -38,11 +38,11 @@ namespace fla::compiler::type_check
 
         const auto *r { std::get_if<ast::Root>(&arena.get(root_ni)) };
         if (!r) {
-            return std::unexpected(Error { 0, 0, 0, 0, "failed to match root" });
+            return std::unexpected(error::Error { 0, 0, 0, 0, "failed to match root" });
         }
 
         if (is_missing_namespace(arena, r->body)) {
-            return std::unexpected(Error { 0, 0, 0, 0, "missing namespace declaration" });
+            return std::unexpected(error::Error { 0, 0, 0, 0, "missing namespace declaration" });
         }
 
         ns.name = read_namespace_string(arena, *r);
@@ -132,7 +132,7 @@ namespace fla::compiler::type_check
 
                 if (types.contains(name->name)) {
                     const std::string msg { std::format("`{}` type is already exist", name->name) };
-                    return std::unexpected(error::from_metadata(name->meta, msg));
+                    return std::unexpected(name->meta.to_error(msg));
                 }
 
                 types.insert({
@@ -179,7 +179,7 @@ namespace fla::compiler::type_check
 
                 if (types.contains(name->name)) {
                     const std::string msg { std::format("`{}` type is already exist", name->name) };
-                    return std::unexpected(error::from_metadata(name->meta, msg));
+                    return std::unexpected(name->meta.to_error(msg));
                 }
 
                 types.insert({
@@ -195,7 +195,7 @@ namespace fla::compiler::type_check
 
                 if (types.contains(name->name)) {
                     const std::string msg { std::format("`{}` type is already exist", name->name) };
-                    return std::unexpected(error::from_metadata(name->meta, msg));
+                    return std::unexpected(name->meta.to_error(msg));
                 }
 
                 types.insert({
@@ -223,7 +223,7 @@ namespace fla::compiler::type_check
 
             if (use->name_segments.size() < 2) {
                 const auto meta { arena.node_metadata(n) };
-                return std::unexpected(error::from_metadata(meta, "invalid use segments"));
+                return std::unexpected(meta.to_error("invalid use segments"));
             }
 
             const auto ns_start { 0 };
@@ -263,7 +263,7 @@ namespace fla::compiler::type_check
             if (!ns.types.contains(name)) {
                 const auto ni { ns.deferred_types.at(name).ni };
                 const auto meta { arena.node_metadata(ni) };
-                return std::unexpected(error::from_metadata(meta, "missing class definition"));
+                return std::unexpected(meta.to_error("missing class definition"));
             }
 
             if (should_promote_visibility(ns.types.at(name), t)) {

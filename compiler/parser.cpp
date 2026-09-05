@@ -17,7 +17,7 @@ namespace fla::compiler::parser
     namespace function
     {
         using FunctionParameters = std::vector<std::pair<ast::NodeIndex, ast::NodeIndex>>;
-        using FunctionParametersParseResult = std::expected<FunctionParameters, Error>;
+        using FunctionParametersParseResult = std::expected<FunctionParameters, error::Error>;
 
         const Result parse(Context &ctx);
         const FunctionParametersParseResult parse_parameters(Context &ctx);
@@ -35,14 +35,14 @@ namespace fla::compiler::parser
 
     namespace type_notation
     {
-        using TypeNotationNodeParseResult = std::expected<ast::NodeIndex, Error>;
+        using TypeNotationNodeParseResult = std::expected<ast::NodeIndex, error::Error>;
 
         const TypeNotationNodeParseResult parse(Context &ctx);
     }; // namespace type_notation
 
-    using BodyResult = std::expected<ast::NodeList, Error>;
-    using NameResult = std::expected<ast::NodeIndex, Error>;
-    using NestedNamesResult = std::expected<ast::NodeList, Error>;
+    using BodyResult = std::expected<ast::NodeList, error::Error>;
+    using NameResult = std::expected<ast::NodeIndex, error::Error>;
+    using NestedNamesResult = std::expected<ast::NodeList, error::Error>;
 
     const Result parse_root(Context &ctx);
     const Result parse_namespace_statement(Context &ctx);
@@ -57,7 +57,7 @@ namespace fla::compiler::parser
     const BodyResult parse_body(Context &ctx, std::set<token::Variant> end_delimiters);
     const NameResult parse_name(Context &ctx);
 
-    const std::expected<token::Token, Error> expect(Context &ctx, const token::Variant &);
+    const std::expected<token::Token, error::Error> expect(Context &ctx, const token::Variant &);
 
     const Result parse(Context &ctx)
     {
@@ -372,12 +372,12 @@ namespace fla::compiler::parser
         if (!tn && !expression) {
             const auto name_metadata { ctx.arena.node_metadata(*name) };
 
-            return std::unexpected(Error {
+            return std::unexpected(error::Error {
                 kw.pos,
                 name_metadata.pos - kw.pos + name_metadata.len,
                 kw.line,
                 kw.col,
-                std::format("expecting either type notation or initial value are provided"),
+                "expecting either type notation or initial value are provided",
             });
         }
 
@@ -457,18 +457,15 @@ namespace fla::compiler::parser
         });
     }
 
-    const std::expected<token::Token, Error> expect(Context &ctx, const token::Variant &expected)
+    const std::expected<token::Token, error::Error> expect(Context &ctx,
+                                                           const token::Variant &expected)
     {
         const auto t { ctx.lexer.next() };
         if (t.variant != expected) {
-            return std::unexpected(Error {
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-                std::format("expecting {}, found {} instead", token::type_string(expected),
-                            token::type_string(t.variant)),
-            });
+            const auto msg { std::format("expecting {}, found {} instead",
+                                         token::type_string(expected),
+                                         token::type_string(t.variant)) };
+            return std::unexpected(t.to_error(msg));
         }
         return t;
     }
@@ -485,14 +482,9 @@ namespace fla::compiler::parser::declaration
 
         const auto entity { ctx.lexer.next() };
         if (entity.variant != token::Variant::KwClass && entity.variant != token::Variant::KwFun) {
-            return std::unexpected(Error {
-                entity.pos,
-                entity.len,
-                entity.line,
-                entity.col,
-                std::format("expecting `class` or `fun` keywords, found {} instead",
-                            token::type_string(entity.variant)),
-            });
+            const auto msg { std::format("expecting `class` or `fun` keywords, found {} instead",
+                                         token::type_string(entity.variant)) };
+            return std::unexpected(entity.to_error(msg));
         }
 
         if (entity.variant == token::Variant::KwClass) {
@@ -659,15 +651,10 @@ namespace fla::compiler::parser::function
             case token::Variant::SymRParen:
                 continue;
             default:
-                return std::unexpected(Error {
-                    next.pos,
-                    next.len,
-                    next.line,
-                    next.col,
-                    std::format("expecting {}, found {} instead",
-                                token::type_string(token::Variant::SymRParen),
-                                token::type_string(next.variant)),
-                });
+                const auto msg { std::format("expecting {}, found {} instead",
+                                             token::type_string(token::Variant::SymRParen),
+                                             token::type_string(next.variant)) };
+                return std::unexpected(next.to_error(msg));
             }
         }
 
@@ -1030,14 +1017,9 @@ namespace fla::compiler::parser::expression
         }
 
         default:
-            return std::unexpected(Error {
-                t.pos,
-                t.len,
-                t.line,
-                t.col,
-                std::format("expecting an expression, found {} instead",
-                            token::type_string(t.variant)),
-            });
+            const auto msg { std::format("expecting an expression, found {} instead",
+                                         token::type_string(t.variant)) };
+            return std::unexpected(t.to_error(msg));
         }
     }
 
@@ -1136,8 +1118,8 @@ namespace fla::compiler::parser::expression
 
 namespace fla::compiler::parser::type_notation
 {
-    using TypeNotationResult = std::expected<ast::NodeIndex, Error>;
-    using TypeNotationListResult = std::expected<ast::NodeList, Error>;
+    using TypeNotationResult = std::expected<ast::NodeIndex, error::Error>;
+    using TypeNotationListResult = std::expected<ast::NodeList, error::Error>;
 
     const TypeNotationResult parse_type_notation(Context &ctx);
     const TypeNotationResult parse_array_type_notation(Context &ctx);
@@ -1263,15 +1245,10 @@ namespace fla::compiler::parser::type_notation
             case token::Variant::SymRParen:
                 continue;
             default:
-                return std::unexpected(Error {
-                    next.pos,
-                    next.len,
-                    next.line,
-                    next.col,
-                    std::format("expecting {}, found {} instead",
-                                token::type_string(token::Variant::SymRParen),
-                                token::type_string(next.variant)),
-                });
+                const auto msg { std::format("expecting {}, found {} instead",
+                                             token::type_string(token::Variant::SymRParen),
+                                             token::type_string(next.variant)) };
+                return std::unexpected(next.to_error(msg));
             }
         }
 

@@ -7,7 +7,7 @@
 
 namespace fla::compiler::common
 {
-    using VoidResult = std::expected<void, Error>;
+    using VoidResult = std::expected<void, error::Error>;
 } // namespace fla::compiler::common
 
 #endif

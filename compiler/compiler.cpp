@@ -24,7 +24,7 @@ int fla_compile(const char *entrypoint, struct FlaCompilerError *err)
         if (!result) {
             throw result.error();
         }
-    } catch (const fla::compiler::Error &e) {
+    } catch (const fla::compiler::error::Error &e) {
         err->pos = e.pos;
         err->len = e.len;
         err->line = e.line;

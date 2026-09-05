@@ -8,6 +8,8 @@
 #include <variant>
 #include <vector>
 
+#include "error.hpp"
+
 namespace fla::compiler::ast
 {
     using NodeIndex = std::size_t;
@@ -18,6 +20,11 @@ namespace fla::compiler::ast
         const std::size_t len;
         const std::size_t line;
         const std::size_t col;
+
+        inline const error::Error to_error(const std::string msg) const
+        {
+            return error::Error { pos, len, line, col, msg };
+        }
     };
 
     struct Add;

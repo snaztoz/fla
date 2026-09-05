@@ -2,8 +2,11 @@
 #define FLA_COMPILER_TOKEN_H
 
 #include <cstddef>
+#include <string>
 #include <string_view>
 #include <utility>
+
+#include "error.hpp"
 
 namespace fla::compiler::token
 {
@@ -160,6 +163,11 @@ namespace fla::compiler::token
         constexpr bool is_eof() const noexcept
         {
             return variant == Variant::Eof;
+        }
+
+        inline const error::Error to_error(const std::string msg) const
+        {
+            return error::Error { pos, len, line, col, msg };
         }
     };
 } // namespace fla::compiler::token

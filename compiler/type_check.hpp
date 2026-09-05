@@ -9,7 +9,7 @@
 
 namespace fla::compiler::type_check
 {
-    using Result = std::expected<Namespace, Error>;
+    using Result = std::expected<Namespace, error::Error>;
 
     const Result read_declarations(const ast::Arena &, const ast::NodeIndex);
 } // namespace fla::compiler::type_check

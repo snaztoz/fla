@@ -11,7 +11,7 @@
 
 namespace fla::compiler::parser
 {
-    using Result = std::expected<ast::NodeIndex, Error>;
+    using Result = std::expected<ast::NodeIndex, error::Error>;
 
     struct Context {
         lexer::Lexer lexer;
