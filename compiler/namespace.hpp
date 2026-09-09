@@ -1,5 +1,5 @@
-#ifndef FLA_COMPILER_CONTEXT_H
-#define FLA_COMPILER_CONTEXT_H
+#ifndef FLA_COMPILER_NAMESPACE_H
+#define FLA_COMPILER_NAMESPACE_H
 
 #include <string>
 #include <string_view>

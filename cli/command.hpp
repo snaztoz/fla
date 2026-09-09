@@ -29,6 +29,7 @@ namespace fla::cli
         int run() const override;
 
     private:
+        std::string std_path;
         std::string entrypoint;
     };
 

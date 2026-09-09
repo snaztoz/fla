@@ -15,7 +15,8 @@ namespace fla::compiler
         std::unordered_map<std::string, ns::Namespace> namespaces;
     };
 
-    const VoidResult compile(const std::filesystem::path entrypoint);
+    const VoidResult compile(const std::filesystem::path entrypoint,
+                             const std::filesystem::path std_path);
 } // namespace fla::compiler
 
 #endif

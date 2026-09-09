@@ -12,15 +12,18 @@ namespace fla::cli
 {
     CompileCommand::CompileCommand(CLI::App &base)
     {
+        std_path = "./std";
+
         command = base.add_subcommand("compile", "Run the compiler.");
         command->add_option("path", entrypoint, "Source code file path")->required();
+        command->add_flag("--std", std_path, "Path to std package");
     }
 
     int CompileCommand::run() const
     {
         FlaCompilerError err {};
 
-        const auto res { fla_compile(entrypoint.c_str(), &err) };
+        const auto res { fla_compile(entrypoint.c_str(), std_path.c_str(), &err) };
         if (res != 0) {
             std::println("error: {}", err.msg);
         }

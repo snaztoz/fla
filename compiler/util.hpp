@@ -4,13 +4,15 @@
 #include <expected>
 #include <filesystem>
 
+#include "error.hpp"
+
 namespace fla::compiler::util
 {
     template <class... Ts> struct overloaded : Ts... {
         using Ts::operator()...;
     };
 
-    const std::expected<std::string, std::string> read_file(const std::filesystem::path path);
+    const std::expected<std::string, error::Error> read_file(const std::filesystem::path &path);
 } // namespace fla::compiler::util
 
 #endif

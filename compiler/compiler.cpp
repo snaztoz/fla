@@ -17,10 +17,10 @@
 #include "util.hpp"
 
 extern "C" {
-int fla_compile(const char *entrypoint, struct FlaCompilerError *err)
+int fla_compile(const char *entrypoint, const char *std_path, struct FlaCompilerError *err)
 {
     try {
-        const auto result { fla::compiler::compile(entrypoint) };
+        const auto result { fla::compiler::compile(entrypoint, std_path) };
         if (!result) {
             throw result.error();
         }
@@ -69,25 +69,29 @@ namespace fla::compiler
 {
     using namespace fla::compiler::common;
 
-    const std::filesystem::path STD_DIR { "std" };
     const auto KERNEL_DIR { "kernel" };
     const auto KERNEL_IO_FILE { "io.fla" };
     const auto KERNEL_TYPE_FILE { "type.fla" };
 
     void print_node(const ast::Arena &arena, const ast::NodeIndex node, const int level);
 
-    const VoidResult compile(const std::filesystem::path entrypoint)
+    const VoidResult compile(const std::filesystem::path entrypoint,
+                             const std::filesystem::path std_path)
     {
         CompilerContext ctx {};
 
         std::vector<std::filesystem::path> files {
-            STD_DIR / KERNEL_DIR / KERNEL_TYPE_FILE,
-            STD_DIR / KERNEL_DIR / KERNEL_IO_FILE,
+            std_path / KERNEL_DIR / KERNEL_TYPE_FILE,
+            std_path / KERNEL_DIR / KERNEL_IO_FILE,
             entrypoint,
         };
 
         for (const auto &file : files) {
             const auto content { util::read_file(file) };
+            if (!content) {
+                return std::unexpected(content.error());
+            }
+
             parser::Context parser_ctx { *content };
 
             const auto root { parse(parser_ctx) };
@@ -112,14 +116,14 @@ namespace fla::compiler
         for (const auto &[_, ns] : ctx.namespaces) {
             std::println("#[{}]", ns.name);
 
-            std::println("  Using:");
+            std::println("    using:");
             for (const auto &[ns_name, t] : ns.external_types) {
-                std::println("    {} {}.{}", string(t.variant), ns_name, t.name);
+                std::println("        {} {}.{}", string(t.variant), ns_name, t.name);
             }
 
-            std::println("  Types:");
+            std::println("    types:");
             for (const auto &[t_name, t] : ns.types) {
-                std::print("    ");
+                std::print("        ");
                 if (t.is_public) {
                     std::print("(public) ");
                 }
