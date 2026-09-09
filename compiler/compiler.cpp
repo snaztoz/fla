@@ -94,12 +94,15 @@ namespace fla::compiler
 
             parser::Context parser_ctx { *content };
 
-            const auto root { parse(parser_ctx) };
-            if (!root) {
-                return std::unexpected(root.error());
+            const auto root_ni { parse(parser_ctx) };
+            if (!root_ni) {
+                return std::unexpected(root_ni.error());
             }
 
-            const auto ns { type_check::read_declarations(parser_ctx.arena, *root) };
+            const auto *root { std::get_if<ast::Root>(&parser_ctx.arena.get(*root_ni)) };
+            type_check::Context type_check_ctx { std::move(parser_ctx.arena), *root };
+
+            const auto ns { type_check::read_declarations(type_check_ctx) };
             if (!ns) {
                 return std::unexpected(ns.error());
             }

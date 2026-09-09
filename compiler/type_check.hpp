@@ -11,7 +11,12 @@ namespace fla::compiler::type_check
 {
     using Result = std::expected<ns::Namespace, error::Error>;
 
-    const Result read_declarations(const ast::Arena &, const ast::NodeIndex);
+    struct Context {
+        const ast::Arena arena;
+        const ast::Root root;
+    };
+
+    const Result read_declarations(const Context &);
 } // namespace fla::compiler::type_check
 
 #endif

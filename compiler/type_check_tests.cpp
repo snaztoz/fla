@@ -2,6 +2,7 @@
 
 #include "Catch2/catch_amalgamated.hpp"
 
+#include "ast.hpp"
 #include "parser.hpp"
 #include "type_check.hpp"
 
@@ -9,12 +10,15 @@ bool is_passing_type_check(const std::string_view src)
 {
     fla::compiler::parser::Context parser_ctx { src };
 
-    const auto root { fla::compiler::parser::parse(parser_ctx) };
-    if (!root) {
+    const auto root_ni { fla::compiler::parser::parse(parser_ctx) };
+    if (!root_ni) {
         std::unreachable();
     }
 
-    return !!fla::compiler::type_check::read_declarations(parser_ctx.arena, *root);
+    const auto *root { std::get_if<fla::compiler::ast::Root>(&parser_ctx.arena.get(*root_ni)) };
+    fla::compiler::type_check::Context type_check_ctx { std::move(parser_ctx.arena), *root };
+
+    return !!fla::compiler::type_check::read_declarations(type_check_ctx);
 }
 
 TEST_CASE("check-namespace", "[type-check]")
