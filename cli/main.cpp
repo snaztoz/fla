@@ -10,15 +10,18 @@ int main(int argc, char **argv)
                    "Fla is released under MIT License. Complete documentation can be found at"
                    " https://github.com/snaztoz/fla" };
 
-    const fla::cli::CompileCommand compile { app };
-    const fla::cli::VersionCommand version { app };
+    using namespace fla::cli::command;
+
+    compile::register_command(app);
+    version::register_command(app);
 
     CLI11_PARSE(app, argc, argv);
 
-    if (compile.should_run()) {
-        return compile.run();
-    } else if (version.should_run()) {
-        return version.run();
+    if (compile::should_run()) {
+        return compile::run();
+    }
+    if (version::should_run()) {
+        return version::run();
     }
 
     return 0;
