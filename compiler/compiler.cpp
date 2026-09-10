@@ -75,8 +75,8 @@ namespace fla::compiler
 
     void print_node(const ast::Arena &arena, const ast::NodeIndex node, const int level);
 
-    const VoidResult compile(const std::filesystem::path entrypoint,
-                             const std::filesystem::path std_path)
+    const VoidResult compile(const std::filesystem::path &entrypoint,
+                             const std::filesystem::path &std_path)
     {
         CompilerContext ctx {};
 
